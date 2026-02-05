@@ -275,7 +275,7 @@ export default function CreateFormPage() {
         {/* Form Builder */}
         <div className="bg-white p-6 rounded-2xl border border-slate-200">
           <h2 className="text-lg font-semibold text-slate-900 mb-4">คำถาม</h2>
-          <FormBuilder fields={fields} onChange={setFields} />
+          <FormBuilder fields={fields} onChange={setFields} currentVersion={0} />
         </div>
 
         {/* Consent Settings */}

@@ -20,9 +20,11 @@ export default function QRRedirectPage() {
   useEffect(() => {
     async function handleRedirect() {
       try {
+        console.log('🔍 QR Redirect started:', qrSlug);
         const supabase = getSupabaseBrowser();
         
         // 1. ดึงข้อมูล QR Code
+        console.log('🔍 Fetching QR Code...');
         const { data: qrData, error: qrError } = await supabase
           .from('qr_codes')
           .select('*')
@@ -36,6 +38,7 @@ export default function QRRedirectPage() {
         }
         
         setQRCode(qrData as QRCode);
+        console.log('🔍 QR Data:', qrData);
         
         // 2. ดึงข้อมูลฟอร์มเพื่อตรวจสอบ is_active
         const { data: formData, error: formError } = await supabase
@@ -51,9 +54,11 @@ export default function QRRedirectPage() {
         }
         
         // 3. บันทึกการสแกน
+        console.log('🔍 Recording scan...');
         await supabase.rpc('record_qr_scan', { qr_slug_param: qrSlug });
         
         // 4. เก็บ UTM parameters ลง sessionStorage
+        console.log('🔍 Building UTM params from QR:', qrData);
         const utmParams = {
           utm_source: searchParams.get('utm_source') || qrData.utm_source || 'qr_code',
           utm_medium: searchParams.get('utm_medium') || qrData.utm_medium || 'offline',
@@ -61,8 +66,10 @@ export default function QRRedirectPage() {
           utm_content: searchParams.get('utm_content') || qrData.utm_content || undefined,
           utm_term: searchParams.get('utm_term') || qrData.utm_term || undefined,
         };
+        console.log('🔍 UTM Params:', utmParams);
         
         storeUTMInSession(utmParams);
+        console.log('🔍 UTM stored in session');
         
         // 5. Redirect ไปยังฟอร์ม
         setStatus('redirecting');
@@ -70,9 +77,12 @@ export default function QRRedirectPage() {
         const targetUrl = qrData.redirect_url 
           ? qrData.redirect_url
           : `/form/${formData.slug}`;
+        
+        console.log('🔍 Redirecting to:', targetUrl);
           
         // รอสักครู่แล้ว redirect
         setTimeout(() => {
+          console.log('🔍 Executing redirect...');
           router.push(targetUrl);
         }, 500);
         

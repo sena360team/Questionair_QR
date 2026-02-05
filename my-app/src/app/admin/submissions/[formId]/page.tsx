@@ -15,6 +15,7 @@ import {
   Calendar
 } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
+import { getVersionBadgeStyle, getVersionColor } from '@/lib/versionColors';
 
 const ITEMS_PER_PAGE = 50;
 
@@ -46,7 +47,8 @@ export default function FormSubmissionsPage() {
     return form.fields.map((field: FormField) => ({
       key: field.id,
       label: field.label,
-      version: form.current_version || 1,
+      // ใช้ _versionAdded ถ้ามี (คำถามใหม่), ไม่มีใช้ current_version
+      version: field._versionAdded || form.current_version || 1,
     }));
   }, [form]);
 
@@ -68,10 +70,14 @@ export default function FormSubmissionsPage() {
         setForm(formData as Form);
       }
       
-      // Get submissions with filters
+      // Get submissions with QR Code + Project info
       let query = supabase
         .from('submissions')
-        .select('*', { count: 'exact' })
+        .select(`
+          *,
+          qr_code:qr_codes(id, name, utm_source, utm_medium, utm_campaign, utm_content, project_id),
+          project:projects(id, code, name)
+        `, { count: 'exact' })
         .eq('form_id', formId)
         .order('submitted_at', { ascending: false });
 
@@ -255,16 +261,29 @@ export default function FormSubmissionsPage() {
                       <th className="px-4 py-3 text-left font-semibold text-slate-700 whitespace-nowrap bg-slate-50">ID</th>
                       <th className="px-4 py-3 text-left font-semibold text-slate-700 whitespace-nowrap bg-slate-50">เวลาส่ง</th>
                       <th className="px-4 py-3 text-center font-semibold text-slate-700 whitespace-nowrap bg-slate-50">Version</th>
-                      {unifiedFields.map((field) => (
-                        <th 
-                          key={field.key} 
-                          className="px-4 py-3 text-left font-semibold whitespace-nowrap bg-slate-50 text-slate-700"
-                        >
-                          <div className="max-w-[200px] truncate" title={field.label}>
-                            {field.label}
-                          </div>
-                        </th>
-                      ))}
+                      {unifiedFields.map((field) => {
+                        const fieldColor = getVersionColor(field.version);
+                        return (
+                          <th 
+                            key={field.key} 
+                            className="px-4 py-3 text-left font-semibold whitespace-nowrap bg-slate-50 text-slate-700"
+                            style={fieldColor ? { color: fieldColor } : undefined}
+                          >
+                            <div className="max-w-[200px] truncate flex items-center gap-1" title={`${field.label}${field.version > 1 ? ` (เพิ่ม v${field.version})` : ''}`}>
+                              {field.label}
+                              {field.version > 1 && (
+                                <span className="text-xs opacity-60 ml-1" style={fieldColor ? { color: fieldColor } : undefined}>v{field.version}</span>
+                              )}
+                            </div>
+                          </th>
+                        );
+                      })}
+                      {/* QR Code & UTM Columns - อยู่ท้ายตาราง */}
+                      <th className="px-4 py-3 text-left font-semibold text-slate-700 whitespace-nowrap bg-slate-50">QR Code</th>
+                      <th className="px-4 py-3 text-left font-semibold text-slate-700 whitespace-nowrap bg-slate-50">รหัสโครงการ</th>
+                      <th className="px-4 py-3 text-left font-semibold text-slate-700 whitespace-nowrap bg-slate-50">ชื่อโครงการ</th>
+                      <th className="px-4 py-3 text-left font-semibold text-slate-700 whitespace-nowrap bg-slate-50">UTM Source</th>
+                      <th className="px-4 py-3 text-left font-semibold text-slate-700 whitespace-nowrap bg-slate-50">UTM Medium</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -283,7 +302,10 @@ export default function FormSubmissionsPage() {
                           })}
                         </td>
                         <td className="px-4 py-3 text-center">
-                          <span className="inline-flex px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium rounded">
+                          <span 
+                            className="inline-flex px-2 py-0.5 text-xs font-medium rounded border"
+                            style={getVersionBadgeStyle(sub.form_version || 1)}
+                          >
                             v{sub.form_version || 1}
                           </span>
                         </td>
@@ -299,6 +321,34 @@ export default function FormSubmissionsPage() {
                             </td>
                           );
                         })}
+                        {/* QR Code & UTM Columns - อยู่ท้ายตาราง */}
+                        <td className="px-4 py-3 whitespace-nowrap text-slate-700">
+                          {sub.qr_code?.name || '-'}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap font-mono text-slate-600">
+                          {sub.project?.code || sub.qr_code?.project_id || '-'}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-slate-700">
+                          {sub.project?.name || '-'}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          {sub.qr_code?.utm_source ? (
+                            <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded">
+                              {sub.qr_code.utm_source}
+                            </span>
+                          ) : (
+                            <span className="text-slate-400">-</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          {sub.qr_code?.utm_medium ? (
+                            <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded">
+                              {sub.qr_code.utm_medium}
+                            </span>
+                          ) : (
+                            <span className="text-slate-400">-</span>
+                          )}
+                        </td>
                       </tr>
                     ))}
                   </tbody>

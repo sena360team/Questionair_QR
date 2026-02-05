@@ -8,6 +8,7 @@ import { FormRenderer } from '@/components/FormRenderer';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import { Form, FormField } from '@/types';
 import { ArrowLeft, Save, Eye, Hash, FileText, X, Shield, CheckCircle, AlertCircle, Rocket } from 'lucide-react';
+import { getVersionBadgeStyle } from '@/lib/versionColors';
 
 export default function EditFormPage() {
   const params = useParams();
@@ -32,6 +33,9 @@ export default function EditFormPage() {
   const [consentText, setConsentText] = useState('');
   const [consentRequireLocation, setConsentRequireLocation] = useState(false);
   const [isActive, setIsActive] = useState(true);
+  
+  // เก็บ fields ต้นฉบับเพื่อเทียบว่ามีการเปลี่ยนแปลงไหม
+  const [originalFields, setOriginalFields] = useState<FormField[]>([]);
   
   // Toast notification state
   const [toast, setToast] = useState<{type: 'success' | 'error', message: string} | null>(null);
@@ -68,6 +72,7 @@ export default function EditFormPage() {
         setSlug(formData.slug);
         setDescription(formData.description || '');
         setFields(formData.fields);
+        setOriginalFields(JSON.parse(JSON.stringify(formData.fields))); // เก็บต้นฉบับ
         setLogoUrl(formData.logo_url || '');
         setRequireConsent(formData.require_consent || false);
         setConsentHeading(formData.consent_heading || 'การยินยอม (Consent)');
@@ -94,30 +99,98 @@ export default function EditFormPage() {
     setSaving(true);
     try {
       const supabase = getSupabaseBrowser();
-      const { error } = await supabase
-        .from('forms')
-        .update({
-          title,
-          slug,
-          description,
-          fields,
-          logo_url: logoUrl,
-          require_consent: requireConsent,
-          consent_heading: consentHeading,
-          consent_text: consentText,
-          consent_require_location: consentRequireLocation,
-          is_active: isActive,
-        })
-        .eq('id', formId);
       
-      if (error) throw error;
-      showToast('success', 'บันทึกสำเร็จ');
-      router.push('/admin/forms');
+      // ถ้าเป็น Published และมีการเปลี่ยนแปลง → Auto สร้าง Version ใหม่
+      if (form.status === 'published' && hasFieldsChanged()) {
+        const currentVersion = form.current_version ?? 0;
+        const newVersion = currentVersion + 1;
+        
+        console.log('📢 Auto creating new version:', formId, 'Version:', newVersion);
+        
+        // 1. อัพเดทฟอร์ม + current_version
+        const { error: updateError } = await supabase
+          .from('forms')
+          .update({
+            title,
+            slug,
+            description,
+            fields,
+            logo_url: logoUrl,
+            require_consent: requireConsent,
+            consent_heading: consentHeading,
+            consent_text: consentText,
+            consent_require_location: consentRequireLocation,
+            is_active: isActive,
+            current_version: newVersion,
+          })
+          .eq('id', formId);
+        
+        if (updateError) {
+          console.error('Update form error:', updateError);
+          throw new Error(`Update failed: ${updateError.message}`);
+        }
+        
+        // 2. สร้าง version ใหม่
+        const { error: versionError } = await supabase
+          .from('form_versions')
+          .insert({
+            form_id: formId,
+            version: newVersion,
+            fields: fields,
+            change_summary: `Updated to version ${newVersion}`,
+            published_at: new Date().toISOString(),
+          });
+        
+        if (versionError) {
+          console.error('Insert version error:', versionError);
+          throw new Error(`Create version failed: ${versionError.message}`);
+        }
+        
+        showToast('success', `บันทึกและสร้าง Version ${newVersion} สำเร็จ`);
+      } else {
+        // Draft หรือ Published แต่ไม่มีการเปลี่ยนแปลง → บันทึกปกติ
+        const { error } = await supabase
+          .from('forms')
+          .update({
+            title,
+            slug,
+            description,
+            fields,
+            logo_url: logoUrl,
+            require_consent: requireConsent,
+            consent_heading: consentHeading,
+            consent_text: consentText,
+            consent_require_location: consentRequireLocation,
+            is_active: isActive,
+          })
+          .eq('id', formId);
+        
+        if (error) {
+          console.error('Save error:', error);
+          throw new Error(`Save failed: ${error.message}`);
+        }
+        showToast('success', 'บันทึกสำเร็จ');
+      }
+      
+      // Redirect กลับไปหน้า list
+      setTimeout(() => {
+        window.location.href = '/admin/forms';
+      }, 500);
     } catch (err) {
       showToast('error', 'เกิดข้อผิดพลาดในการบันทึก');
     } finally {
       setSaving(false);
     }
+  };
+
+  // ฟังก์ชันเทียบว่า fields มีการเปลี่ยนแปลงไหม
+  const hasFieldsChanged = (): boolean => {
+    if (!originalFields || originalFields.length === 0) return true;
+    if (fields.length !== originalFields.length) return true;
+    
+    const fieldsStr = JSON.stringify(fields);
+    const originalStr = JSON.stringify(originalFields);
+    return fieldsStr !== originalStr;
   };
 
   const handlePublish = async () => {
@@ -130,11 +203,14 @@ export default function EditFormPage() {
     try {
       const supabase = getSupabaseBrowser();
       
-      // คำนวณ version ใหม่
-      const newVersion = (form.current_version || 0) + 1;
+      // คำนวณ version ใหม่ (เริ่มต้นที่ 1)
+      const currentVersion = form.current_version ?? 0;
+      const newVersion = currentVersion + 1;
+      
+      console.log('📢 Publishing form:', formId, 'Current version:', currentVersion, 'New version:', newVersion);
       
       // 1. บันทึกฟอร์ม + current_version
-      const { error: updateError } = await supabase
+      const { data: updatedForm, error: updateError } = await supabase
         .from('forms')
         .update({
           title,
@@ -149,13 +225,18 @@ export default function EditFormPage() {
           is_active: true,
           status: 'published',
           current_version: newVersion,
+          updated_at: new Date().toISOString(),
         })
-        .eq('id', formId);
+        .eq('id', formId)
+        .select()
+        .single();
       
       if (updateError) {
         console.error('Update form error:', updateError);
         throw new Error(`Update form failed: ${updateError.message}`);
       }
+      
+      console.log('✅ Form updated:', updatedForm);
       
       // 2. สร้าง version ใหม่
       const { error: versionError } = await supabase
@@ -173,11 +254,88 @@ export default function EditFormPage() {
         throw new Error(`Create version failed: ${versionError.message}`);
       }
       
-      showToast('success', `Publish สำเร็จ (v${newVersion})`);
-      router.push('/admin/forms');
+      showToast('success', `Publish สำเร็จ (Version ${newVersion})`);
+      
+      // รอสักครู่แล้ว redirect ให้ DB ทำงานเสร็จ + force refresh
+      setTimeout(() => {
+        window.location.href = '/admin/forms';
+      }, 800);
     } catch (err: any) {
       console.error('Publish error:', err);
       showToast('error', err.message || 'เกิดข้อผิดพลาดในการ Publish');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Publish Version ใหม่สำหรับฟอร์มที่ Published แล้ว
+  const handlePublishNewVersion = async () => {
+    if (!title || !slug) {
+      showToast('error', 'กรุณากรอกข้อมูลให้ครบถ้วน');
+      return;
+    }
+
+    // เช็คว่ามีการเปลี่ยนแปลงไหม
+    if (!hasFieldsChanged()) {
+      showToast('error', 'ไม่มีการเปลี่ยนแปลงเนื้อหา ไม่สามารถสร้าง Version ใหม่ได้');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const supabase = getSupabaseBrowser();
+      
+      // คำนวณ version ใหม่
+      const currentVersion = form.current_version ?? 0;
+      const newVersion = currentVersion + 1;
+      
+      console.log('📢 Creating new version:', formId, 'Current:', currentVersion, 'New:', newVersion);
+      
+      // 1. อัพเดทฟอร์ม + current_version
+      const { error: updateError } = await supabase
+        .from('forms')
+        .update({
+          title,
+          slug,
+          description,
+          fields,
+          logo_url: logoUrl,
+          require_consent: requireConsent,
+          consent_heading: consentHeading,
+          consent_text: consentText,
+          consent_require_location: consentRequireLocation,
+          is_active: true,
+          current_version: newVersion,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', formId);
+      
+      if (updateError) throw updateError;
+      
+      // 2. สร้าง version ใหม่
+      const { error: versionError } = await supabase
+        .from('form_versions')
+        .insert({
+          form_id: formId,
+          version: newVersion,
+          fields: fields,
+          change_summary: `Updated to version ${newVersion}`,
+          published_at: new Date().toISOString(),
+        });
+      
+      if (versionError) throw versionError;
+      
+      // อัพเดท original fields เป็นค่าปัจจุบัน
+      setOriginalFields(JSON.parse(JSON.stringify(fields)));
+      
+      showToast('success', `สร้าง Version ${newVersion} สำเร็จ`);
+      
+      setTimeout(() => {
+        window.location.href = '/admin/forms';
+      }, 800);
+    } catch (err: any) {
+      console.error('Publish new version error:', err);
+      showToast('error', err.message || 'เกิดข้อผิดพลาด');
     } finally {
       setSaving(false);
     }
@@ -222,12 +380,18 @@ export default function EditFormPage() {
             <Eye className="w-5 h-5" /> ดูตัวอย่าง
           </button>
           {form.status === 'draft' && (
+            // ฟอร์ม Draft - แสดงปุ่ม Publish (สร้าง Version 1)
             <button onClick={handlePublish} disabled={saving} className="flex items-center gap-2 px-6 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 disabled:opacity-50">
               <Rocket className="w-5 h-5" /> {saving ? 'กำลัง Publish...' : 'Publish'}
             </button>
           )}
-          <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50">
-            <Save className="w-5 h-5" /> {saving ? 'กำลังบันทึก...' : 'บันทึก'}
+          <button 
+            onClick={handleSave} 
+            disabled={saving} 
+            className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50"
+            title={form.status === 'published' && hasFieldsChanged() ? 'บันทึกและสร้าง Version ใหม่' : 'บันทึก'}
+          >
+            <Save className="w-5 h-5" /> {saving ? 'กำลังบันทึก...' : form.status === 'published' && hasFieldsChanged() ? 'บันทึก (Auto Version)' : 'บันทึก'}
           </button>
         </div>
       </div>
@@ -262,12 +426,13 @@ export default function EditFormPage() {
                   </span>
                 )}
                 
-                {/* Version */}
-                {form.current_version && form.current_version > 0 && (
-                  <span className="px-3 py-1 bg-blue-100 text-blue-700 text-sm font-medium rounded-full">
-                    v{form.current_version}
-                  </span>
-                )}
+                {/* Version - Dynamic Color */}
+                <span 
+                  className="px-3 py-1 text-sm font-medium rounded-full border"
+                  style={getVersionBadgeStyle(form.current_version || 0)}
+                >
+                  Version {form.current_version || 0}
+                </span>
                 
                 {/* Active/Inactive */}
                 {form.status === 'published' && (
@@ -334,7 +499,7 @@ export default function EditFormPage() {
 
         <div className="bg-white p-6 rounded-2xl border border-slate-200">
           <h2 className="text-lg font-semibold mb-4">คำถาม</h2>
-          <FormBuilder fields={fields} onChange={setFields} />
+          <FormBuilder fields={fields} onChange={setFields} currentVersion={form.current_version || 0} />
         </div>
 
         <div className="bg-white p-6 rounded-2xl border border-slate-200">

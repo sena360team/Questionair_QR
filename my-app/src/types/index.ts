@@ -42,6 +42,7 @@ export interface FormField {
   min?: number;             // สำหรับ rating, scale, number
   max?: number;             // สำหรับ rating, scale, number
   helpText?: string;        // คำอธิบายเพิ่มเติม
+  _versionAdded?: number;   // UI only: Version ที่เพิ่มคำถามนี้ (ใช้แสดงสี)
 }
 
 export interface Form {

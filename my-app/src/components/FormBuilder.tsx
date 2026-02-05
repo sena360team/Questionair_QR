@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react';
 import { FormField, FieldType } from '@/types';
 import { cn, generateId } from '@/lib/utils';
+import { getVersionColor } from '@/lib/versionColors';
 import { 
   Plus, 
   Trash2, 
@@ -21,7 +22,8 @@ import {
   Heading,
   LayoutTemplate,
   MoveVertical,
-  Info
+  Info,
+  Sparkles
 } from 'lucide-react';
 
 const FIELD_TYPES = [
@@ -44,9 +46,10 @@ const FIELD_TYPES = [
 interface FormBuilderProps {
   fields: FormField[];
   onChange: (fields: FormField[]) => void;
+  currentVersion?: number;  // สำหรับกำหนดสีคำถามใหม่
 }
 
-export function FormBuilder({ fields, onChange }: FormBuilderProps) {
+export function FormBuilder({ fields, onChange, currentVersion = 0 }: FormBuilderProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
@@ -74,6 +77,10 @@ export function FormBuilder({ fields, onChange }: FormBuilderProps) {
       }
     };
 
+    // ถ้าเป็นการเพิ่มคำถามใหม่ใน form ที่ published แล้ว
+    // ให้标记ว่าเพิ่มใน version ถัดไป (currentVersion + 1)
+    const nextVersion = currentVersion > 0 ? currentVersion + 1 : undefined;
+    
     const newField: FormField = {
       id: generateId(),
       type,
@@ -85,6 +92,7 @@ export function FormBuilder({ fields, onChange }: FormBuilderProps) {
         : {}),
       ...(type === 'rating' ? { min: 1, max: 5 } : {}),
       ...(type === 'scale' ? { min: 1, max: 10 } : {}),
+      ...(nextVersion ? { _versionAdded: nextVersion } : {}),
     };
     onChange([...fields, newField]);
     setEditingId(newField.id);
@@ -436,12 +444,26 @@ function FieldEditor({ field, onChange }: { field: FormField; onChange: (updates
 // ==================== Field Preview (Compact) ====================
 
 function FieldPreview({ field }: { field: FormField }) {
+  // ดึงสีจาก version ที่เพิ่มคำถามนี้ (ถ้ามี)
+  const versionColor = field._versionAdded ? getVersionColor(field._versionAdded) : undefined;
+  const versionLabel = field._versionAdded ? `เพิ่มใน v${field._versionAdded}` : undefined;
+  
   // Compact preview - just show summary
   if (field.type === 'heading') {
     return (
       <div className="py-1">
-        <span className="text-xs text-purple-600 font-medium uppercase tracking-wide">หัวข้อ</span>
-        <h3 className="text-lg font-bold text-slate-900 leading-tight">{field.label}</h3>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-purple-600 font-medium uppercase tracking-wide">หัวข้อ</span>
+          {field._versionAdded && (
+            <span className="flex items-center gap-1 text-xs font-medium" style={{ color: versionColor }}>
+              <Sparkles className="w-3 h-3" />
+              {versionLabel}
+            </span>
+          )}
+        </div>
+        <h3 className="text-lg font-bold leading-tight" style={{ color: versionColor || '#0f172a' }}>
+          {field.label}
+        </h3>
       </div>
     );
   }
@@ -449,8 +471,18 @@ function FieldPreview({ field }: { field: FormField }) {
   if (field.type === 'section') {
     return (
       <div className="py-1">
-        <span className="text-xs text-blue-600 font-medium uppercase tracking-wide">Section</span>
-        <h4 className="text-base font-semibold text-slate-800 leading-tight">{field.label}</h4>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-blue-600 font-medium uppercase tracking-wide">Section</span>
+          {field._versionAdded && (
+            <span className="flex items-center gap-1 text-xs font-medium" style={{ color: versionColor }}>
+              <Sparkles className="w-3 h-3" />
+              {versionLabel}
+            </span>
+          )}
+        </div>
+        <h4 className="text-base font-semibold leading-tight" style={{ color: versionColor || '#1e293b' }}>
+          {field.label}
+        </h4>
       </div>
     );
   }
@@ -458,8 +490,18 @@ function FieldPreview({ field }: { field: FormField }) {
   if (field.type === 'info_box') {
     return (
       <div className="py-1">
-        <span className="text-xs text-amber-600 font-medium uppercase tracking-wide">กล่องข้อความ</span>
-        <p className="text-sm font-medium text-slate-900 line-clamp-1">{field.label || 'ไม่มีหัวข้อ'}</p>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-amber-600 font-medium uppercase tracking-wide">กล่องข้อความ</span>
+          {field._versionAdded && (
+            <span className="flex items-center gap-1 text-xs font-medium" style={{ color: versionColor }}>
+              <Sparkles className="w-3 h-3" />
+              {versionLabel}
+            </span>
+          )}
+        </div>
+        <p className="text-sm font-medium line-clamp-1" style={{ color: versionColor || '#0f172a' }}>
+          {field.label || 'ไม่มีหัวข้อ'}
+        </p>
         {field.helpText && (
           <p className="text-xs text-slate-500 mt-1 line-clamp-2">{field.helpText}</p>
         )}
@@ -488,10 +530,18 @@ function FieldPreview({ field }: { field: FormField }) {
   return (
     <div className="flex items-center gap-3 py-1">
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-slate-900 truncate leading-tight">
-          {field.label}
-          {field.required && <span className="text-red-500 ml-1">*</span>}
-        </p>
+        <div className="flex items-center gap-2">
+          <p className="text-sm font-medium truncate leading-tight" style={{ color: versionColor || '#0f172a' }}>
+            {field.label}
+            {field.required && <span className="text-red-500 ml-1">*</span>}
+          </p>
+          {field._versionAdded && (
+            <span className="flex items-center gap-1 text-xs font-medium" style={{ color: versionColor }}>
+              <Sparkles className="w-3 h-3" />
+              v{field._versionAdded}
+            </span>
+          )}
+        </div>
         <p className="text-xs text-slate-400">{getTypeLabel()}</p>
       </div>
     </div>

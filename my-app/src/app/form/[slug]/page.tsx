@@ -78,11 +78,17 @@ export default function FormPage() {
         const sessionParams = hasUTMParams(urlParams) ? {} : getUTMFromSession();
         
         const mergedParams = { ...sessionParams, ...urlParams };
-        setUtmParams(mergedParams);
+        console.log('🔍 UTM Params loaded:', mergedParams);
+        console.log('🔍 Session params:', sessionParams);
+        console.log('🔍 URL params:', urlParams);
         
-        // ล้าง session หลังใช้งาน
-        if (hasUTMParams(sessionParams)) {
-          clearUTMSession();
+        // เก็บ UTM ไว้ก่อน ล้างหลัง submit สำเร็จ
+        if (hasUTMParams(mergedParams)) {
+          setUtmParams(mergedParams);
+          // ไม่ล้าง session ทันที รอให้ submit สำเร็จก่อน
+          // clearUTMSession();
+        } else {
+          setUtmParams({});
         }
         
       } catch (err) {
@@ -122,21 +128,29 @@ export default function FormPage() {
       let qrCodeId: string | null = null;
       let projectId: string | null = null;
       
+      console.log('📝 Current UTM params:', utmParams);
+      console.log('📝 utm_content:', utmParams.utm_content);
+      
       if (utmParams.utm_content) {
         console.log('📝 Looking up QR code by utm_content:', utmParams.utm_content);
+        console.log('📝 Form ID:', form.id);
         const supabase = getSupabaseBrowser();
         const qrResult = await supabase
           .from('qr_codes')
-          .select('id, project_id')
+          .select('id, project_id, utm_content, qr_slug')
           .eq('form_id', form.id)
           .eq('utm_content', utmParams.utm_content)
           .maybeSingle();
           
         console.log('📝 QR lookup result:', qrResult);
+        console.log('📝 QR data:', qrResult.data);
           
         if (qrResult.data) {
           qrCodeId = qrResult.data.id;
           projectId = qrResult.data.project_id;
+          console.log('📝 Found QR Code:', qrCodeId, 'Project:', projectId);
+        } else {
+          console.log('📝 QR Code not found!');
         }
       } else {
         console.log('📝 No utm_content, skipping QR lookup');
@@ -183,6 +197,11 @@ export default function FormPage() {
       }
       
       console.log('✅ Submission saved:', data);
+      
+      // ล้าง UTM session หลัง submit สำเร็จ
+      clearUTMSession();
+      console.log('🔍 UTM session cleared after successful submission');
+      
       alert('ส่งคำตอบสำเร็จ!');
       
     } catch (err: any) {

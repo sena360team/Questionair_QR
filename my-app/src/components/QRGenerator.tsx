@@ -57,12 +57,14 @@ export function QRGenerator({
         // Auto-generate name: FRM-XXX-PROJECT-CODE
         const autoName = `${currentForm.code}-${project.code}`;
         setName(autoName);
-        setQrSlug(generateQRSlug(autoName));
+        const newQrSlug = generateQRSlug(autoName);
+        setQrSlug(newQrSlug);
         
-        // Auto-fill UTM
+        // Auto-fill UTM - ใช้ qr_slug เป็น utm_content เพื่อให้ระบบ track ได้
         setUtmSource(project.name);
         setUtmMedium(project.code);
         setUtmCampaign(currentForm.code);
+        setUtmContent(newQrSlug); // ใช้ qr_slug เป็น utm_content
       }
     }
   }, [selectedProjectId, currentForm, projects, existingQR]);
@@ -78,6 +80,9 @@ export function QRGenerator({
         utm_content: utmContent,
       };
       const url = buildQRRedirectURL(baseUrl, qrSlug, utmParams);
+      console.log('🔍 QR URL generated:', url);
+      console.log('🔍 Base URL:', baseUrl);
+      console.log('🔍 QR Slug:', qrSlug);
       const dataUrl = await generateQRCodeDataURL(url, { width: 400 });
       setQrDataUrl(dataUrl);
     } catch (error) {

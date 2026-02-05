@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import { Form } from '@/types';
+import { getVersionBadgeStyle, getVersionBadgeClass } from '@/lib/versionColors';
 
 export default function FormsPage() {
   const { forms, loading, deleteForm } = useForms();
@@ -150,12 +151,13 @@ function FormCard({ form, submissionCount, onDelete }: FormCardProps) {
                     Archived
                   </span>
                 )}
-                {/* Version Badge */}
-                {form.current_version && form.current_version > 0 && (
-                  <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full font-medium">
-                    v{form.current_version}
-                  </span>
-                )}
+                {/* Version Badge - Dynamic Color */}
+                <span 
+                  className="px-2 py-0.5 text-xs rounded-full font-medium border"
+                  style={getVersionBadgeStyle(form.current_version || 0)}
+                >
+                  Version {form.current_version || 0}
+                </span>
               </div>
               {/* Active/Inactive Badge */}
               {form.status === 'published' && (
