@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 
-export default function HomePage() {
+export default async function HomePage() {
   redirect('/admin');
+  return null;
 }
