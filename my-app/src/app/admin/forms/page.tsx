@@ -197,21 +197,39 @@ function FormCard({ form, submissionCount, onDelete }: FormCardProps) {
         </span>
         
         <div className="flex items-center gap-1">
-          <Link
-            href={`/form/${form.slug}`}
-            target="_blank"
-            className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-            title="ดูฟอร์ม"
-          >
-            <ExternalLink className="w-4 h-4" />
-          </Link>
-          <Link
-            href={`/admin/qr-codes?form=${form.id}`}
-            className="p-2 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-all"
-            title="สร้าง QR Code"
-          >
-            <QrCode className="w-4 h-4" />
-          </Link>
+          {form.status === 'published' ? (
+            <Link
+              href={`/form/${form.slug}`}
+              target="_blank"
+              className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+              title="ดูฟอร์ม"
+            >
+              <ExternalLink className="w-4 h-4" />
+            </Link>
+          ) : (
+            <span
+              className="p-2 text-slate-200 cursor-not-allowed rounded-lg"
+              title="ไม่สามารถดูฟอร์มได้ กรุณา Publish แบบสอบถามก่อน"
+            >
+              <ExternalLink className="w-4 h-4" />
+            </span>
+          )}
+          {form.status === 'published' ? (
+            <Link
+              href={`/admin/qr-codes?form=${form.id}`}
+              className="p-2 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-all"
+              title="สร้าง QR Code"
+            >
+              <QrCode className="w-4 h-4" />
+            </Link>
+          ) : (
+            <span
+              className="p-2 text-slate-200 cursor-not-allowed rounded-lg"
+              title="ไม่สามารถสร้าง QR Code ได้ กรุณา Publish แบบสอบถามก่อน"
+            >
+              <QrCode className="w-4 h-4" />
+            </span>
+          )}
           <Link
             href={`/admin/forms/${form.id}`}
             onClick={() => console.log('🔗 Click Edit - Form ID:', form.id, 'URL:', `/admin/forms/${form.id}`)}

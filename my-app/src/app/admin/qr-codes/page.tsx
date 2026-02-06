@@ -1,9 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useQRCodes, useForms, useSubmissions } from '@/hooks/useSupabase';
 import { QRGenerator } from '@/components/QRGenerator';
+import { generateQRCodeDataURL, buildQRRedirectURL } from '@/lib/qr';
 import { 
   QrCode, 
   Plus, 
@@ -187,24 +189,35 @@ export default function QRCodesPage() {
               <div className="space-y-4">
                 <p className="text-slate-600">เลือกแบบสอบถามที่ต้องการสร้าง QR Code:</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {forms.map((form) => (
-                    <button
-                      key={form.id}
-                      onClick={() => setSelectedForm(form.id)}
-                      className="p-4 border border-slate-200 rounded-xl text-left hover:border-blue-500 hover:bg-blue-50 transition-all"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                          <FileText className="w-5 h-5 text-blue-600" />
+                  {forms
+                    .filter((form) => form.status === 'published')
+                    .map((form) => (
+                      <button
+                        key={form.id}
+                        onClick={() => setSelectedForm(form.id)}
+                        className="p-4 border border-slate-200 rounded-xl text-left hover:border-blue-500 hover:bg-blue-50 transition-all"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <FileText className="w-5 h-5 text-blue-600" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-slate-900">{form.title}</p>
+                            <p className="text-sm text-slate-500">/{form.slug}</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-medium text-slate-900">{form.title}</p>
-                          <p className="text-sm text-slate-500">/{form.slug}</p>
-                        </div>
-                      </div>
-                    </button>
-                  ))}
+                      </button>
+                    ))}
                 </div>
+                {forms.filter((f) => f.status === 'published').length === 0 && (
+                  <div className="text-center py-8 bg-slate-50 rounded-xl">
+                    <FileText className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                    <p className="text-slate-500">ไม่มีแบบสอบถามที่เผยแพร่แล้ว</p>
+                    <p className="text-sm text-slate-400 mt-1">
+                      กรุณา Publish แบบสอบถามก่อนสร้าง QR Code
+                    </p>
+                  </div>
+                )}
                 <button
                   onClick={() => setShowCreateModal(false)}
                   className="w-full py-3 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50"
@@ -245,6 +258,45 @@ interface QRCodeRowProps {
 
 function QRCodeRow({ qr, form, submissionCount, onDelete }: QRCodeRowProps) {
   const [showQR, setShowQR] = useState(false);
+  const [qrImage, setQrImage] = useState<string>('');
+  const [generating, setGenerating] = useState(false);
+
+  // Generate QR Code เมื่อเปิด modal
+  useEffect(() => {
+    if (showQR && !qrImage) {
+      generateQR();
+    }
+  }, [showQR]);
+
+  const generateQR = useCallback(async () => {
+    setGenerating(true);
+    try {
+      const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+      const url = buildQRRedirectURL(baseUrl, qr.qr_slug, {
+        utm_source: qr.utm_source || undefined,
+        utm_medium: qr.utm_medium || undefined,
+        utm_campaign: qr.utm_campaign || undefined,
+        utm_content: qr.utm_content || undefined,
+      });
+      const dataUrl = await generateQRCodeDataURL(url, { width: 400 });
+      setQrImage(dataUrl);
+    } catch (error) {
+      console.error('Failed to generate QR:', error);
+    } finally {
+      setGenerating(false);
+    }
+  }, [qr]);
+
+  const handleDownload = () => {
+    if (qrImage) {
+      const link = document.createElement('a');
+      link.href = qrImage;
+      link.download = `qr-${qr.qr_slug}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
 
   return (
     <>
@@ -306,24 +358,45 @@ function QRCodeRow({ qr, form, submissionCount, onDelete }: QRCodeRowProps) {
         </td>
       </tr>
 
-      {/* QR Preview Modal */}
-      {showQR && (
+      {/* QR Preview Modal - Portal ออกนอก table */}
+      {showQR && typeof document !== 'undefined' && createPortal(
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl p-8 max-w-md w-full text-center">
             <h3 className="font-semibold text-slate-900 mb-2">{qr.name}</h3>
             <p className="text-sm text-slate-500 mb-6">/{qr.qr_slug}</p>
-            {/* QR Code Image would go here */}
-            <div className="w-48 h-48 bg-slate-100 rounded-xl mx-auto mb-6 flex items-center justify-center">
-              <QrCode className="w-24 h-24 text-slate-300" />
+            
+            {/* QR Code Image */}
+            <div className="w-56 h-56 bg-white rounded-xl mx-auto mb-6 flex items-center justify-center border border-slate-100 p-2">
+              {generating ? (
+                <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full" />
+              ) : qrImage ? (
+                <img src={qrImage} alt="QR Code" className="w-full h-full object-contain" />
+              ) : (
+                <div className="w-full h-full bg-slate-100 rounded-lg flex items-center justify-center">
+                  <QrCode className="w-20 h-20 text-slate-300" />
+                </div>
+              )}
             </div>
-            <button
-              onClick={() => setShowQR(false)}
-              className="w-full py-3 bg-slate-100 text-slate-700 rounded-xl font-medium hover:bg-slate-200"
-            >
-              ปิด
-            </button>
+
+            <div className="flex gap-3">
+              <button
+                onClick={handleDownload}
+                disabled={!qrImage}
+                className="flex-1 flex items-center justify-center gap-2 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <Download className="w-5 h-5" />
+                ดาวน์โหลด
+              </button>
+              <button
+                onClick={() => setShowQR(false)}
+                className="flex-1 py-3 bg-slate-100 text-slate-700 rounded-xl font-medium hover:bg-slate-200 transition-colors"
+              >
+                ปิด
+              </button>
+            </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );

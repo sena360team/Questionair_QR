@@ -1,21 +1,32 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { FormRenderer } from '@/components/FormRenderer';
 import { getUTMParamsFromURL, getUTMFromSession, clearUTMSession, storeUTMInSession, hasUTMParams } from '@/lib/utm';
 import { Form } from '@/types';
 import { getSupabaseBrowser } from '@/lib/supabase';
+import { CheckCircle, XCircle } from 'lucide-react';
+
+interface SubmitStatus {
+  type: 'success' | 'error';
+  message: string;
+  show: boolean;
+}
 
 export default function FormPage() {
   const params = useParams();
-  const slug = params.slug as string;
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const slug = decodeURIComponent(params.slug as string);
   
   const [form, setForm] = useState<Form | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [utmParams, setUtmParams] = useState<Record<string, string>>({});
+  const [submitStatus, setSubmitStatus] = useState<SubmitStatus>({ type: 'success', message: '', show: false });
+  const [qrSlug, setQrSlug] = useState<string | null>(null);
 
   // ดึงข้อมูลฟอร์มและ UTM parameters
   useEffect(() => {
@@ -71,6 +82,13 @@ export default function FormPage() {
         
         setForm(result.data as Form);
         
+        // ดึง QR slug จาก query param (สำหรับ QR Code tracking)
+        const qrSlugFromUrl = searchParams.get('_qr');
+        if (qrSlugFromUrl) {
+          setQrSlug(qrSlugFromUrl);
+          console.log('🔍 QR Slug from URL:', qrSlugFromUrl);
+        }
+        
         // ดึง UTM จาก URL (ถ้ามี)
         const urlParams = getUTMParamsFromURL();
         
@@ -102,7 +120,7 @@ export default function FormPage() {
     if (slug) {
       loadForm();
     }
-  }, [slug]);
+  }, [slug, searchParams]);
 
   const handleSubmit = async (responses: Record<string, unknown>) => {
     if (!form) return;
@@ -124,22 +142,25 @@ export default function FormPage() {
       // ลบ _consent ออกจาก responses ก่อนบันทึก
       const { _consent, ...cleanResponses } = responses;
       
-      // หา qr_code_id และ project_id จาก UTM (ถ้ามี)
+      // หา qr_code_id และ project_id จาก QR Slug (ถ้ามี)
       let qrCodeId: string | null = null;
       let projectId: string | null = null;
       
-      console.log('📝 Current UTM params:', utmParams);
-      console.log('📝 utm_content:', utmParams.utm_content);
+      // ดึง qr_slug จาก query param ที่ส่งมาจาก QR redirect
+      const currentQrSlug = searchParams.get('_qr') || qrSlug;
+      console.log('📝 QR Slug from query param:', currentQrSlug);
       
-      if (utmParams.utm_content) {
-        console.log('📝 Looking up QR code by utm_content:', utmParams.utm_content);
+      // สร้าง copy ของ UTM params เพื่อให้แก้ไขได้
+      const finalUtmParams = { ...utmParams };
+      
+      if (currentQrSlug) {
+        console.log('📝 Looking up QR code by qr_slug:', currentQrSlug);
         console.log('📝 Form ID:', form.id);
         const supabase = getSupabaseBrowser();
         const qrResult = await supabase
           .from('qr_codes')
-          .select('id, project_id, utm_content, qr_slug')
-          .eq('form_id', form.id)
-          .eq('utm_content', utmParams.utm_content)
+          .select('id, project_id, utm_content, qr_slug, utm_source, utm_medium, utm_campaign')
+          .eq('qr_slug', currentQrSlug)
           .maybeSingle();
           
         console.log('📝 QR lookup result:', qrResult);
@@ -149,11 +170,36 @@ export default function FormPage() {
           qrCodeId = qrResult.data.id;
           projectId = qrResult.data.project_id;
           console.log('📝 Found QR Code:', qrCodeId, 'Project:', projectId);
+          
+          // ถ้า UTM ยังไม่มี ให้ใช้จาก QR Code
+          if (!finalUtmParams.utm_source && qrResult.data.utm_source) {
+            finalUtmParams.utm_source = qrResult.data.utm_source;
+          }
+          if (!finalUtmParams.utm_medium && qrResult.data.utm_medium) {
+            finalUtmParams.utm_medium = qrResult.data.utm_medium;
+          }
+          if (!finalUtmParams.utm_campaign && qrResult.data.utm_campaign) {
+            finalUtmParams.utm_campaign = qrResult.data.utm_campaign;
+          }
         } else {
-          console.log('📝 QR Code not found!');
+          console.log('📝 QR Code not found by slug, trying utm_content fallback...');
+          // Fallback: ถ้าหาไม่เจอ ลองหาด้วย utm_content (สำหรับ QR เก่า)
+          if (finalUtmParams.utm_content) {
+            const fallbackResult = await supabase
+              .from('qr_codes')
+              .select('id, project_id, utm_content, qr_slug')
+              .eq('form_id', form.id)
+              .eq('utm_content', finalUtmParams.utm_content)
+              .maybeSingle();
+            if (fallbackResult.data) {
+              qrCodeId = fallbackResult.data.id;
+              projectId = fallbackResult.data.project_id;
+              console.log('📝 Found QR Code via fallback:', qrCodeId);
+            }
+          }
         }
       } else {
-        console.log('📝 No utm_content, skipping QR lookup');
+        console.log('📝 No QR slug provided, skipping QR lookup');
       }
       
       // เตรียมข้อมูล submission
@@ -161,11 +207,11 @@ export default function FormPage() {
         form_id: form.id,
         form_version: form.current_version || 1,
         responses: cleanResponses,
-        utm_source: utmParams.utm_source || null,
-        utm_medium: utmParams.utm_medium || null,
-        utm_campaign: utmParams.utm_campaign || null,
-        utm_content: utmParams.utm_content || null,
-        utm_term: utmParams.utm_term || null,
+        utm_source: finalUtmParams.utm_source || null,
+        utm_medium: finalUtmParams.utm_medium || null,
+        utm_campaign: finalUtmParams.utm_campaign || null,
+        utm_content: finalUtmParams.utm_content || null,
+        utm_term: finalUtmParams.utm_term || null,
         // Consent Stamp
         consent_given: consentData?.given || false,
         consent_ip: consentData?.ip || null,
@@ -202,13 +248,21 @@ export default function FormPage() {
       clearUTMSession();
       console.log('🔍 UTM session cleared after successful submission');
       
-      alert('ส่งคำตอบสำเร็จ!');
+      setSubmitStatus({ type: 'success', message: 'ส่งคำตอบสำเร็จ!', show: true });
       
     } catch (err: any) {
       console.error('❌ Submit error:', err);
-      alert('เกิดข้อผิดพลาด: ' + (err.message || 'กรุณาลองใหม่'));
+      setSubmitStatus({ type: 'error', message: err.message || 'กรุณาลองใหม่', show: true });
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleCloseStatus = () => {
+    setSubmitStatus(prev => ({ ...prev, show: false }));
+    // ถ้าสำเร็จ ให้ redirect กลับไปหน้าแรกหรือรีเฟรชฟอร์ม
+    if (submitStatus.type === 'success' && form) {
+      window.location.reload();
     }
   };
 
@@ -281,6 +335,49 @@ export default function FormPage() {
           Powered by Questionnaire QR System
         </div>
       </div>
+
+      {/* Submission Status Modal */}
+      {submitStatus.show && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl p-8 max-w-sm w-full text-center animate-in zoom-in-95 duration-200">
+            {submitStatus.type === 'success' ? (
+              <>
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <CheckCircle className="w-8 h-8 text-green-600" />
+                </div>
+                <h3 className="text-xl font-semibold text-slate-900 mb-2">
+                  ส่งคำตอบสำเร็จ!
+                </h3>
+                <p className="text-slate-500 mb-6">
+                  ขอบคุณที่สละเวลาตอบแบบสอบถาม
+                </p>
+              </>
+            ) : (
+              <>
+                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <XCircle className="w-8 h-8 text-red-600" />
+                </div>
+                <h3 className="text-xl font-semibold text-slate-900 mb-2">
+                  เกิดข้อผิดพลาด
+                </h3>
+                <p className="text-slate-500 mb-6">
+                  {submitStatus.message}
+                </p>
+              </>
+            )}
+            <button
+              onClick={handleCloseStatus}
+              className={`w-full py-3 rounded-xl font-medium transition-colors ${
+                submitStatus.type === 'success'
+                  ? 'bg-green-600 text-white hover:bg-green-700'
+                  : 'bg-slate-900 text-white hover:bg-slate-800'
+              }`}
+            >
+              {submitStatus.type === 'success' ? 'ตกลง' : 'ลองใหม่'}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

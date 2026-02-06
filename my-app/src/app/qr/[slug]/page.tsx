@@ -71,12 +71,17 @@ export default function QRRedirectPage() {
         storeUTMInSession(utmParams);
         console.log('🔍 UTM stored in session');
         
-        // 5. Redirect ไปยังฟอร์ม
+        // 5. Redirect ไปยังฟอร์ม พร้อม qr_slug สำหรับ lookup
         setStatus('redirecting');
         
-        const targetUrl = qrData.redirect_url 
+        // สร้าง URL พร้อม qr_slug สำหรับติดตาม
+        const baseUrl = qrData.redirect_url 
           ? qrData.redirect_url
           : `/form/${formData.slug}`;
+        
+        // เพิ่ม qr_slug เป็น query param เพื่อให้ form หา QR Code ได้ถูกต้อง
+        const separator = baseUrl.includes('?') ? '&' : '?';
+        const targetUrl = `${baseUrl}${separator}_qr=${qrSlug}`;
         
         console.log('🔍 Redirecting to:', targetUrl);
           

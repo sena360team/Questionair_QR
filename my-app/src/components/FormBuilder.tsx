@@ -527,23 +527,49 @@ function FieldPreview({ field }: { field: FormField }) {
     }
   };
 
+  // แสดง options สำหรับ choice/multiple_choice พร้อมสี version
+  const showOptions = field.type === 'choice' || field.type === 'multiple_choice';
+  
   return (
-    <div className="flex items-center gap-3 py-1">
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <p className="text-sm font-medium truncate leading-tight" style={{ color: versionColor || '#0f172a' }}>
-            {field.label}
-            {field.required && <span className="text-red-500 ml-1">*</span>}
-          </p>
-          {field._versionAdded && (
-            <span className="flex items-center gap-1 text-xs font-medium" style={{ color: versionColor }}>
-              <Sparkles className="w-3 h-3" />
-              v{field._versionAdded}
-            </span>
-          )}
-        </div>
-        <p className="text-xs text-slate-400">{getTypeLabel()}</p>
+    <div className="py-1">
+      <div className="flex items-center gap-2 mb-1">
+        <p className="text-sm font-medium truncate leading-tight" style={{ color: versionColor || '#0f172a' }}>
+          {field.label}
+          {field.required && <span className="text-red-500 ml-1">*</span>}
+        </p>
+        {field._versionAdded && (
+          <span className="flex items-center gap-1 text-xs font-medium" style={{ color: versionColor }}>
+            <Sparkles className="w-3 h-3" />
+            v{field._versionAdded}
+          </span>
+        )}
       </div>
+      <p className="text-xs text-slate-400 mb-2">{getTypeLabel()}</p>
+      
+      {/* แสดง options ถ้ามี */}
+      {showOptions && field.options && field.options.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {field.options.map((option, idx) => (
+            <span 
+              key={idx}
+              className="inline-flex items-center px-2 py-0.5 text-xs rounded-md border"
+              style={{
+                backgroundColor: versionColor ? `${versionColor}15` : 'rgba(107, 114, 128, 0.1)',
+                borderColor: versionColor ? `${versionColor}40` : 'rgba(107, 114, 128, 0.2)',
+                color: versionColor || '#374151'
+              }}
+            >
+              {field.type === 'multiple_choice' && (
+                <span className="mr-1">☑</span>
+              )}
+              {field.type === 'choice' && (
+                <span className="mr-1">◯</span>
+              )}
+              {option}
+            </span>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

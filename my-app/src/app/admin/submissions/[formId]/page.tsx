@@ -12,7 +12,9 @@ import {
   ChevronLeft,
   ChevronRight,
   RefreshCw,
-  Calendar
+  Calendar,
+  Shield,
+  ShieldCheck
 } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import { getVersionBadgeStyle, getVersionColor } from '@/lib/versionColors';
@@ -47,8 +49,8 @@ export default function FormSubmissionsPage() {
     return form.fields.map((field: FormField) => ({
       key: field.id,
       label: field.label,
-      // ใช้ _versionAdded ถ้ามี (คำถามใหม่), ไม่มีใช้ current_version
-      version: field._versionAdded || form.current_version || 1,
+      // ใช้ _versionAdded ถ้ามี (คำถามใหม่), ถ้าไม่มีคือคำถามเดิมจาก v1
+      version: field._versionAdded ?? 1,
     }));
   }, [form]);
 
@@ -117,7 +119,16 @@ export default function FormSubmissionsPage() {
       'ID',
       'เวลาส่ง',
       'Version',
-      ...unifiedFields.map(f => f.label)
+      ...unifiedFields.map(f => f.label),
+      'QR Code',
+      'รหัสโครงการ',
+      'ชื่อโครงการ',
+      'UTM Source',
+      'UTM Medium',
+      'Consent (ยินยอม)',
+      'Consent IP',
+      'Consent Location (Lat,Lng)',
+      'Consent Time'
     ];
     
     const rows = submissions.map(sub => {
@@ -127,6 +138,7 @@ export default function FormSubmissionsPage() {
         `v${sub.form_version || 1}`,
       ];
       
+      // Field responses
       unifiedFields.forEach(field => {
         const value = (sub.responses as Record<string, unknown>)?.[field.key];
         if (value === undefined || value === null || value === '') {
@@ -137,6 +149,19 @@ export default function FormSubmissionsPage() {
           row.push(String(value));
         }
       });
+      
+      // QR Code & Project info
+      row.push(sub.qr_code?.name || '-');
+      row.push(sub.project?.code || sub.qr_code?.project_id || '-');
+      row.push(sub.project?.name || '-');
+      row.push(sub.qr_code?.utm_source || '-');
+      row.push(sub.qr_code?.utm_medium || '-');
+      
+      // Consent Stamp
+      row.push(sub.consent_given ? 'ยินยอม' : '-');
+      row.push(sub.consent_ip || '-');
+      row.push(sub.consent_location ? `${sub.consent_location.latitude},${sub.consent_location.longitude}` : '-');
+      row.push(sub.consented_at ? formatDate(sub.consented_at, { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-');
       
       return row;
     });
@@ -262,17 +287,25 @@ export default function FormSubmissionsPage() {
                       <th className="px-4 py-3 text-left font-semibold text-slate-700 whitespace-nowrap bg-slate-50">เวลาส่ง</th>
                       <th className="px-4 py-3 text-center font-semibold text-slate-700 whitespace-nowrap bg-slate-50">Version</th>
                       {unifiedFields.map((field) => {
-                        const fieldColor = getVersionColor(field.version);
+                        const versionColor = getVersionColor(field.version);
                         return (
                           <th 
                             key={field.key} 
                             className="px-4 py-3 text-left font-semibold whitespace-nowrap bg-slate-50 text-slate-700"
-                            style={fieldColor ? { color: fieldColor } : undefined}
                           >
                             <div className="max-w-[200px] truncate flex items-center gap-1" title={`${field.label}${field.version > 1 ? ` (เพิ่ม v${field.version})` : ''}`}>
                               {field.label}
                               {field.version > 1 && (
-                                <span className="text-xs opacity-60 ml-1" style={fieldColor ? { color: fieldColor } : undefined}>v{field.version}</span>
+                                <span 
+                                  className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium border"
+                                  style={{
+                                    backgroundColor: versionColor ? `${versionColor}20` : '#dbeafe',
+                                    color: versionColor || '#1d4ed8',
+                                    borderColor: versionColor ? `${versionColor}40` : '#93c5fd'
+                                  }}
+                                >
+                                  v{field.version}
+                                </span>
                               )}
                             </div>
                           </th>
@@ -284,6 +317,7 @@ export default function FormSubmissionsPage() {
                       <th className="px-4 py-3 text-left font-semibold text-slate-700 whitespace-nowrap bg-slate-50">ชื่อโครงการ</th>
                       <th className="px-4 py-3 text-left font-semibold text-slate-700 whitespace-nowrap bg-slate-50">UTM Source</th>
                       <th className="px-4 py-3 text-left font-semibold text-slate-700 whitespace-nowrap bg-slate-50">UTM Medium</th>
+                      <th className="px-4 py-3 text-center font-semibold text-slate-700 whitespace-nowrap bg-slate-50">Consent</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -344,6 +378,16 @@ export default function FormSubmissionsPage() {
                           {sub.qr_code?.utm_medium ? (
                             <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded">
                               {sub.qr_code.utm_medium}
+                            </span>
+                          ) : (
+                            <span className="text-slate-400">-</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-center">
+                          {sub.consent_given ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded" title={sub.consented_at ? formatDate(sub.consented_at, { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : undefined}>
+                              <ShieldCheck className="w-3.5 h-3.5" />
+                              ยินยอม
                             </span>
                           ) : (
                             <span className="text-slate-400">-</span>
