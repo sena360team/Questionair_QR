@@ -46,3 +46,6 @@ next-env.d.ts
 
 # Migrations
 migrations_manual/
+
+# Docs
+docs/
