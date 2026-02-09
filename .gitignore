@@ -3,3 +3,4 @@
 .agents/
 my-app/supabase/migrations/
 *.sql
+node_modules/
