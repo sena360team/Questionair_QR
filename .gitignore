@@ -2,3 +2,4 @@
 .agent/
 .agents/
 my-app/supabase/migrations/
+*.sql
