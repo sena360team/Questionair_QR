@@ -43,3 +43,6 @@ next-env.d.ts
 # Supabase
 /supabase/.temp
 /supabase/config.toml
+
+# Migrations
+*.sql
