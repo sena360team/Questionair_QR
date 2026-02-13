@@ -73,27 +73,27 @@ export function DefaultTheme({
 
         {/* Consent Section */}
         {form.require_consent && (
-          <div className="border-t pt-6 mt-6">
-            <div className="bg-slate-50 rounded-xl p-4 border-2 border-slate-200">
+          <div className="border-t border-green-200 pt-6 mt-6">
+            <div className="bg-green-50 rounded-xl p-4 border-2 border-green-200">
               <div className="flex items-start gap-3">
-                <Shield className="w-5 h-5 text-blue-600 mt-0.5" />
+                <Shield className="w-5 h-5 text-green-600 mt-0.5" />
                 <div className="flex-1">
-                  <h4 className="font-medium text-slate-900 mb-2">
+                  <h4 className="font-medium text-green-900 mb-2">
                     {form.consent_heading || 'การยินยอม'}
                   </h4>
                   {form.consent_text && (
-                    <p className="text-sm text-slate-600 mb-4 whitespace-pre-line">
+                    <p className="text-sm text-green-700 mb-4 whitespace-pre-line">
                       {form.consent_text}
                     </p>
                   )}
-                  <label className="flex items-start gap-3 cursor-pointer">
+                  <label className="flex items-start gap-3 cursor-pointer bg-white p-3 rounded-lg border border-green-200">
                     <input
                       type="checkbox"
                       checked={consentChecked}
                       onChange={(e) => onConsentChange(e.target.checked)}
-                      className="w-5 h-5 mt-0.5 rounded border-2 border-slate-300 text-blue-600 focus:ring-blue-500"
+                      className="w-5 h-5 mt-0.5 rounded border-2 border-green-300 text-green-600 focus:ring-green-500"
                     />
-                    <span className="text-sm text-slate-700">
+                    <span className="text-sm text-green-800 font-medium">
                       ข้าพเจ้าได้อ่านและยินยอมตามข้อความข้างต้น
                     </span>
                   </label>
