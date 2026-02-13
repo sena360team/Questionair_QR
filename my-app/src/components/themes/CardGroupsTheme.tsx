@@ -13,39 +13,30 @@ interface CardGroupsThemeProps {
   renderSubmitButton: () => React.ReactNode;
 }
 
-// Group fields by section or type
+// Group fields by section/heading markers
+// User controls grouping by adding "section" or "heading" fields
 function groupFields(fields: FormField[]): { title: string; fields: FormField[] }[] {
   const groups: { title: string; fields: FormField[] }[] = [];
   let currentGroup: FormField[] = [];
   let currentTitle = 'ข้อมูลทั่วไป';
 
-  fields.forEach((field, index) => {
-    // Start new group on certain field types or every 3-4 fields
-    if (field.type === 'rating' || field.type === 'nps' || field.type === 'scale') {
+  fields.forEach((field) => {
+    // Section or Heading field = start new group with this title
+    if (field.type === 'section' || field.type === 'heading') {
+      // Save previous group if has fields
       if (currentGroup.length > 0) {
         groups.push({ title: currentTitle, fields: currentGroup });
         currentGroup = [];
       }
-      currentTitle = 'แบบประเมิน';
-      currentGroup.push(field);
-    } else if (field.type === 'checkbox' && field.options && field.options.length > 4) {
-      if (currentGroup.length > 0) {
-        groups.push({ title: currentTitle, fields: currentGroup });
-        currentGroup = [];
-      }
-      currentTitle = 'ตัวเลือก';
-      currentGroup.push(field);
+      // Use this field's label as new group title
+      currentTitle = field.label || 'หัวข้อใหม่';
+      // Don't include section/heading field itself in the group (it's just a marker)
     } else {
       currentGroup.push(field);
-      // Auto split every 3-4 fields
-      if (currentGroup.length >= 4) {
-        groups.push({ title: currentTitle, fields: currentGroup });
-        currentGroup = [];
-        currentTitle = 'ข้อมูลเพิ่มเติม';
-      }
     }
   });
 
+  // Add remaining fields as last group
   if (currentGroup.length > 0) {
     groups.push({ title: currentTitle, fields: currentGroup });
   }
