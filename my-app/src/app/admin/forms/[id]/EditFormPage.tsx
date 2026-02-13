@@ -576,7 +576,7 @@ export default function EditFormPage() {
         )}
 
         {activeTab === 'settings' && (
-          <div className="max-w-2xl space-y-6">
+          <div className="space-y-6">
             {/* Theme Selector */}
             <div className="bg-white p-6 rounded-2xl border-2 border-slate-300">
               <div className="flex items-center gap-3 mb-4">
@@ -585,7 +585,7 @@ export default function EditFormPage() {
                 </div>
                 <h2 className="text-lg font-semibold">ธีมฟอร์ม</h2>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 {[
                   { value: 'default', label: 'ดั้งเดิม', desc: 'คลาสสิก เรียบง่าย' },
                   { value: 'card-groups', label: 'การ์ดแยกกลุ่ม', desc: 'แบ่งเป็นหมวดหมู่' },
