@@ -32,6 +32,7 @@ export default function EditFormPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabType>('content');
   const [showPreview, setShowPreview] = useState(false);
+  const [previewSnapshot, setPreviewSnapshot] = useState<Form | null>(null);
   const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
@@ -123,16 +124,16 @@ export default function EditFormPage() {
     }
   }, [formId, draft, isDraftMode]);
 
-  // Auto-save draft every 30 seconds
+  // Auto-save draft every 30 seconds (pause when preview is open)
   useEffect(() => {
-    if (!form || form.status !== 'published' || !isEditingDraft) return;
+    if (!form || form.status !== 'published' || !isEditingDraft || showPreview) return;
     
     const interval = setInterval(() => {
       handleAutoSave();
     }, 30000);
     
     return () => clearInterval(interval);
-  }, [form, title, description, fields, logoUrl, requireConsent, consentHeading, consentText, consentRequireLocation]);
+  }, [form, title, description, fields, logoUrl, requireConsent, consentHeading, consentText, consentRequireLocation, showPreview]);
 
   const handleAutoSave = async () => {
     if (!form || form.status !== 'published') return;
@@ -316,7 +317,31 @@ export default function EditFormPage() {
 
   if (!form) return null;
 
-  const previewForm: Form = {
+  // Create snapshot when opening preview
+  const handleOpenPreview = () => {
+    setPreviewSnapshot({
+      ...form,
+      title,
+      description,
+      logo_url: logoUrl,
+      theme,
+      fields,
+      require_consent: requireConsent,
+      consent_heading: consentHeading,
+      consent_text: consentText,
+      consent_require_location: consentRequireLocation,
+    });
+    setShowPreview(true);
+  };
+
+  const handleClosePreview = () => {
+    setShowPreview(false);
+    // Clear snapshot after animation
+    setTimeout(() => setPreviewSnapshot(null), 300);
+  };
+
+  // Use snapshot if available, otherwise use current state
+  const previewForm = previewSnapshot || {
     ...form,
     title,
     description,
@@ -405,7 +430,7 @@ export default function EditFormPage() {
           </button>
           
           <button 
-            onClick={() => setShowPreview(true)} 
+            onClick={handleOpenPreview} 
             className="flex items-center gap-2 px-4 py-2 border-2 border-slate-300 text-slate-700 rounded-xl hover:bg-slate-50"
           >
             <Eye className="w-4 h-4" />
@@ -668,7 +693,7 @@ export default function EditFormPage() {
           <div className="bg-white w-full max-w-5xl my-4 rounded-xl shadow-2xl overflow-hidden max-h-[95vh] flex flex-col">
             <div className="sticky top-0 bg-white border-b p-4 flex justify-between z-10 shrink-0">
               <h3 className="font-semibold">ตัวอย่าง</h3>
-              <button onClick={() => setShowPreview(false)}><X className="w-6 h-6" /></button>
+              <button onClick={handleClosePreview}><X className="w-6 h-6" /></button>
             </div>
             <div className="p-4 bg-slate-100 overflow-y-auto">
               {/* Preview Label */}
