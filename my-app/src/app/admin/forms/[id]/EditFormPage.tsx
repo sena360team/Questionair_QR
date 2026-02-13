@@ -478,6 +478,7 @@ export default function EditFormPage() {
             <div className="bg-white p-6 rounded-2xl border-2 border-slate-300">
               <h2 className="text-lg font-semibold mb-4">ข้อมูลพื้นฐาน</h2>
               <div className="space-y-4">
+                {/* Title */}
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1.5">ชื่อแบบสอบถาม</label>
                   <input 
@@ -487,30 +488,48 @@ export default function EditFormPage() {
                     className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500" 
                   />
                 </div>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1.5">URL (Slug)</label>
-                    <div className="flex items-center gap-2">
-                      <span className="text-slate-400 text-sm whitespace-nowrap">/form/</span>
-                      <input 
-                        type="text" 
-                        value={slug} 
-                        onChange={(e) => setSlug(e.target.value)} 
-                        className="flex-1 px-4 py-3 border-2 border-slate-300 rounded-xl font-mono text-sm" 
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1.5">Logo (URL)</label>
+                
+                {/* Slug */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">URL (Slug)</label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-400 text-sm whitespace-nowrap">/form/</span>
                     <input 
                       type="text" 
-                      value={logoUrl} 
-                      onChange={(e) => setLogoUrl(e.target.value)} 
-                      placeholder="https://example.com/logo.png" 
-                      className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl" 
+                      value={slug} 
+                      onChange={(e) => setSlug(e.target.value)} 
+                      className="flex-1 px-4 py-3 border-2 border-slate-300 rounded-xl font-mono text-sm" 
                     />
                   </div>
                 </div>
+                
+                {/* Logo - แยกบรรทัดให้เห็นชัด */}
+                <div className="border-t border-slate-200 pt-4 mt-4">
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                    🖼️ โลโก้ (Logo URL)
+                  </label>
+                  <div className="flex gap-4 items-start">
+                    <div className="flex-1">
+                      <input 
+                        type="text" 
+                        value={logoUrl} 
+                        onChange={(e) => setLogoUrl(e.target.value)} 
+                        placeholder="https://example.com/logo.png หรือ /logo.png" 
+                        className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl" 
+                      />
+                      <p className="text-xs text-slate-500 mt-1.5">
+                        แนะนำ: ใช้รูป PNG หรือ SVG มีพื้นหลังโปร่งใส ความสูงประมาณ 80-120px
+                      </p>
+                    </div>
+                    {logoUrl && (
+                      <div className="w-24 h-24 bg-slate-50 rounded-xl border-2 border-slate-200 flex items-center justify-center p-2">
+                        <img src={logoUrl} alt="Logo Preview" className="max-w-full max-h-full object-contain" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Description */}
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1.5">คำอธิบาย</label>
                   <textarea 
@@ -520,7 +539,6 @@ export default function EditFormPage() {
                     className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl resize-none" 
                   />
                 </div>
-                {logoUrl && <img src={logoUrl} alt="Logo" className="mt-3 h-12 object-contain" />}
               </div>
             </div>
 

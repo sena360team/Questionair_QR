@@ -21,21 +21,27 @@ export function DefaultTheme({
   renderSubmitButton,
 }: DefaultThemeProps) {
   return (
-    <div className="bg-white rounded-xl overflow-hidden">
-      {/* Header -->
-      <div className="bg-gradient-to-b from-blue-600 to-blue-500 p-6 lg:p-8 text-center text-white">
-        {form.logo_url && (
-          <img 
-            src={form.logo_url} 
-            alt="Logo" 
-            className="h-16 lg:h-20 mx-auto object-contain mb-4"
-          />
+    <div className="bg-white rounded-xl overflow-hidden shadow-lg">
+      {/* Header */}
+      <div className="bg-gradient-to-b from-blue-600 to-blue-500 p-8 lg:p-10 text-center text-white">
+        {form.logo_url ? (
+          <>
+            <img 
+              src={form.logo_url} 
+              alt={form.title || 'Logo'} 
+              className="h-20 lg:h-24 mx-auto object-contain mb-4 bg-white/10 rounded-xl p-2"
+            />
+            <h1 className="text-xl lg:text-2xl font-bold">
+              {form.title}
+            </h1>
+          </>
+        ) : (
+          <h1 className="text-3xl lg:text-4xl font-bold">
+            {form.title || 'แบบสอบถาม'}
+          </h1>
         )}
-        <h1 className="text-2xl lg:text-3xl font-bold mb-2">
-          {form.title || 'แบบสอบถาม'}
-        </h1>
         {form.description && (
-          <p className="text-blue-100 max-w-2xl mx-auto">
+          <p className="text-blue-100 max-w-2xl mx-auto mt-3 text-base lg:text-lg">
             {form.description}
           </p>
         )}
