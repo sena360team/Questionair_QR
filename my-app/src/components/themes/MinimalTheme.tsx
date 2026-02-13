@@ -67,29 +67,29 @@ export function MinimalTheme({
 
       {/* Consent */}
       {form.require_consent && (
-        <div className="mb-6">
-          <h4 className="text-sm font-medium text-slate-700 mb-3 flex items-center gap-2">
-            <Shield className="w-4 h-4" />
+        <div className="mb-6 p-4 bg-green-50 rounded-xl border border-green-200">
+          <h4 className="text-sm font-medium text-green-800 mb-3 flex items-center gap-2">
+            <Shield className="w-4 h-4 text-green-600" />
             {form.consent_heading || 'การยินยอม'}
           </h4>
           {form.consent_text && (
-            <p className="text-xs text-slate-500 mb-3 leading-relaxed">
+            <p className="text-xs text-green-700 mb-3 leading-relaxed">
               {form.consent_text}
             </p>
           )}
-          <label className="flex items-start gap-2 cursor-pointer">
+          <label className="flex items-start gap-2 cursor-pointer bg-white p-2.5 rounded-lg border border-green-200">
             <input
               type="checkbox"
               checked={consentChecked}
               onChange={(e) => onConsentChange(e.target.checked)}
-              className="w-4 h-4 mt-0.5 rounded border-slate-300 text-slate-900 focus:ring-slate-500"
+              className="w-4 h-4 mt-0.5 rounded border-green-300 text-green-600 focus:ring-green-500"
             />
-            <span className="text-sm text-slate-600">
+            <span className="text-sm text-green-800 font-medium">
               ยินยอมตามข้อความข้างต้น
             </span>
           </label>
           {form.consent_require_location && consentChecked && (
-            <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-500">
+            <div className="mt-2 flex items-center gap-1.5 text-xs text-green-600 ml-6">
               <MapPin className="w-3 h-3" />
               {locationStatus === 'requesting' && 'กำลังขอตำแหน่ง...'}
               {locationStatus === 'granted' && 'ได้รับตำแหน่งแล้ว'}

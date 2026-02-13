@@ -115,38 +115,32 @@ export function StepWizardTheme({
           {isConsentStep ? (
             // Consent Step
             <div className="space-y-4">
-              <div className="flex items-center gap-3 text-amber-600 mb-4">
+              <div className="flex items-center gap-3 text-green-600 mb-4">
                 <Shield className="w-6 h-6" />
-                <h3 className="font-medium text-lg">{form.consent_heading || 'การยินยอม'}</h3>
+                <h3 className="font-medium text-lg text-green-800">{form.consent_heading || 'การยินยอม'}</h3>
               </div>
               {form.consent_text && (
-                <div className="bg-slate-50 rounded-lg p-4 text-sm text-slate-700 border border-slate-200">
+                <div className="bg-green-50 rounded-lg p-4 text-sm text-green-700 border border-green-200">
                   {form.consent_text}
                 </div>
               )}
-              <label className="flex items-start gap-3 cursor-pointer p-4 border-2 border-slate-200 rounded-xl hover:border-amber-300 hover:bg-amber-50/50 transition-colors">
+              <label className="flex items-start gap-3 cursor-pointer p-4 border-2 border-green-200 rounded-xl bg-green-50/50 hover:bg-green-100 transition-colors">
                 <input
                   type="checkbox"
                   checked={consentChecked}
                   onChange={(e) => onConsentChange(e.target.checked)}
-                  className="w-5 h-5 mt-0.5 rounded border-2 border-slate-300 text-amber-600 focus:ring-amber-500"
+                  className="w-5 h-5 mt-0.5 rounded border-2 border-green-300 text-green-600 focus:ring-green-500"
                 />
-                <span className="text-slate-700">
+                <span className="text-green-800 font-medium">
                   ข้าพเจ้าได้อ่านและยินยอมตามข้อความข้างต้น
                 </span>
               </label>
               {form.consent_require_location && consentChecked && (
-                <div className="flex items-center gap-2 text-sm ml-8">
+                <div className="flex items-center gap-2 text-sm ml-8 text-green-600">
                   <MapPin className="w-4 h-4" />
-                  {locationStatus === 'requesting' && (
-                    <span className="text-slate-500">กำลังขอตำแหน่ง...</span>
-                  )}
-                  {locationStatus === 'granted' && (
-                    <span className="text-green-600">ได้รับตำแหน่งแล้ว</span>
-                  )}
-                  {locationStatus === 'denied' && (
-                    <span className="text-amber-600">ไม่สามารถเข้าถึงตำแหน่งได้</span>
-                  )}
+                  {locationStatus === 'requesting' && 'กำลังขอตำแหน่ง...'}
+                  {locationStatus === 'granted' && 'ได้รับตำแหน่งแล้ว'}
+                  {locationStatus === 'denied' && 'ไม่สามารถเข้าถึงตำแหน่งได้'}
                 </div>
               )}
             </div>
