@@ -23,7 +23,7 @@ export function MinimalTheme({
   renderSubmitButton,
 }: MinimalThemeProps) {
   return (
-    <div className="max-w-xl mx-auto">
+    <div className="max-w-xl mx-auto bg-white rounded-xl p-8 shadow-sm">
       {/* Simple Header */}
       <div className="mb-8 pb-6 border-b border-slate-200">
         {form.logo_url && (
@@ -65,19 +65,19 @@ export function MinimalTheme({
       {/* Divider */}
       <hr className="my-8 border-slate-200" />
 
-      {/* Consent */}
+      {/* Consent - White background with green accents */}
       {form.require_consent && (
-        <div className="mb-6 p-4 bg-green-50 rounded-xl border border-green-200">
-          <h4 className="text-sm font-medium text-green-800 mb-3 flex items-center gap-2">
+        <div className="mb-6 p-4 bg-white rounded-xl border border-slate-200">
+          <h4 className="text-sm font-medium text-slate-800 mb-3 flex items-center gap-2">
             <Shield className="w-4 h-4 text-green-600" />
             {form.consent_heading || 'การยินยอม'}
           </h4>
           {form.consent_text && (
-            <p className="text-xs text-green-700 mb-3 leading-relaxed">
+            <p className="text-xs text-slate-600 mb-3 leading-relaxed">
               {form.consent_text}
             </p>
           )}
-          <label className="flex items-start gap-2 cursor-pointer bg-white p-2.5 rounded-lg border border-green-200">
+          <label className="flex items-start gap-2 cursor-pointer p-3 bg-green-50 rounded-lg border border-green-200">
             <input
               type="checkbox"
               checked={consentChecked}

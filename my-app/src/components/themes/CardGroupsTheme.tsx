@@ -55,7 +55,7 @@ export function CardGroupsTheme({
   const groups = useMemo(() => groupFields(form.fields), [form.fields]);
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
+    <div className="max-w-3xl mx-auto space-y-6 bg-white rounded-xl p-6 shadow-sm">
       {/* Header Card */}
       <div className="bg-gradient-to-br from-indigo-600 via-blue-600 to-cyan-500 rounded-2xl p-8 text-white shadow-xl">
         {form.logo_url && (
@@ -119,24 +119,24 @@ export function CardGroupsTheme({
         </div>
       ))}
 
-      {/* Consent Card */}
+      {/* Consent Card - White background with green accents */}
       {form.require_consent && (
-        <div className="bg-green-50 rounded-xl shadow-md border-2 border-green-200 overflow-hidden">
-          <div className="px-6 py-4 border-b border-green-200 bg-green-100/50">
+        <div className="bg-white rounded-xl shadow-md border-2 border-slate-200 overflow-hidden">
+          <div className="px-6 py-4 border-b border-slate-200 bg-slate-50">
             <div className="flex items-center gap-2">
               <Shield className="w-5 h-5 text-green-600" />
-              <h4 className="font-medium text-green-900">
+              <h4 className="font-medium text-slate-900">
                 {form.consent_heading || 'การยินยอม'}
               </h4>
             </div>
           </div>
           <div className="p-6">
             {form.consent_text && (
-              <div className="bg-white rounded-lg p-4 mb-4 text-sm text-green-800 border border-green-200">
+              <div className="bg-slate-50 rounded-lg p-4 mb-4 text-sm text-slate-700 border border-slate-200">
                 {form.consent_text}
               </div>
             )}
-            <label className="flex items-start gap-3 cursor-pointer">
+            <label className="flex items-start gap-3 cursor-pointer p-3 bg-green-50 rounded-lg border border-green-200">
               <input
                 type="checkbox"
                 checked={consentChecked}

@@ -65,7 +65,7 @@ export function StepWizardTheme({
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-2xl mx-auto bg-white rounded-xl p-8 shadow-sm">
       {/* Header */}
       <div className="text-center mb-8">
         {form.logo_url && (
