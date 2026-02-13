@@ -13,7 +13,6 @@ import {
   ChevronRight,
   RefreshCw,
   Calendar,
-  Shield,
   ShieldCheck
 } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
@@ -185,248 +184,246 @@ export default function FormSubmissionsPage() {
   };
 
   return (
-    <div className="fixed inset-0 lg:left-64 top-0 bottom-0 right-0 overflow-auto p-4 lg:p-6 bg-slate-50">
-      <div className="flex flex-col h-full gap-4 min-w-[800px]">
-        {/* Header */}
-        <div className="flex items-center justify-between flex-shrink-0">
-          <div className="flex items-center gap-4">
-            <Link href="/admin/submissions" className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg">
-              <ArrowLeft className="w-6 h-6" />
-            </Link>
-            <div>
-              <h1 className="text-2xl font-bold text-slate-900">
-                {form?.title || 'รายละเอียดคำตอบ'}
-              </h1>
-              <p className="text-slate-500">
-                {form?.code} • {totalCount.toLocaleString()} คำตอบ • v{form?.current_version || 1}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <button 
-              onClick={() => setShowFilters(!showFilters)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-colors ${
-                showFilters ? 'bg-blue-100 text-blue-700' : 'border border-slate-200 hover:bg-slate-50 bg-white'
-              }`}
-            >
-              <Calendar className="w-5 h-5" />
-              ช่วงวันที่
-            </button>
-            <button 
-              onClick={handleExport}
-              disabled={!submissions.length}
-              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 disabled:opacity-50"
-            >
-              <Download className="w-5 h-5" />
-              Export CSV
-            </button>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <Link href="/admin/submissions" className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg">
+            <ArrowLeft className="w-6 h-6" />
+          </Link>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">
+              {form?.title || 'รายละเอียดคำตอบ'}
+            </h1>
+            <p className="text-slate-500">
+              {form?.code} • {totalCount.toLocaleString()} คำตอบ • v{form?.current_version || 1}
+            </p>
           </div>
         </div>
+        <div className="flex items-center gap-3 flex-wrap">
+          <button 
+            onClick={() => setShowFilters(!showFilters)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-colors ${
+              showFilters ? 'bg-blue-100 text-blue-700' : 'border-2 border-slate-300 hover:bg-slate-50 bg-white'
+            }`}
+          >
+            <Calendar className="w-5 h-5" />
+            <span className="hidden sm:inline">ช่วงวันที่</span>
+          </button>
+          <button 
+            onClick={handleExport}
+            disabled={!submissions.length}
+            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 disabled:opacity-50"
+          >
+            <Download className="w-5 h-5" />
+            <span className="hidden sm:inline">Export CSV</span>
+          </button>
+        </div>
+      </div>
 
-        {/* Date Filters */}
-        {showFilters && (
-          <div className="bg-white p-4 rounded-2xl border border-slate-200 flex-shrink-0">
-            <div className="flex items-center gap-4">
-              <div className="w-44">
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">ตั้งแต่</label>
-                <input
-                  type="date"
-                  value={dateFrom}
-                  onChange={(e) => setDateFrom(e.target.value)}
-                  className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div className="w-44">
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">ถึง</label>
-                <input
-                  type="date"
-                  value={dateTo}
-                  onChange={(e) => setDateTo(e.target.value)}
-                  className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div className="flex items-end gap-2">
-                <button
-                  onClick={() => { setDateFrom(''); setDateTo(''); }}
-                  className="px-4 py-2 border border-slate-200 rounded-xl hover:bg-slate-50"
-                >
-                  ล้าง
-                </button>
-                <button
-                  onClick={fetchData}
-                  className="p-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700"
-                >
-                  <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
-                </button>
-              </div>
+      {/* Date Filters */}
+      {showFilters && (
+        <div className="bg-white p-4 rounded-2xl border-2 border-slate-300">
+          <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4">
+            <div className="w-full sm:w-44">
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">ตั้งแต่</label>
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                className="w-full px-4 py-2 border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div className="w-full sm:w-44">
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">ถึง</label>
+              <input
+                type="date"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                className="w-full px-4 py-2 border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => { setDateFrom(''); setDateTo(''); }}
+                className="px-4 py-2 border-2 border-slate-300 rounded-xl hover:bg-slate-50"
+              >
+                ล้าง
+              </button>
+              <button
+                onClick={fetchData}
+                className="p-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700"
+              >
+                <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+              </button>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Table */}
-        <div className="flex-1 bg-white rounded-2xl border border-slate-200 overflow-hidden flex flex-col min-h-0">
-          {loading ? (
-            <div className="flex items-center justify-center flex-1">
-              <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full" />
+      {/* Table - Full Width */}
+      <div className="bg-white rounded-2xl border-2 border-slate-300 overflow-hidden">
+        {loading ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full" />
+          </div>
+        ) : submissions.length === 0 ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="text-center">
+              <FileText className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-slate-900 mb-2">ไม่พบคำตอบ</h3>
+              <p className="text-slate-500">ลองเปลี่ยนช่วงวันที่ดู</p>
             </div>
-          ) : submissions.length === 0 ? (
-            <div className="flex items-center justify-center flex-1">
-              <div className="text-center">
-                <FileText className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-slate-900 mb-2">ไม่พบคำตอบ</h3>
-                <p className="text-slate-500">ลองเปลี่ยนช่วงวันที่ดู</p>
-              </div>
-            </div>
-          ) : (
-            <>
-              <div className="flex-1 overflow-auto">
-                <table className="w-full text-sm">
-                  <thead className="bg-slate-50 border-b border-slate-200 sticky top-0">
-                    <tr>
-                      <th className="px-4 py-3 text-left font-semibold text-slate-700 whitespace-nowrap bg-slate-50">ID</th>
-                      <th className="px-4 py-3 text-left font-semibold text-slate-700 whitespace-nowrap bg-slate-50">เวลาส่ง</th>
-                      <th className="px-4 py-3 text-center font-semibold text-slate-700 whitespace-nowrap bg-slate-50">Version</th>
+          </div>
+        ) : (
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-slate-50 border-b border-slate-300">
+                  <tr>
+                    <th className="px-4 py-3 text-left font-semibold text-slate-700 whitespace-nowrap">ID</th>
+                    <th className="px-4 py-3 text-left font-semibold text-slate-700 whitespace-nowrap">เวลาส่ง</th>
+                    <th className="px-4 py-3 text-center font-semibold text-slate-700 whitespace-nowrap">Version</th>
+                    {unifiedFields.map((field) => {
+                      const versionColor = getVersionColor(field.version);
+                      return (
+                        <th 
+                          key={field.key} 
+                          className="px-4 py-3 text-left font-semibold whitespace-nowrap bg-slate-50 text-slate-700"
+                        >
+                          <div className="max-w-[200px] truncate flex items-center gap-1" title={`${field.label}${field.version > 1 ? ` (เพิ่ม v${field.version})` : ''}`}>
+                            {field.label}
+                            {field.version > 1 && (
+                              <span 
+                                className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium border"
+                                style={{
+                                  backgroundColor: versionColor ? `${versionColor}20` : '#dbeafe',
+                                  color: versionColor || '#1d4ed8',
+                                  borderColor: versionColor ? `${versionColor}40` : '#93c5fd'
+                                }}
+                              >
+                                v{field.version}
+                              </span>
+                            )}
+                          </div>
+                        </th>
+                      );
+                    })}
+                    {/* QR Code & UTM Columns */}
+                    <th className="px-4 py-3 text-left font-semibold text-slate-700 whitespace-nowrap">QR Code</th>
+                    <th className="px-4 py-3 text-left font-semibold text-slate-700 whitespace-nowrap">รหัสโครงการ</th>
+                    <th className="px-4 py-3 text-left font-semibold text-slate-700 whitespace-nowrap">ชื่อโครงการ</th>
+                    <th className="px-4 py-3 text-left font-semibold text-slate-700 whitespace-nowrap">UTM Source</th>
+                    <th className="px-4 py-3 text-left font-semibold text-slate-700 whitespace-nowrap">UTM Medium</th>
+                    <th className="px-4 py-3 text-center font-semibold text-slate-700 whitespace-nowrap">Consent</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200">
+                  {submissions.map((sub) => (
+                    <tr className="border-b border-slate-200" key={sub.id} className="hover:bg-slate-50 transition-colors">
+                      <td className="px-4 py-3 font-mono text-slate-500 whitespace-nowrap">
+                        #{sub.id?.slice(-6)}
+                      </td>
+                      <td className="px-4 py-3 text-slate-900 whitespace-nowrap">
+                        {formatDate(sub.submitted_at, { 
+                          day: '2-digit', 
+                          month: 'short', 
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <span 
+                          className="inline-flex px-2 py-0.5 text-xs font-medium rounded border"
+                          style={getVersionBadgeStyle(sub.form_version || 1)}
+                        >
+                          v{sub.form_version || 1}
+                        </span>
+                      </td>
                       {unifiedFields.map((field) => {
-                        const versionColor = getVersionColor(field.version);
+                        const value = getFieldDisplayValue(sub, field);
                         return (
-                          <th 
+                          <td 
                             key={field.key} 
-                            className="px-4 py-3 text-left font-semibold whitespace-nowrap bg-slate-50 text-slate-700"
+                            className="px-4 py-3 max-w-[200px] truncate text-slate-700"
+                            title={value !== '-' ? value : undefined}
                           >
-                            <div className="max-w-[200px] truncate flex items-center gap-1" title={`${field.label}${field.version > 1 ? ` (เพิ่ม v${field.version})` : ''}`}>
-                              {field.label}
-                              {field.version > 1 && (
-                                <span 
-                                  className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium border"
-                                  style={{
-                                    backgroundColor: versionColor ? `${versionColor}20` : '#dbeafe',
-                                    color: versionColor || '#1d4ed8',
-                                    borderColor: versionColor ? `${versionColor}40` : '#93c5fd'
-                                  }}
-                                >
-                                  v{field.version}
-                                </span>
-                              )}
-                            </div>
-                          </th>
+                            {value}
+                          </td>
                         );
                       })}
-                      {/* QR Code & UTM Columns - อยู่ท้ายตาราง */}
-                      <th className="px-4 py-3 text-left font-semibold text-slate-700 whitespace-nowrap bg-slate-50">QR Code</th>
-                      <th className="px-4 py-3 text-left font-semibold text-slate-700 whitespace-nowrap bg-slate-50">รหัสโครงการ</th>
-                      <th className="px-4 py-3 text-left font-semibold text-slate-700 whitespace-nowrap bg-slate-50">ชื่อโครงการ</th>
-                      <th className="px-4 py-3 text-left font-semibold text-slate-700 whitespace-nowrap bg-slate-50">UTM Source</th>
-                      <th className="px-4 py-3 text-left font-semibold text-slate-700 whitespace-nowrap bg-slate-50">UTM Medium</th>
-                      <th className="px-4 py-3 text-center font-semibold text-slate-700 whitespace-nowrap bg-slate-50">Consent</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {submissions.map((sub) => (
-                      <tr key={sub.id} className="hover:bg-slate-50 transition-colors">
-                        <td className="px-4 py-3 font-mono text-slate-500 whitespace-nowrap">
-                          #{sub.id?.slice(-6)}
-                        </td>
-                        <td className="px-4 py-3 text-slate-900 whitespace-nowrap">
-                          {formatDate(sub.submitted_at, { 
-                            day: '2-digit', 
-                            month: 'short', 
-                            year: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          <span 
-                            className="inline-flex px-2 py-0.5 text-xs font-medium rounded border"
-                            style={getVersionBadgeStyle(sub.form_version || 1)}
-                          >
-                            v{sub.form_version || 1}
+                      {/* QR Code & UTM Columns */}
+                      <td className="px-4 py-3 whitespace-nowrap text-slate-700">
+                        {sub.qr_code?.name || '-'}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap font-mono text-slate-600">
+                        {sub.project?.code || sub.qr_code?.project_id || '-'}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-slate-700">
+                        {sub.project?.name || '-'}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        {sub.qr_code?.utm_source ? (
+                          <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded">
+                            {sub.qr_code.utm_source}
                           </span>
-                        </td>
-                        {unifiedFields.map((field) => {
-                          const value = getFieldDisplayValue(sub, field);
-                          return (
-                            <td 
-                              key={field.key} 
-                              className="px-4 py-3 max-w-[200px] truncate text-slate-700"
-                              title={value !== '-' ? value : undefined}
-                            >
-                              {value}
-                            </td>
-                          );
-                        })}
-                        {/* QR Code & UTM Columns - อยู่ท้ายตาราง */}
-                        <td className="px-4 py-3 whitespace-nowrap text-slate-700">
-                          {sub.qr_code?.name || '-'}
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap font-mono text-slate-600">
-                          {sub.project?.code || sub.qr_code?.project_id || '-'}
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap text-slate-700">
-                          {sub.project?.name || '-'}
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap">
-                          {sub.qr_code?.utm_source ? (
-                            <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded">
-                              {sub.qr_code.utm_source}
-                            </span>
-                          ) : (
-                            <span className="text-slate-400">-</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap">
-                          {sub.qr_code?.utm_medium ? (
-                            <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded">
-                              {sub.qr_code.utm_medium}
-                            </span>
-                          ) : (
-                            <span className="text-slate-400">-</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap text-center">
-                          {sub.consent_given ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded" title={sub.consented_at ? formatDate(sub.consented_at, { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : undefined}>
-                              <ShieldCheck className="w-3.5 h-3.5" />
-                              ยินยอม
-                            </span>
-                          ) : (
-                            <span className="text-slate-400">-</span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                        ) : (
+                          <span className="text-slate-400">-</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        {sub.qr_code?.utm_medium ? (
+                          <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded">
+                            {sub.qr_code.utm_medium}
+                          </span>
+                        ) : (
+                          <span className="text-slate-400">-</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-center">
+                        {sub.consent_given ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded" title={sub.consented_at ? formatDate(sub.consented_at, { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : undefined}>
+                            <ShieldCheck className="w-3.5 h-3.5" />
+                            ยินยอม
+                          </span>
+                        ) : (
+                          <span className="text-slate-400">-</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
-              {/* Pagination */}
-              <div className="flex items-center justify-between px-6 py-4 border-t border-slate-200 bg-white flex-shrink-0">
-                <div className="text-sm text-slate-600">
-                  แสดง {(currentPage - 1) * ITEMS_PER_PAGE + 1} - {Math.min(currentPage * ITEMS_PER_PAGE, totalCount)} จาก {totalCount.toLocaleString()} รายการ
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                    disabled={currentPage === 1}
-                    className="p-2 border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <ChevronLeft className="w-5 h-5" />
-                  </button>
-                  <span className="px-4 py-2 text-sm font-medium">
-                    หน้า {currentPage} / {totalPages}
-                  </span>
-                  <button
-                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                    disabled={currentPage === totalPages}
-                    className="p-2 border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <ChevronRight className="w-5 h-5" />
-                  </button>
-                </div>
+            {/* Pagination */}
+            <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-4 border-t border-slate-300 gap-4">
+              <div className="text-sm text-slate-600">
+                แสดง {(currentPage - 1) * ITEMS_PER_PAGE + 1} - {Math.min(currentPage * ITEMS_PER_PAGE, totalCount)} จาก {totalCount.toLocaleString()} รายการ
               </div>
-            </>
-          )}
-        </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="p-2 border-2 border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <span className="px-4 py-2 text-sm font-medium">
+                  หน้า {currentPage} / {totalPages}
+                </span>
+                <button
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="p-2 border-2 border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

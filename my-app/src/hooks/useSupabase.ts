@@ -98,7 +98,9 @@ export function useForms() {
     try {
       setLoading(true);
       const supabase = getSupabaseBrowser();
-      const { data, error } = await supabase
+      
+      // Fetch forms with counts
+      const { data: formsData, error: formsError } = await supabase
         .from('forms')
         .select(`
           *,
@@ -107,8 +109,26 @@ export function useForms() {
         `)
         .order('created_at', { ascending: false });
         
-      if (error) throw error;
-      setForms((data as Form[]) || []);
+      if (formsError) throw formsError;
+      
+      // Fetch draft statuses
+      const { data: draftsData, error: draftsError } = await supabase
+        .from('form_drafts')
+        .select('form_id, status');
+        
+      if (draftsError) throw draftsError;
+      
+      // Create draft lookup map
+      const draftMap = new Map(draftsData?.map(d => [d.form_id, d.status]) || []);
+      
+      // Merge data
+      const mergedForms = (formsData || []).map(form => ({
+        ...form,
+        has_draft: draftMap.has(form.id),
+        draft_status: draftMap.get(form.id) || null,
+      }));
+      
+      setForms(mergedForms as Form[]);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Unknown error'));
     } finally {

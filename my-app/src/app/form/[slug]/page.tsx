@@ -322,7 +322,7 @@ export default function FormPage() {
         </div>
 
         {/* Form */}
-        <div className="bg-white rounded-xl border border-slate-200 p-8">
+        <div className="bg-white rounded-xl border-2 border-slate-300 p-8">
           <FormRenderer
             form={form}
             onSubmit={handleSubmit}

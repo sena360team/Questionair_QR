@@ -37,6 +37,7 @@ const FIELD_TYPES = [
   { type: 'number' as FieldType, label: 'ตัวเลข', icon: <Hash className="w-4 h-4" />, category: 'input' as const },
   { type: 'choice' as FieldType, label: 'ตัวเลือกเดียว', icon: <List className="w-4 h-4" />, category: 'input' as const },
   { type: 'multiple_choice' as FieldType, label: 'หลายตัวเลือก', icon: <CheckSquare className="w-4 h-4" />, category: 'input' as const },
+  { type: 'dropdown' as FieldType, label: 'Dropdown', icon: <List className="w-4 h-4" />, category: 'input' as const },
   { type: 'rating' as FieldType, label: 'ให้คะแนน', icon: <Star className="w-4 h-4" />, category: 'input' as const },
   { type: 'scale' as FieldType, label: 'สเกล', icon: <Sliders className="w-4 h-4" />, category: 'input' as const },
   { type: 'date' as FieldType, label: 'วันที่', icon: <Calendar className="w-4 h-4" />, category: 'input' as const },
@@ -87,7 +88,7 @@ export function FormBuilder({ fields, onChange, currentVersion = 0 }: FormBuilde
       label: getDefaultLabel(),
       placeholder: getDefaultPlaceholder(),
       required: false,
-      ...(type === 'choice' || type === 'multiple_choice' 
+      ...(type === 'choice' || type === 'multiple_choice' || type === 'dropdown'
         ? { options: ['ตัวเลือก 1', 'ตัวเลือก 2'] } 
         : {}),
       ...(type === 'rating' ? { min: 1, max: 5 } : {}),
@@ -158,14 +159,14 @@ export function FormBuilder({ fields, onChange, currentVersion = 0 }: FormBuilde
       </div>
 
       {/* Input Fields */}
-      <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
+      <div className="p-4 bg-slate-50 rounded-xl border-2 border-slate-300">
         <span className="text-xs font-medium text-slate-600 uppercase tracking-wide mb-3 block">
           คำถาม
         </span>
         <div className="flex flex-wrap gap-2">
           {FIELD_TYPES.filter(f => f.category === 'input').map(({ type, label, icon }) => (
             <button key={type} onClick={() => addField(type)}
-              className="flex items-center gap-2 px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg hover:border-blue-500 hover:text-blue-600 transition-colors">
+              className="flex items-center gap-2 px-3 py-2 text-sm bg-white border-2 border-slate-300 rounded-lg hover:border-blue-500 hover:text-blue-600 transition-colors">
               {icon} {label}
             </button>
           ))}
@@ -175,7 +176,7 @@ export function FormBuilder({ fields, onChange, currentVersion = 0 }: FormBuilde
       {/* Fields List with Drag & Drop */}
       <div className="space-y-2">
         {fields.length === 0 && (
-          <div className="text-center py-12 text-slate-400 border-2 border-dashed border-slate-200 rounded-xl bg-slate-50">
+          <div className="text-center py-12 text-slate-400 border-2 border-dashed border-slate-300 rounded-xl bg-slate-50">
             <Plus className="w-12 h-12 mx-auto mb-2 opacity-50" />
             <p>ยังไม่มีคำถาม</p>
             <p className="text-sm">เลือกประเภทคำถามจากด้านบน</p>
@@ -193,7 +194,7 @@ export function FormBuilder({ fields, onChange, currentVersion = 0 }: FormBuilde
               field.type === 'heading' ? "bg-purple-50 border-purple-200" :
               field.type === 'section' ? "bg-blue-50 border-blue-200" :
               field.type === 'info_box' ? "bg-amber-50 border-amber-200" :
-              "bg-white border-slate-200",
+              "bg-white border-slate-300",
               editingId === field.id ? "ring-2 ring-blue-500 border-blue-500" : "",
               draggedIndex === index ? "opacity-90 shadow-2xl scale-[1.02] border-blue-400 z-50" : "",
               dragOverIndex === index && draggedIndex !== index ? "border-blue-500 border-dashed border-2" : ""
@@ -205,7 +206,7 @@ export function FormBuilder({ fields, onChange, currentVersion = 0 }: FormBuilde
             )}
             
             {/* Field Header */}
-            <div className="flex items-center gap-3 p-3 border-b border-slate-100">
+            <div className="flex items-center gap-3 p-3 border-b border-slate-300">
               <div 
                 draggable
                 onDragStart={() => handleDragStart(index)}
@@ -314,7 +315,7 @@ function FieldEditor({ field, onChange }: { field: FormField; onChange: (updates
           type="text"
           value={field.label || ''}
           onChange={(e) => onChange({ label: e.target.value })}
-          className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 border-2 border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500"
         />
       </div>
 
@@ -329,13 +330,13 @@ function FieldEditor({ field, onChange }: { field: FormField; onChange: (updates
             value={field.placeholder || ''}
             onChange={(e) => onChange({ placeholder: e.target.value })}
             placeholder={field.type === 'email' ? 'email@example.com' : field.type === 'tel' ? '0xx-xxx-xxxx' : ''}
-            className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border-2 border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500"
           />
         </div>
       )}
 
       {/* Options for choice types */}
-      {(field.type === 'choice' || field.type === 'multiple_choice') && (
+      {(field.type === 'choice' || field.type === 'multiple_choice' || field.type === 'dropdown') && (
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-2">ตัวเลือก</label>
           <div className="space-y-2">
@@ -345,7 +346,7 @@ function FieldEditor({ field, onChange }: { field: FormField; onChange: (updates
                   type="text"
                   value={option || ''}
                   onChange={(e) => updateOption(idx, e.target.value)}
-                  className="flex-1 px-3 py-2 border border-slate-300 rounded-md"
+                  className="flex-1 px-3 py-2 border-2 border-slate-300 rounded-md"
                 />
                 <button
                   onClick={() => deleteOption(idx)}
@@ -386,7 +387,7 @@ function FieldEditor({ field, onChange }: { field: FormField; onChange: (updates
               type="number"
               value={field.min || 1}
               onChange={(e) => onChange({ min: parseInt(e.target.value) })}
-              className="w-24 px-3 py-2 border border-slate-300 rounded-md"
+              className="w-24 px-3 py-2 border-2 border-slate-300 rounded-md"
             />
           </div>
           <div>
@@ -395,7 +396,7 @@ function FieldEditor({ field, onChange }: { field: FormField; onChange: (updates
               type="number"
               value={field.max || 5}
               onChange={(e) => onChange({ max: parseInt(e.target.value) })}
-              className="w-24 px-3 py-2 border border-slate-300 rounded-md"
+              className="w-24 px-3 py-2 border-2 border-slate-300 rounded-md"
             />
           </div>
         </div>
@@ -412,7 +413,7 @@ function FieldEditor({ field, onChange }: { field: FormField; onChange: (updates
             onChange={(e) => onChange({ helpText: e.target.value })}
             placeholder="พิมพ์ข้อความที่ต้องการแสดง..."
             rows={6}
-            className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 resize-none"
+            className="w-full px-3 py-2 border-2 border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 resize-none"
           />
         ) : (
           <input
@@ -420,7 +421,7 @@ function FieldEditor({ field, onChange }: { field: FormField; onChange: (updates
             value={field.helpText || ''}
             onChange={(e) => onChange({ helpText: e.target.value })}
             placeholder="ข้อความช่วยเหลือสำหรับผู้ตอบ"
-            className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border-2 border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500"
           />
         )}
       </div>
@@ -514,6 +515,7 @@ function FieldPreview({ field }: { field: FormField }) {
     switch(field.type) {
       case 'choice': return `ตัวเลือกเดียว (${field.options?.length || 0})`;
       case 'multiple_choice': return `หลายตัวเลือก (${field.options?.length || 0})`;
+      case 'dropdown': return `Dropdown (${field.options?.length || 0})`;
       case 'rating': return `ให้คะแนน ${field.min}-${field.max}`;
       case 'scale': return `สเกล ${field.min}-${field.max}`;
       case 'text': return 'ข้อความสั้น';
@@ -527,8 +529,8 @@ function FieldPreview({ field }: { field: FormField }) {
     }
   };
 
-  // แสดง options สำหรับ choice/multiple_choice พร้อมสี version
-  const showOptions = field.type === 'choice' || field.type === 'multiple_choice';
+  // แสดง options สำหรับ choice/multiple_choice/dropdown พร้อมสี version
+  const showOptions = field.type === 'choice' || field.type === 'multiple_choice' || field.type === 'dropdown';
   
   return (
     <div className="py-1">
@@ -564,6 +566,9 @@ function FieldPreview({ field }: { field: FormField }) {
               )}
               {field.type === 'choice' && (
                 <span className="mr-1">◯</span>
+              )}
+              {field.type === 'dropdown' && (
+                <span className="mr-1">▼</span>
               )}
               {option}
             </span>

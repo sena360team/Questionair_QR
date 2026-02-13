@@ -1,8 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForms, useSubmissions } from '@/hooks/useSupabase';
+import { DuplicateFormDialog } from '@/components/DuplicateFormDialog';
 import { 
   FileText, 
   Plus, 
@@ -12,17 +13,23 @@ import {
   Trash2,
   QrCode,
   BarChart3,
-  Hash
+  Hash,
+  Copy,
+  MoreVertical,
+  Edit3,
+  Clock
 } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import { Form } from '@/types';
-import { getVersionBadgeStyle, getVersionBadgeClass } from '@/lib/versionColors';
+import { getVersionBadgeStyle } from '@/lib/versionColors';
+import { cn } from '@/lib/utils';
 
 export default function FormsPage() {
   const { forms, loading, deleteForm } = useForms();
   const { submissions } = useSubmissions();
   const [searchTerm, setSearchTerm] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+  const [duplicateForm, setDuplicateForm] = useState<Form | null>(null);
 
   const filteredForms = forms.filter(form => 
     form.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -38,14 +45,14 @@ export default function FormsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">แบบสอบถาม</h1>
           <p className="text-slate-500">จัดการแบบสอบถามทั้งหมดของคุณ</p>
         </div>
         <Link
           href="/admin/forms/create"
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors"
+          className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors"
         >
           <Plus className="w-5 h-5" />
           สร้างใหม่
@@ -60,7 +67,7 @@ export default function FormsPage() {
           placeholder="ค้นหาด้วยชื่อ รหัส หรือ slug..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          className="w-full pl-12 pr-4 py-3 bg-white border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         />
       </div>
 
@@ -70,7 +77,7 @@ export default function FormsPage() {
           <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full" />
         </div>
       ) : filteredForms.length === 0 ? (
-        <div className="text-center py-20 bg-white rounded-2xl border border-slate-200">
+        <div className="text-center py-20 bg-white rounded-2xl border-2 border-slate-300">
           <FileText className="w-16 h-16 text-slate-300 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-slate-900 mb-2">
             {searchTerm ? 'ไม่พบแบบสอบถาม' : 'ยังไม่มีแบบสอบถาม'}
@@ -89,23 +96,33 @@ export default function FormsPage() {
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 3xl:grid-cols-5 gap-4 lg:gap-6">
           {filteredForms.map((form) => (
             <FormCard
               key={form.id}
               form={form}
               submissionCount={submissions.filter(s => s.form_id === form.id).length}
               onDelete={() => setShowDeleteConfirm(form.id)}
+              onDuplicate={() => setDuplicateForm(form)}
             />
           ))}
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
+      {/* Delete Confirmation */}
       {showDeleteConfirm && (
         <DeleteConfirmModal
           onConfirm={() => handleDelete(showDeleteConfirm)}
           onCancel={() => setShowDeleteConfirm(null)}
+        />
+      )}
+
+      {/* Duplicate Dialog */}
+      {duplicateForm && (
+        <DuplicateFormDialog
+          form={duplicateForm}
+          isOpen={true}
+          onClose={() => setDuplicateForm(null)}
         />
       )}
     </div>
@@ -118,21 +135,24 @@ interface FormCardProps {
   form: Form;
   submissionCount: number;
   onDelete: () => void;
+  onDuplicate: () => void;
 }
 
-function FormCard({ form, submissionCount, onDelete }: FormCardProps) {
+function FormCard({ form, submissionCount, onDelete, onDuplicate }: FormCardProps) {
+  const [showActions, setShowActions] = useState(false);
+
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden hover:border-blue-300 hover:shadow-lg transition-all group">
+    <div className="bg-white rounded-2xl border-2 border-slate-300 overflow-hidden hover:border-blue-300 hover:shadow-lg transition-all group flex flex-col">
       {/* Card Header */}
-      <div className="p-6">
+      <div className="p-5 flex-1">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center">
-              <FileText className="w-6 h-6 text-blue-600" />
+            <div className="w-10 h-10 lg:w-12 lg:h-12 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0">
+              <FileText className="w-5 h-5 lg:w-6 lg:h-6 text-blue-600" />
             </div>
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="inline-block px-2 py-1 bg-slate-100 text-slate-600 text-xs font-mono rounded">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-1.5 mb-1">
+                <span className="inline-block px-2 py-0.5 bg-slate-100 text-slate-600 text-xs font-mono rounded">
                   {form.code}
                 </span>
                 {/* Status Badge */}
@@ -151,32 +171,120 @@ function FormCard({ form, submissionCount, onDelete }: FormCardProps) {
                     Archived
                   </span>
                 )}
-                {/* Version Badge - Dynamic Color */}
+              </div>
+              {/* Version & Draft Badge */}
+              <div className="flex items-center gap-2">
                 <span 
                   className="px-2 py-0.5 text-xs rounded-full font-medium border"
                   style={getVersionBadgeStyle(form.current_version || 0)}
                 >
                   Version {form.current_version || 0}
                 </span>
+                {form.has_draft && (
+                  <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-xs rounded-full flex items-center gap-1">
+                    <Edit3 className="w-3 h-3" />
+                    มี Draft
+                  </span>
+                )}
+                {form.cloned_from && (
+                  <span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-xs rounded-full flex items-center gap-1">
+                    <Copy className="w-3 h-3" />
+                    Copy
+                  </span>
+                )}
               </div>
-              {/* Active/Inactive Badge */}
-              {form.status === 'published' && (
-                form.is_active ? (
-                  <span className="px-2 py-0.5 bg-green-50 text-green-600 text-xs rounded-full">
-                    เปิดใช้งาน
-                  </span>
-                ) : (
-                  <span className="px-2 py-0.5 bg-red-100 text-red-600 text-xs rounded-full font-medium">
-                    ปิดใช้งาน
-                  </span>
-                )
-              )}
             </div>
+          </div>
+          
+          {/* Action Menu */}
+          <div className="relative">
+            <button
+              onClick={() => setShowActions(!showActions)}
+              className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg"
+            >
+              <MoreVertical className="w-4 h-4" />
+            </button>
+            
+            {showActions && (
+              <>
+                <div 
+                  className="fixed inset-0 z-10" 
+                  onClick={() => setShowActions(false)}
+                />
+                <div className="absolute right-0 top-full mt-1 w-48 bg-white border-2 border-slate-300 rounded-xl shadow-lg z-20 py-1">
+                  <Link
+                    href={`/admin/forms/${form.id}`}
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                    onClick={() => setShowActions(false)}
+                  >
+                    <Edit className="w-4 h-4" />
+                    แก้ไข
+                  </Link>
+                  
+                  {form.status === 'published' && (
+                    <Link
+                      href={`/admin/forms/${form.id}?draft=true`}
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-amber-700 hover:bg-amber-50"
+                      onClick={() => setShowActions(false)}
+                    >
+                      <Edit3 className="w-4 h-4" />
+                      {form.has_draft ? 'ต่อ Draft' : 'แก้ไข (Draft)'}
+                    </Link>
+                  )}
+                  
+                  <Link
+                    href={`/admin/forms/${form.id}?tab=history`}
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                    onClick={() => setShowActions(false)}
+                  >
+                    <Clock className="w-4 h-4" />
+                    ประวัติ Version
+                  </Link>
+                  
+                  <button
+                    onClick={() => {
+                      onDuplicate();
+                      setShowActions(false);
+                    }}
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 w-full text-left"
+                  >
+                    <Copy className="w-4 h-4" />
+                    คัดลอกเป็นฟอร์มใหม่
+                  </button>
+                  
+                  <hr className="my-1 border-slate-200" />
+                  
+                  <button
+                    onClick={() => {
+                      onDelete();
+                      setShowActions(false);
+                    }}
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 w-full text-left"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    ลบ
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
 
-        <h3 className="font-semibold text-slate-900 mb-1 line-clamp-1">{form.title}</h3>
-        <p className="text-sm text-slate-500 mb-4">/{form.slug}</p>
+        <h3 className="font-semibold text-slate-900 mb-1 line-clamp-1" title={form.title}>{form.title}</h3>
+        <p className="text-sm text-slate-500 mb-3 truncate">/{form.slug}</p>
+
+        {/* Active/Inactive Badge */}
+        {form.status === 'published' && (
+          form.is_active ? (
+            <span className="inline-flex px-2 py-0.5 bg-green-50 text-green-600 text-xs rounded-full mb-3">
+              เปิดใช้งาน
+            </span>
+          ) : (
+            <span className="inline-flex px-2 py-0.5 bg-red-100 text-red-600 text-xs rounded-full font-medium mb-3">
+              ปิดใช้งาน
+            </span>
+          )
+        )}
 
         <div className="flex items-center gap-4 text-sm">
           <div className="flex items-center gap-1.5 text-slate-600">
@@ -184,14 +292,14 @@ function FormCard({ form, submissionCount, onDelete }: FormCardProps) {
             <span>{submissionCount} คำตอบ</span>
           </div>
           <div className="flex items-center gap-1.5 text-slate-600">
-            <FileText className="w-4 h-4" />
+            <Hash className="w-4 h-4" />
             <span>{form.fields?.length || 0} คำถาม</span>
           </div>
         </div>
       </div>
 
       {/* Card Actions */}
-      <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+      <div className="px-5 py-3 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
         <span className="text-xs text-slate-500">
           {formatDate(form.created_at, { month: 'short', day: 'numeric', year: 'numeric' })}
         </span>
@@ -209,12 +317,12 @@ function FormCard({ form, submissionCount, onDelete }: FormCardProps) {
           ) : (
             <span
               className="p-2 text-slate-200 cursor-not-allowed rounded-lg"
-              title="ไม่สามารถดูฟอร์มได้ กรุณา Publish แบบสอบถามก่อน"
+              title="ไม่สามารถดูฟอร์มได้"
             >
               <ExternalLink className="w-4 h-4" />
             </span>
           )}
-          {form.status === 'published' ? (
+          {form.status === 'published' && (
             <Link
               href={`/admin/qr-codes?form=${form.id}`}
               className="p-2 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-all"
@@ -222,29 +330,17 @@ function FormCard({ form, submissionCount, onDelete }: FormCardProps) {
             >
               <QrCode className="w-4 h-4" />
             </Link>
-          ) : (
-            <span
-              className="p-2 text-slate-200 cursor-not-allowed rounded-lg"
-              title="ไม่สามารถสร้าง QR Code ได้ กรุณา Publish แบบสอบถามก่อน"
-            >
-              <QrCode className="w-4 h-4" />
-            </span>
           )}
+          
+          {/* Edit Button */}
           <Link
-            href={`/admin/forms/${form.id}`}
-            onClick={() => console.log('🔗 Click Edit - Form ID:', form.id, 'URL:', `/admin/forms/${form.id}`)}
-            className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all"
-            title="แก้ไข"
+            href={form.status === 'published' ? `/admin/forms/${form.id}?draft=true` : `/admin/forms/${form.id}`}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+            title={form.status === 'published' ? 'แก้ไข (Draft)' : 'แก้ไข'}
           >
             <Edit className="w-4 h-4" />
+            <span className="hidden sm:inline">{form.status === 'published' ? 'แก้ไข' : 'แก้ไข'}</span>
           </Link>
-          <button
-            onClick={onDelete}
-            className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-            title="ลบ"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
         </div>
       </div>
     </div>
@@ -267,7 +363,7 @@ function DeleteConfirmModal({ onConfirm, onCancel }: { onConfirm: () => void; on
         <div className="flex gap-3">
           <button
             onClick={onCancel}
-            className="flex-1 py-2.5 border border-slate-200 text-slate-700 rounded-xl font-medium hover:bg-slate-50"
+            className="flex-1 py-2.5 border-2 border-slate-300 text-slate-700 rounded-xl font-medium hover:bg-slate-50"
           >
             ยกเลิก
           </button>
@@ -282,5 +378,3 @@ function DeleteConfirmModal({ onConfirm, onCancel }: { onConfirm: () => void; on
     </div>
   );
 }
-
-import { cn } from '@/lib/utils';

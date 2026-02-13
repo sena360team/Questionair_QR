@@ -28,7 +28,7 @@ export interface ProjectCreateInput {
 // ============================================================
 
 export type FieldType = 'heading' | 'section' | 'info_box' | 'text' | 'textarea' | 'email' | 'number' | 'tel' | 
-                        'choice' | 'multiple_choice' | 'rating' | 'date' | 
+                        'choice' | 'multiple_choice' | 'dropdown' | 'rating' | 'date' | 
                         'time' | 'scale' | 'nps';
 
 export interface FormField {
@@ -37,8 +37,9 @@ export interface FormField {
   label: string;
   placeholder?: string;
   required?: boolean;
-  options?: string[];       // สำหรับ choice, multiple_choice
-  allow_other?: boolean;    // ให้เลือก "อื่นๆ" และพิมพ์เองได้
+  options?: string[];       // สำหรับ choice, multiple_choice, dropdown
+  allow_other?: boolean;    // ให้เลือก "อื่นๆ" และพิมพ์เองได้ (สำหรับ choice, dropdown)
+  searchable?: boolean;     // ให้ค้นหาได้ (สำหรับ dropdown เมื่อ options เยอะ)
   min?: number;             // สำหรับ rating, scale, number
   max?: number;             // สำหรับ rating, scale, number
   helpText?: string;        // คำอธิบายเพิ่มเติม
@@ -66,9 +67,15 @@ export interface Form {
   consent_heading?: string;  // หัวข้อ Consent (e.g., "การยินยอม", "ข้อตกลง")
   consent_text?: string;
   consent_require_location?: boolean;
+  // Clone tracking
+  cloned_from?: string | null;
+  cloned_at?: string | null;
   created_at: string;
   updated_at: string;
   created_by: string | null;
+  // Computed fields
+  has_draft?: boolean;
+  draft_status?: 'editing' | 'pending_review' | 'approved' | 'rejected' | null;
 }
 
 export interface FormCreateInput {
@@ -90,7 +97,7 @@ export interface FormCreateInput {
 }
 
 // ============================================================
-// Form Version Types
+// Form Version Types (Enhanced)
 // ============================================================
 
 export interface FormVersion {
@@ -99,14 +106,130 @@ export interface FormVersion {
   version: number;
   fields: FormField[];
   fields_hash: string;
+  // Enhanced metadata
+  title?: string;
+  description?: string | null;
+  logo_url?: string | null;
+  require_consent?: boolean;
+  consent_heading?: string;
+  consent_text?: string | null;
+  consent_require_location?: boolean;
   change_summary?: string;
   published_at: string;
   published_by?: string | null;
+  // Revert tracking
+  is_reverted?: boolean;
+  reverted_to_version?: number | null;
+  created_from_clone?: string | null;
+  // Join data
+  published_by_user?: {
+    id: string;
+    email?: string;
+  } | null;
+}
+
+export interface FormVersionWithUser extends FormVersion {
+  published_by_name?: string;
 }
 
 export interface FormWithVersion extends Form {
   versions?: FormVersion[];
   total_submissions?: number;
+}
+
+// ============================================================
+// Form Draft Types (NEW)
+// ============================================================
+
+export type DraftStatus = 'editing' | 'pending_review' | 'approved' | 'rejected';
+
+export interface FormDraft {
+  id: string;
+  form_id: string;
+  // Content
+  title: string;
+  description?: string | null;
+  logo_url?: string | null;
+  fields: FormField[];
+  // Consent Settings
+  require_consent: boolean;
+  consent_heading: string;
+  consent_text?: string | null;
+  consent_require_location: boolean;
+  // Workflow Status
+  status: DraftStatus;
+  // Revert Info
+  is_revert?: boolean;
+  revert_from_version?: number | null;
+  revert_to_version?: number | null;
+  revert_notes?: string | null;
+  // Submission for Review
+  submitted_by?: string | null;
+  submitted_at?: string | null;
+  submitted_notes?: string | null;
+  // Review Info
+  reviewed_by?: string | null;
+  reviewed_at?: string | null;
+  review_notes?: string | null;
+  // Metadata
+  created_at: string;
+  updated_at: string;
+  // Join data
+  submitted_by_user?: {
+    id: string;
+    email?: string;
+  } | null;
+  reviewed_by_user?: {
+    id: string;
+    email?: string;
+  } | null;
+}
+
+export interface FormDraftCreateInput {
+  form_id: string;
+  title?: string;
+  description?: string;
+  logo_url?: string;
+  fields?: FormField[];
+  require_consent?: boolean;
+  consent_heading?: string;
+  consent_text?: string;
+  consent_require_location?: boolean;
+}
+
+// ============================================================
+// Duplicate/Clone Types (NEW)
+// ============================================================
+
+export interface DuplicateFormOptions {
+  copy_questions: boolean;
+  copy_settings: boolean;
+  copy_logo: boolean;
+}
+
+export interface DuplicateFormRequest {
+  title: string;
+  options: DuplicateFormOptions;
+}
+
+export interface DuplicateFormResponse {
+  new_form_id: string;
+  code: string;
+  message: string;
+}
+
+// ============================================================
+// Revert Types (NEW)
+// ============================================================
+
+export interface RevertFormRequest {
+  to_version: number;
+  notes?: string;
+}
+
+export interface RevertFormResponse {
+  draft_id: string;
+  message: string;
 }
 
 // ============================================================

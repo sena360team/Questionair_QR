@@ -11,15 +11,15 @@ import {
   Download,
   Filter
 } from 'lucide-react';
-import { formatDate, formatNumber, groupBy } from '@/lib/utils';
+import { formatNumber, groupBy } from '@/lib/utils';
 
-// Simple bar chart component (ไม่ต้องใช้ recharts)
+// Simple bar chart component
 function SimpleBarChart({ data, maxValue }: { data: { label: string; value: number }[]; maxValue: number }) {
   return (
     <div className="space-y-3">
       {data.map((item) => (
         <div key={item.label} className="flex items-center gap-4">
-          <span className="text-sm text-slate-600 w-20 truncate">{item.label}</span>
+          <span className="text-sm text-slate-600 w-20 lg:w-24 truncate">{item.label}</span>
           <div className="flex-1 h-8 bg-slate-100 rounded-lg overflow-hidden">
             <div 
               className="h-full bg-blue-500 rounded-lg transition-all duration-500"
@@ -114,14 +114,14 @@ export default function AnalyticsPage() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">รายงานและ Analytics</h1>
           <p className="text-slate-500">วิเคราะห์ข้อมูลจากแบบสอบถามและ QR Codes</p>
         </div>
         
         {/* Date Range Filter */}
-        <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl p-1">
+        <div className="flex items-center gap-2 bg-white border-2 border-slate-300 rounded-xl p-1 self-start">
           {[
             { value: '7days', label: '7 วัน' },
             { value: '30days', label: '30 วัน' },
@@ -130,7 +130,7 @@ export default function AnalyticsPage() {
             <button
               key={option.value}
               onClick={() => setDateRange(option.value)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              className={`px-3 lg:px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 dateRange === option.value
                   ? 'bg-blue-600 text-white'
                   : 'text-slate-600 hover:bg-slate-50'
@@ -142,37 +142,38 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      {/* Stats Cards - Responsive Grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
         <StatCard
-          icon={<BarChart3 className="w-6 h-6" />}
+          icon={<BarChart3 className="w-5 h-5 lg:w-6 lg:h-6" />}
           label="คำตอบในช่วง"
           value={stats.filteredCount}
           color="blue"
         />
         <StatCard
-          icon={<QrCode className="w-6 h-6" />}
+          icon={<QrCode className="w-5 h-5 lg:w-6 lg:h-6" />}
           label="ยอดสแกนรวม"
           value={stats.totalScans}
           color="green"
         />
         <StatCard
-          icon={<TrendingUp className="w-6 h-6" />}
+          icon={<TrendingUp className="w-5 h-5 lg:w-6 lg:h-6" />}
           label="Conversion Rate"
           value={`${stats.conversionRate}%`}
           color="purple"
         />
         <StatCard
-          icon={<Calendar className="w-6 h-6" />}
+          icon={<Calendar className="w-5 h-5 lg:w-6 lg:h-6" />}
           label="คำตอบทั้งหมด"
           value={stats.totalSubmissions}
           color="amber"
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      {/* Charts Grid - Responsive: 1col mobile, 2col lg, 4col 2xl */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-4 gap-6 lg:gap-8">
         {/* Submissions Trend */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-200">
+        <div className="bg-white p-5 lg:p-6 rounded-2xl border-2 border-slate-300">
           <div className="flex items-center justify-between mb-6">
             <h3 className="font-semibold text-slate-900">แนวโน้มคำตอบ</h3>
             <span className="text-sm text-slate-500">{dateRange === '7days' ? '7 วัน' : dateRange === '30days' ? '30 วัน' : '90 วัน'} ล่าสุด</span>
@@ -184,7 +185,7 @@ export default function AnalyticsPage() {
         </div>
 
         {/* UTM Source */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-200">
+        <div className="bg-white p-5 lg:p-6 rounded-2xl border-2 border-slate-300">
           <div className="flex items-center justify-between mb-6">
             <h3 className="font-semibold text-slate-900">แหล่งที่มา (UTM Source)</h3>
           </div>
@@ -199,7 +200,7 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Location Stats */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-200">
+        <div className="bg-white p-5 lg:p-6 rounded-2xl border-2 border-slate-300">
           <div className="flex items-center justify-between mb-6">
             <h3 className="font-semibold text-slate-900 flex items-center gap-2">
               <MapPin className="w-5 h-5 text-blue-500" />
@@ -217,18 +218,18 @@ export default function AnalyticsPage() {
         </div>
 
         {/* QR Performance */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-200">
+        <div className="bg-white p-5 lg:p-6 rounded-2xl border-2 border-slate-300">
           <div className="flex items-center justify-between mb-6">
             <h3 className="font-semibold text-slate-900">ประสิทธิภาพ QR Code</h3>
           </div>
           <div className="space-y-4">
             {stats.qrStats.map((qr) => (
               <div key={qr.name} className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
-                <div>
-                  <p className="font-medium text-slate-900">{qr.name}</p>
+                <div className="min-w-0">
+                  <p className="font-medium text-slate-900 truncate">{qr.name}</p>
                   <p className="text-sm text-slate-500">{qr.scans} สแกน</p>
                 </div>
-                <div className="text-right">
+                <div className="text-right flex-shrink-0">
                   <p className="text-2xl font-bold text-slate-900">{qr.submissions}</p>
                   <p className="text-xs text-slate-500">คำตอบ</p>
                 </div>
@@ -262,14 +263,14 @@ function StatCard({ icon, label, value, color }: StatCardProps) {
   };
 
   return (
-    <div className="bg-white p-6 rounded-2xl border border-slate-200">
-      <div className="flex items-center gap-4">
-        <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${colors[color]}`}>
+    <div className="bg-white p-5 lg:p-6 rounded-2xl border-2 border-slate-300">
+      <div className="flex items-center gap-3 lg:gap-4">
+        <div className={`w-10 h-10 lg:w-12 lg:h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${colors[color]}`}>
           {icon}
         </div>
-        <div>
-          <p className="text-3xl font-bold text-slate-900">{value}</p>
-          <p className="text-sm text-slate-500">{label}</p>
+        <div className="min-w-0">
+          <p className="text-xl lg:text-3xl font-bold text-slate-900 truncate">{value}</p>
+          <p className="text-xs lg:text-sm text-slate-500 truncate">{label}</p>
         </div>
       </div>
     </div>

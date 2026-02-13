@@ -100,7 +100,7 @@ export function AnalyticsDashboard({ submissions, qrCodes }: AnalyticsProps) {
       {/* Charts Row 1 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Submissions Trend */}
-        <div className="bg-white p-6 rounded-xl border border-slate-200">
+        <div className="bg-white p-6 rounded-xl border-2 border-slate-300">
           <h3 className="font-semibold text-slate-900 mb-4">แนวโน้มคำตอบ (7 วัน)</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -135,7 +135,7 @@ export function AnalyticsDashboard({ submissions, qrCodes }: AnalyticsProps) {
         </div>
 
         {/* UTM Source Distribution */}
-        <div className="bg-white p-6 rounded-xl border border-slate-200">
+        <div className="bg-white p-6 rounded-xl border-2 border-slate-300">
           <h3 className="font-semibold text-slate-900 mb-4">แหล่งที่มา (UTM Source)</h3>
           <div className="h-64">
             {stats.utmSourceData.length > 0 ? (
@@ -178,12 +178,12 @@ export function AnalyticsDashboard({ submissions, qrCodes }: AnalyticsProps) {
       </div>
 
       {/* QR Code Performance */}
-      <div className="bg-white p-6 rounded-xl border border-slate-200">
+      <div className="bg-white p-6 rounded-xl border-2 border-slate-300">
         <h3 className="font-semibold text-slate-900 mb-4">ประสิทธิภาพ QR Code</h3>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-slate-200">
+              <tr className="border-b border-slate-300">
                 <th className="text-left py-3 px-4 font-medium text-slate-700">ชื่อ QR Code</th>
                 <th className="text-center py-3 px-4 font-medium text-slate-700">จำนวนสแกน</th>
                 <th className="text-center py-3 px-4 font-medium text-slate-700">คำตอบ</th>
@@ -199,7 +199,7 @@ export function AnalyticsDashboard({ submissions, qrCodes }: AnalyticsProps) {
                 </tr>
               ) : (
                 stats.qrPerformance.map((qr) => (
-                  <tr key={qr.name} className="border-b border-slate-100">
+                  <tr className="border-b border-slate-200" key={qr.name} className="border-b border-slate-300">
                     <td className="py-3 px-4">{qr.name}</td>
                     <td className="text-center py-3 px-4">{formatNumber(qr.scans)}</td>
                     <td className="text-center py-3 px-4 font-medium">{formatNumber(qr.submissions)}</td>
@@ -225,7 +225,7 @@ export function AnalyticsDashboard({ submissions, qrCodes }: AnalyticsProps) {
 
       {/* Location/Content Breakdown */}
       {stats.utmContentData.length > 0 && (
-        <div className="bg-white p-6 rounded-xl border border-slate-200">
+        <div className="bg-white p-6 rounded-xl border-2 border-slate-300">
           <h3 className="font-semibold text-slate-900 mb-4">คำตอบตามตำแหน่ง (UTM Content)</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -269,7 +269,7 @@ function StatCard({
   };
 
   return (
-    <div className="bg-white p-6 rounded-xl border border-slate-200">
+    <div className="bg-white p-6 rounded-xl border-2 border-slate-300">
       <div className="flex items-center gap-4">
         <div className={cn("p-3 rounded-lg", colorClasses[color])}>
           {icon}

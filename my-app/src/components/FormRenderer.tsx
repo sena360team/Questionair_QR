@@ -352,7 +352,7 @@ function FieldControl({ field, value, onChange }: Omit<FormFieldInputProps, 'err
                 "flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-all select-none",
                 value === option 
                   ? "border-blue-500 bg-blue-50" 
-                  : "border-slate-200 hover:border-slate-300"
+                  : "border-slate-300 hover:border-slate-300"
               )}
             >
               <input
@@ -370,7 +370,7 @@ function FieldControl({ field, value, onChange }: Omit<FormFieldInputProps, 'err
             <label
               className={cn(
                 "flex flex-col gap-2 p-3 border rounded-lg cursor-pointer transition-all select-none",
-                isOther ? "border-blue-500 bg-blue-50" : "border-slate-200 hover:border-slate-300"
+                isOther ? "border-blue-500 bg-blue-50" : "border-slate-300 hover:border-slate-300"
               )}
             >
               <div className="flex items-center gap-3">
@@ -389,7 +389,7 @@ function FieldControl({ field, value, onChange }: Omit<FormFieldInputProps, 'err
                   value={choiceOtherValue}
                   onChange={(e) => onChange(`other:${e.target.value}`)}
                   placeholder="ระบุคำตอบของคุณ"
-                  className="ml-7 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="ml-7 px-3 py-2 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                   autoFocus
                 />
               )}
@@ -431,7 +431,7 @@ function FieldControl({ field, value, onChange }: Omit<FormFieldInputProps, 'err
                 "flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-all select-none",
                 selectedValues.includes(option)
                   ? "border-blue-500 bg-blue-50"
-                  : "border-slate-200 hover:border-slate-300"
+                  : "border-slate-300 hover:border-slate-300"
               )}
             >
               <input
@@ -454,7 +454,7 @@ function FieldControl({ field, value, onChange }: Omit<FormFieldInputProps, 'err
             <label
               className={cn(
                 "flex flex-col gap-2 p-3 border rounded-lg cursor-pointer transition-all select-none",
-                hasOther ? "border-blue-500 bg-blue-50" : "border-slate-200 hover:border-slate-300"
+                hasOther ? "border-blue-500 bg-blue-50" : "border-slate-300 hover:border-slate-300"
               )}
             >
               <div className="flex items-center gap-3">
@@ -472,7 +472,7 @@ function FieldControl({ field, value, onChange }: Omit<FormFieldInputProps, 'err
                   value={multiOtherValue}
                   onChange={(e) => updateOtherValue(e.target.value)}
                   placeholder="ระบุคำตอบของคุณ"
-                  className="ml-7 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="ml-7 px-3 py-2 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                   autoFocus
                 />
               )}
@@ -522,6 +522,48 @@ function FieldControl({ field, value, onChange }: Omit<FormFieldInputProps, 'err
         />
       );
 
+    case 'dropdown':
+      const dropdownOptions = field.options || [];
+      const dropdownValue = String(value || '');
+      const isDropdownOther = dropdownValue.startsWith('other:');
+      const dropdownOtherValue = isDropdownOther ? dropdownValue.replace('other:', '') : '';
+      
+      return (
+        <div className="space-y-2">
+          <select
+            value={isDropdownOther ? '_other_' : dropdownValue}
+            onChange={(e) => {
+              const val = e.target.value;
+              if (val === '_other_') {
+                onChange('other:');
+              } else {
+                onChange(val);
+              }
+            }}
+            className={cn(baseClassName, "bg-white")}
+          >
+            <option value="" disabled>-- เลือก --</option>
+            {dropdownOptions.map((option, idx) => (
+              <option key={idx} value={option}>{option}</option>
+            ))}
+            {field.allow_other && (
+              <option value="_other_">อื่นๆ (โปรดระบุ)</option>
+            )}
+          </select>
+          
+          {isDropdownOther && (
+            <input
+              type="text"
+              value={dropdownOtherValue}
+              onChange={(e) => onChange(`other:${e.target.value}`)}
+              placeholder="ระบุคำตอบของคุณ"
+              className={cn(baseClassName, "mt-2")}
+              autoFocus
+            />
+          )}
+        </div>
+      );
+
     case 'heading':
       return (
         <div className="py-6">
@@ -532,7 +574,7 @@ function FieldControl({ field, value, onChange }: Omit<FormFieldInputProps, 'err
     
     case 'section':
       return (
-        <div className="border border-slate-200 rounded-xl bg-white p-6 my-4 shadow-sm">
+        <div className="border-2 border-slate-300 rounded-xl bg-white p-6 my-4 shadow-sm">
           {field.label && <h4 className="text-lg font-semibold text-slate-900 mb-2">{field.label}</h4>}
           {field.helpText && <p className="text-slate-600 whitespace-pre-wrap">{field.helpText}</p>}
         </div>
@@ -540,7 +582,7 @@ function FieldControl({ field, value, onChange }: Omit<FormFieldInputProps, 'err
 
     case 'info_box':
       return (
-        <div className="border border-slate-200 rounded-xl bg-white p-6 my-4 shadow-sm">
+        <div className="border-2 border-slate-300 rounded-xl bg-white p-6 my-4 shadow-sm">
           {field.label && (
             <h4 className="text-lg font-semibold text-slate-900 mb-3">{field.label}</h4>
           )}

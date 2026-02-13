@@ -49,6 +49,14 @@ export const getSupabaseBrowser = () => {
   return browserClient;
 };
 
+// Get fresh client (for operations that need guaranteed auth)
+export const getFreshSupabaseClient = () => {
+  if (typeof window === 'undefined') {
+    throw new Error('getFreshSupabaseClient ใช้ได้เฉพาะ client-side');
+  }
+  return createClient();
+};
+
 // ============================================================
 // Projects API
 // ============================================================

@@ -49,6 +49,17 @@ const config: Config = {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      // Extended breakpoints for ultra-wide screens
+      screens: {
+        '3xl': '1920px',
+        '4xl': '2560px',
+      },
+      maxWidth: {
+        '8xl': '88rem',    // 1408px
+        '9xl': '96rem',    // 1536px
+        'screen-3xl': '1920px',
+        'screen-4xl': '2560px',
+      },
     },
   },
   plugins: [require("tailwindcss-animate")],

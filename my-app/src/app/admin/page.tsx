@@ -9,9 +9,11 @@ import {
   TrendingUp, 
   TrendingDown,
   ArrowRight,
-  Calendar
+  Calendar,
+  ChevronRight
 } from 'lucide-react';
 import { formatDate, formatNumber } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 
 export default function DashboardPage() {
   const { forms, loading: formsLoading } = useForms();
@@ -77,8 +79,8 @@ export default function DashboardPage() {
         <p className="text-slate-500">ภาพรวมระบบแบบสอบถามของคุณ</p>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      {/* Stats Cards - Responsive Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-4 gap-4 lg:gap-6">
         <StatCard
           icon={<FileText className="w-6 h-6" />}
           label="แบบสอบถาม"
@@ -111,20 +113,21 @@ export default function DashboardPage() {
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Recent Forms */}
-        <div className="lg:col-span-2 space-y-6">
+      {/* Main Content Grid - Wide Layout */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 2xl:grid-cols-4 gap-6 lg:gap-8">
+        {/* Recent Forms - Takes 2/3 on xl, 3/4 on 2xl */}
+        <div className="xl:col-span-2 2xl:col-span-3 space-y-6">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-slate-900">แบบสอบถามล่าสุด</h2>
             <Link 
               href="/admin/forms" 
               className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
             >
-              ดูทั้งหมด <ArrowRight className="w-4 h-4" />
+              ดูทั้งหมด <ChevronRight className="w-4 h-4" />
             </Link>
           </div>
 
-          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+          <div className="bg-white rounded-2xl border-2 border-slate-300 overflow-hidden">
             {forms.length === 0 ? (
               <div className="p-12 text-center text-slate-500">
                 <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
@@ -137,18 +140,18 @@ export default function DashboardPage() {
                 </Link>
               </div>
             ) : (
-              <div className="divide-y divide-slate-100">
-                {forms.slice(0, 5).map((form) => (
+              <div className="divide-y divide-slate-200">
+                {forms.slice(0, 10).map((form) => (
                   <div 
                     key={form.id} 
-                    className="p-6 flex items-center justify-between hover:bg-slate-50 transition-colors"
+                    className="p-4 lg:p-6 flex items-center justify-between hover:bg-slate-50 transition-colors"
                   >
                     <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center">
+                      <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0">
                         <FileText className="w-6 h-6 text-blue-600" />
                       </div>
-                      <div>
-                        <h3 className="font-medium text-slate-900">{form.title}</h3>
+                      <div className="min-w-0">
+                        <h3 className="font-medium text-slate-900 truncate">{form.title}</h3>
                         <p className="text-sm text-slate-500">
                           {form.fields?.length || 0} คำถาม • สร้างเมื่อ {formatDate(form.created_at, { 
                             year: 'numeric', 
@@ -158,8 +161,8 @@ export default function DashboardPage() {
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-6">
-                      <div className="text-right">
+                    <div className="flex items-center gap-4 lg:gap-6">
+                      <div className="text-right hidden sm:block">
                         <p className="text-2xl font-bold text-slate-900">
                           {submissions.filter(s => s.form_id === form.id).length}
                         </p>
@@ -169,7 +172,7 @@ export default function DashboardPage() {
                         href={`/admin/forms/${form.id}`}
                         className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
                       >
-                        <ArrowRight className="w-5 h-5" />
+                        <ChevronRight className="w-5 h-5" />
                       </Link>
                     </div>
                   </div>
@@ -179,11 +182,11 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Recent Activity */}
+        {/* Recent Activity - Takes 1/3 on xl, 1/4 on 2xl */}
         <div className="space-y-6">
           <h2 className="text-lg font-semibold text-slate-900">กิจกรรมล่าสุด</h2>
           
-          <div className="bg-white rounded-2xl border border-slate-200 p-6">
+          <div className="bg-white rounded-2xl border-2 border-slate-300 p-6">
             {recentSubmissions.length === 0 ? (
               <p className="text-center text-slate-500 py-8">ยังไม่มีกิจกรรม</p>
             ) : (
@@ -236,21 +239,21 @@ interface StatCardProps {
 function StatCard({ icon, label, value, trend, trendUp, href, highlight }: StatCardProps) {
   const content = (
     <div className={cn(
-      "p-6 rounded-2xl transition-all",
+      "p-4 lg:p-6 rounded-2xl transition-all h-full",
       highlight 
         ? "bg-blue-600 text-white" 
-        : "bg-white border border-slate-200 hover:border-blue-300 hover:shadow-lg"
+        : "bg-white border-2 border-slate-300 hover:border-blue-300 hover:shadow-lg"
     )}>
       <div className="flex items-start justify-between">
         <div className={cn(
-          "w-12 h-12 rounded-xl flex items-center justify-center",
+          "w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0",
           highlight ? "bg-blue-500 text-white" : "bg-slate-50 text-slate-600"
         )}>
           {icon}
         </div>
         {trend && (
           <span className={cn(
-            "text-xs flex items-center gap-1",
+            "text-xs flex items-center gap-1 flex-shrink-0",
             highlight ? "text-blue-100" : "text-slate-500"
           )}>
             {trendUp !== undefined && (
@@ -264,7 +267,7 @@ function StatCard({ icon, label, value, trend, trendUp, href, highlight }: StatC
       </div>
       <div className="mt-4">
         <p className={cn(
-          "text-3xl font-bold",
+          "text-2xl lg:text-3xl font-bold",
           highlight ? "text-white" : "text-slate-900"
         )}>
           {formatNumber(value)}
@@ -289,5 +292,3 @@ function StatCard({ icon, label, value, trend, trendUp, href, highlight }: StatC
 
   return content;
 }
-
-import { cn } from '@/lib/utils';
