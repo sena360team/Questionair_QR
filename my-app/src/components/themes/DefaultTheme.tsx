@@ -49,7 +49,7 @@ export function DefaultTheme({
 
       {/* Form Content */}
       <div className="p-6 lg:p-8 space-y-6">
-        {/* Calculate question numbers excluding section/heading */}
+        {/* Calculate question numbers excluding section/heading/info_box */}
         {(() => {
           let questionNumber = 0;
           return form.fields.map((field) => {
@@ -63,6 +63,15 @@ export function DefaultTheme({
                   {field.description && (
                     <p className="text-sm text-slate-500 mt-1">{field.description}</p>
                   )}
+                </div>
+              );
+            }
+            
+            // Info box - render without number but show content
+            if (field.type === 'info_box') {
+              return (
+                <div key={field.id} className="ml-8">
+                  {renderField(field)}
                 </div>
               );
             }
