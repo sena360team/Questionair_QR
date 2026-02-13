@@ -305,30 +305,12 @@ export default function FormPage() {
           </div>
         )}
         
-        {/* Header - Blue Gradient */}
-        {console.log('🔍 Rendering header:', { logo_url: form.logo_url, title: form.title })}
-        <div className="bg-gradient-to-b from-blue-600 to-blue-500 rounded-xl p-8 mb-6 text-center text-white shadow-lg">
-          {form.logo_url ? (
-            <div className="mb-4">
-              <img src={form.logo_url} alt="Logo" className="h-16 mx-auto object-contain" />
-            </div>
-          ) : (
-            <div className="mb-4 text-blue-200 text-sm">ไม่มี Logo</div>
-          )}
-          <h1 className="text-2xl font-bold mb-3">{form.title}</h1>
-          {form.description && (
-            <p className="text-blue-100 text-sm">{form.description}</p>
-          )}
-        </div>
-
-        {/* Form */}
-        <div className="bg-white rounded-xl border-2 border-slate-300 p-8">
-          <FormRenderer
-            form={form}
-            onSubmit={handleSubmit}
-            submitting={submitting}
-          />
-        </div>
+        {/* Form with Theme */}
+        <FormRenderer
+          form={form}
+          onSubmit={handleSubmit}
+          submitting={submitting}
+        />
 
         {/* Footer */}
         <div className="text-center mt-8 text-sm text-slate-400">

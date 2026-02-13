@@ -654,22 +654,15 @@ export default function EditFormPage() {
               </div>
               
               {/* Actual Form Preview */}
-              <div className="max-w-3xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
-                <div className="bg-gradient-to-b from-blue-600 to-blue-500 p-6 text-center text-white">
-                  {logoUrl && <img src={logoUrl} alt="Logo" className="h-16 mx-auto object-contain mb-4" />}
-                  <h1 className="text-2xl font-bold mb-2">{title || 'ชื่อแบบสอบถาม'}</h1>
-                  {description && <p className="text-blue-100 text-sm">{description}</p>}
-                </div>
-                <div className="p-6">
-                  <FormRenderer 
-                    form={previewForm} 
-                    onSubmit={(data) => {
-                      alert('นี่คือตัวอย่างฟอร์มเท่านั้น\n\nข้อมูลที่กรอก:\n' + JSON.stringify(data, null, 2));
-                    }} 
-                    submitting={false}
-                    submitLabel="ส่งคำตอบ (ตัวอย่าง)"
-                  />
-                </div>
+              <div className="max-w-3xl mx-auto">
+                <FormRenderer 
+                  form={previewForm} 
+                  onSubmit={(data) => {
+                    alert('นี่คือตัวอย่างฟอร์มเท่านั้น\n\nข้อมูลที่กรอก:\n' + JSON.stringify(data, null, 2));
+                  }} 
+                  submitting={false}
+                  submitLabel="ส่งคำตอบ (ตัวอย่าง)"
+                />
               </div>
               
               {/* Bottom spacing */}

@@ -379,39 +379,38 @@ export default function CreateFormPage() {
 
             {/* Full Size Form Preview */}
             <div className="p-8 bg-slate-50 overflow-y-auto">
-              <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
-                {/* Form Header */}
-                <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-8 text-white text-center">
-                  {logoUrl && (
-                    <div className="mb-4">
-                      <img src={logoUrl} alt="Logo" className="h-16 mx-auto object-contain" />
+              <div className="max-w-4xl mx-auto">
+                {fields.length === 0 ? (
+                  <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+                    <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-8 text-white text-center">
+                      {logoUrl && (
+                        <div className="mb-4">
+                          <img src={logoUrl} alt="Logo" className="h-16 mx-auto object-contain" />
+                        </div>
+                      )}
+                      <h1 className="text-2xl font-bold">
+                        {title || 'ชื่อแบบสอบถาม'}
+                      </h1>
+                      {description && (
+                        <p className="text-blue-100 mt-3 text-base">{description}</p>
+                      )}
                     </div>
-                  )}
-                  <h1 className="text-2xl font-bold">
-                    {title || 'ชื่อแบบสอบถาม'}
-                  </h1>
-                  {description && (
-                    <p className="text-blue-100 mt-3 text-base">{description}</p>
-                  )}
-                </div>
-
-                {/* Form Content */}
-                <div className="p-8">
-                  {fields.length === 0 ? (
-                    <div className="text-center py-16 text-slate-400">
-                      <FileText className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                      <p className="text-lg">ยังไม่มีคำถาม</p>
-                      <p className="text-sm">เพิ่มคำถามจากด้านล่าง</p>
+                    <div className="p-8">
+                      <div className="text-center py-16 text-slate-400">
+                        <FileText className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                        <p className="text-lg">ยังไม่มีคำถาม</p>
+                        <p className="text-sm">เพิ่มคำถามจากด้านล่าง</p>
+                      </div>
                     </div>
-                  ) : (
-                    <FormRenderer
-                      form={previewForm}
-                      onSubmit={() => {}}
-                      submitting={false}
-                      submitLabel="ส่งคำตอบ"
-                    />
-                  )}
-                </div>
+                  </div>
+                ) : (
+                  <FormRenderer
+                    form={previewForm}
+                    onSubmit={() => {}}
+                    submitting={false}
+                    submitLabel="ส่งคำตอบ"
+                  />
+                )}
               </div>
 
               <div className="text-center mt-8 text-slate-400 text-sm">
