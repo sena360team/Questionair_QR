@@ -305,28 +305,31 @@ function FormCard({ form, submissionCount, onDelete, onDuplicate }: FormCardProp
         </span>
         
         <div className="flex items-center gap-1">
+          {/* View Form Button - Published only */}
           {form.status === 'published' ? (
             <Link
               href={`/form/${form.slug}`}
               target="_blank"
-              className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-              title="ดูฟอร์ม"
+              className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-all border border-blue-200 hover:border-blue-300"
+              title="ไปที่แบบสอบถาม"
             >
               <ExternalLink className="w-4 h-4" />
             </Link>
           ) : (
             <span
-              className="p-2 text-slate-200 cursor-not-allowed rounded-lg"
-              title="ไม่สามารถดูฟอร์มได้"
+              className="p-2 text-slate-300 cursor-not-allowed rounded-lg border border-slate-100"
+              title="ยังไม่สามารถดูได้ (รอ Publish)"
             >
               <ExternalLink className="w-4 h-4" />
             </span>
           )}
+          
+          {/* QR Code Button - Published only */}
           {form.status === 'published' && (
             <Link
               href={`/admin/qr-codes?form=${form.id}`}
-              className="p-2 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-all"
-              title="สร้าง QR Code"
+              className="p-2 text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-all border border-purple-200 hover:border-purple-300"
+              title="จัดการ QR Code"
             >
               <QrCode className="w-4 h-4" />
             </Link>
@@ -335,11 +338,10 @@ function FormCard({ form, submissionCount, onDelete, onDuplicate }: FormCardProp
           {/* Edit Button */}
           <Link
             href={form.status === 'published' ? `/admin/forms/${form.id}?draft=true` : `/admin/forms/${form.id}`}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+            className="p-2 text-slate-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all border border-slate-200 hover:border-blue-200"
             title={form.status === 'published' ? 'แก้ไข (Draft)' : 'แก้ไข'}
           >
             <Edit className="w-4 h-4" />
-            <span className="hidden sm:inline">{form.status === 'published' ? 'แก้ไข' : 'แก้ไข'}</span>
           </Link>
         </div>
       </div>

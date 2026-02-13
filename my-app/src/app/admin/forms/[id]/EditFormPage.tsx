@@ -34,6 +34,7 @@ export default function EditFormPage() {
   const [showPreview, setShowPreview] = useState(false);
   const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   
   // Draft system
   const { draft, saveDraft, discard: discardDraft } = useFormDraft(formId);
@@ -204,11 +205,14 @@ export default function EditFormPage() {
     }
   };
 
-  const handleDiscardDraft = async () => {
-    if (!confirm('คุณแน่ใจหรือไม่ว่าต้องการละทิ้ง Draft?')) return;
-    
+  const handleDiscardDraft = () => {
+    setShowDiscardConfirm(true);
+  };
+
+  const confirmDiscardDraft = async () => {
     try {
       await discardDraft();
+      setShowDiscardConfirm(false);
       router.refresh();
       window.location.href = `/admin/forms/${formId}`;
     } catch (err) {
@@ -241,6 +245,7 @@ export default function EditFormPage() {
           consent_text: consentText,
           consent_require_location: consentRequireLocation,
           is_active: true,
+          status: 'published',
           current_version: newVersion,
           updated_at: new Date().toISOString(),
         })
@@ -322,8 +327,8 @@ export default function EditFormPage() {
       {isEditingDraft && (
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
           <div className="flex items-start gap-3">
-            <Edit3 className="w-5 h-5 text-amber-600 mt-0.5" />
-            <div className="flex-1">
+            <Edit3 className="w-5 h-5 text-amber-600 mt-0.5 shrink-0" />
+            <div className="flex-1 min-w-0">
               <p className="font-medium text-amber-900">
                 คุณกำลังแก้ไข Draft
                 {draft.is_revert && (
@@ -336,15 +341,13 @@ export default function EditFormPage() {
                 ฟอร์มที่ Publish อยู่ (v{form.current_version}) ยังไม่มีการเปลี่ยนแปลง 
                 ผู้ใช้ยังเห็นเวอร์ชันเดิมอยู่
               </p>
-              <div className="flex gap-2 mt-3">
-                <button 
-                  onClick={handleDiscardDraft}
-                  className="px-3 py-1.5 text-amber-700 text-sm hover:underline"
-                >
-                  ละทิ้ง Draft
-                </button>
-              </div>
             </div>
+            <button 
+              onClick={handleDiscardDraft}
+              className="shrink-0 px-4 py-2 bg-amber-100 hover:bg-amber-200 text-amber-800 text-sm font-medium rounded-lg transition-colors"
+            >
+              ละทิ้ง Draft
+            </button>
           </div>
         </div>
       )}
@@ -644,6 +647,53 @@ export default function EditFormPage() {
           }`}>
             {toast.type === 'success' ? <CheckCircle className="w-6 h-6" /> : <AlertCircle className="w-6 h-6" />}
             <span className="font-medium">{toast.message}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Discard Draft Confirmation Modal */}
+      {showDiscardConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl">
+            <div className="flex items-center gap-3 text-red-600 mb-4">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                <AlertCircle className="w-6 h-6" />
+              </div>
+              <h3 className="text-lg font-semibold">ยืนยันการละทิ้ง Draft</h3>
+            </div>
+            
+            <p className="text-slate-600 mb-4">
+              คุณแน่ใจหรือไม่ว่าต้องการละทิ้ง Draft นี้?
+            </p>
+            
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5 shrink-0" />
+                <div className="text-sm text-amber-800">
+                  <p className="font-medium mb-1">คำเตือน:</p>
+                  <ul className="space-y-1 list-disc list-inside">
+                    <li>การเปลี่ยนแปลงทั้งหมดจะสูญหาย</li>
+                    <li>ฟอร์มจะกลับไปใช้ Version ที่ Publish ล่าสุด</li>
+                    <li>ไม่สามารถกู้คืนได้</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDiscardConfirm(false)}
+                className="flex-1 py-2.5 px-4 border-2 border-slate-300 text-slate-700 rounded-xl hover:bg-slate-50 font-medium transition-colors"
+              >
+                ยกเลิก
+              </button>
+              <button
+                onClick={confirmDiscardDraft}
+                className="flex-1 py-2.5 px-4 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium transition-colors"
+              >
+                ละทิ้ง Draft
+              </button>
+            </div>
           </div>
         </div>
       )}

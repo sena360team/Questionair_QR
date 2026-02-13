@@ -39,6 +39,12 @@ export function VersionHistory({ formId, currentVersion }: VersionHistoryProps) 
   const [showRevertConfirm, setShowRevertConfirm] = useState<FormVersion | null>(null);
   const [revertNotes, setRevertNotes] = useState('');
   const [isReverting, setIsReverting] = useState(false);
+  const [toast, setToast] = useState<{type: 'success' | 'error', message: string} | null>(null);
+
+  const showToast = (type: 'success' | 'error', message: string) => {
+    setToast({ type, message });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   const toggleExpand = (version: number) => {
     const newExpanded = new Set(expandedVersions);
@@ -54,15 +60,18 @@ export function VersionHistory({ formId, currentVersion }: VersionHistoryProps) 
     if (!showRevertConfirm) return;
     
     setIsReverting(true);
+    
     try {
       const result = await revertToVersion(showRevertConfirm.version, revertNotes);
+      // Close modal first, then redirect
+      setShowRevertConfirm(null);
+      setRevertNotes('');
+      // Redirect to draft mode
       router.push(`/admin/forms/${formId}?draft=true`);
     } catch (err) {
       console.error('Revert failed:', err);
-      alert('เกิดข้อผิดพลาดในการ revert');
-    } finally {
+      showToast('error', 'Revert ไม่สำเร็จ: ' + (err instanceof Error ? err.message : 'Unknown error'));
       setIsReverting(false);
-      setShowRevertConfirm(null);
     }
   };
 
@@ -73,12 +82,12 @@ export function VersionHistory({ formId, currentVersion }: VersionHistoryProps) 
         copy_questions: true,
         copy_settings: true,
         copy_logo: !!version.logo_url,
-        copy_qr_codes: false,
       });
+      showToast('success', 'คัดลอกฟอร์มสำเร็จ');
       router.push(`/admin/forms/${result.new_form_id}`);
     } catch (err) {
       console.error('Duplicate failed:', err);
-      alert('เกิดข้อผิดพลาดในการคัดลอก');
+      showToast('error', 'คัดลอกไม่สำเร็จ: ' + (err instanceof Error ? err.message : 'Unknown error'));
     }
   };
 
@@ -376,6 +385,18 @@ export function VersionHistory({ formId, currentVersion }: VersionHistoryProps) 
                 {isReverting ? 'กำลังดำเนินการ...' : 'ยืนยัน Revert'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Toast Notification */}
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-2 fade-in duration-300">
+          <div className={`flex items-center gap-3 px-6 py-4 rounded-xl shadow-2xl ${
+            toast.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
+          }`}>
+            {toast.type === 'success' ? <CheckCircle className="w-6 h-6" /> : <AlertCircle className="w-6 h-6" />}
+            <span className="font-medium">{toast.message}</span>
           </div>
         </div>
       )}
