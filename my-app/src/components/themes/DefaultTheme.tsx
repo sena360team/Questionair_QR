@@ -21,7 +21,7 @@ export function DefaultTheme({
   renderSubmitButton,
 }: DefaultThemeProps) {
   return (
-    <div>
+    <div className="bg-white rounded-xl overflow-hidden">
       {/* Header -->
       <div className="bg-gradient-to-b from-blue-600 to-blue-500 p-6 lg:p-8 text-center text-white">
         {form.logo_url && (
