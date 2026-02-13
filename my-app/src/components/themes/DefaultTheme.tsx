@@ -56,7 +56,7 @@ export function DefaultTheme({
             // Section/Heading fields render as section headers (no number, no input)
             if (field.type === 'section' || field.type === 'heading') {
               return (
-                <div key={field.id} className="pt-4 pb-2 border-b-2 border-slate-200">
+                <div key={field.id} className="pt-6 pb-2">
                   <h3 className="text-lg font-semibold text-slate-800">
                     {field.label}
                   </h3>
