@@ -62,7 +62,7 @@ export function CardGroupsTheme({
           <img 
             src={form.logo_url} 
             alt="Logo" 
-            className="h-16 mx-auto object-contain mb-4 bg-white/20 rounded-xl p-2"
+            className="h-16 mx-auto object-contain mb-4"
           />
         )}
         <h1 className="text-2xl lg:text-3xl font-bold mb-2 text-center">

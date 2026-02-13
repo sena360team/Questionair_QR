@@ -29,7 +29,7 @@ export function DefaultTheme({
             <img 
               src={form.logo_url} 
               alt={form.title || 'Logo'} 
-              className="h-20 lg:h-24 mx-auto object-contain mb-4 bg-white/10 rounded-xl p-2"
+              className="h-20 lg:h-24 mx-auto object-contain mb-4"
             />
             <h1 className="text-xl lg:text-2xl font-bold">
               {form.title}
