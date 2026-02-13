@@ -240,12 +240,12 @@ export function VersionHistory({ formId, currentVersion }: VersionHistoryProps) 
         </div>
         
         {/* Right: Preview Panel */}
-        <div className="border-2 border-slate-300 rounded-xl p-6 bg-slate-50">
+        <div className="border-2 border-slate-300 rounded-xl p-4 bg-slate-50 overflow-y-auto max-h-[calc(100vh-200px)]">
           {selectedVersion ? (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="font-semibold text-slate-900">
-                  Preview: v{selectedVersion.version}
+                  ตัวอย่าง: v{selectedVersion.version}
                 </h3>
                 <button
                   onClick={() => setSelectedVersion(null)}
@@ -255,7 +255,17 @@ export function VersionHistory({ formId, currentVersion }: VersionHistoryProps) 
                 </button>
               </div>
               
-              <div className="bg-white rounded-xl border-2 border-slate-300 overflow-hidden">
+              {/* Preview Mode Banner */}
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-center gap-3">
+                <Eye className="w-5 h-5 text-amber-600" />
+                <div>
+                  <p className="font-medium text-amber-800 text-sm">โหมดตัวอย่าง</p>
+                  <p className="text-xs text-amber-600">ฟอร์มนี้แสดงตัวอย่างการใช้งานจริง แต่ไม่บันทึกข้อมูล</p>
+                </div>
+              </div>
+              
+              {/* Actual Form Preview with FormRenderer */}
+              <div className="bg-white rounded-xl border-2 border-slate-300 overflow-hidden shadow-lg">
                 {/* Form Header */}
                 <div className="bg-gradient-to-b from-blue-600 to-blue-500 p-6 text-center text-white">
                   {selectedVersion.logo_url && (
@@ -275,26 +285,34 @@ export function VersionHistory({ formId, currentVersion }: VersionHistoryProps) 
                   )}
                 </div>
                 
-                {/* Form Fields Preview */}
-                <div className="p-6 space-y-4">
-                  {(selectedVersion.fields as FormField[]).map((field, idx) => (
-                    <div key={field.id} className="border-2 border-slate-300 rounded-lg p-3">
-                      <div className="flex items-start gap-2">
-                        <span className="text-sm text-slate-400 w-6">{idx + 1}.</span>
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-slate-700">
-                            {field.label}
-                            {field.required && (
-                              <span className="text-red-500 ml-1">*</span>
-                            )}
-                          </p>
-                          <p className="text-xs text-slate-400 mt-0.5 capitalize">
-                            {field.type}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                {/* Interactive Form */}
+                <div className="p-6">
+                  <FormRenderer 
+                    form={{
+                      id: 'preview',
+                      code: `v${selectedVersion.version}`,
+                      slug: 'preview',
+                      title: selectedVersion.title || '',
+                      description: selectedVersion.description || '',
+                      logo_url: selectedVersion.logo_url,
+                      fields: selectedVersion.fields as FormField[],
+                      require_consent: selectedVersion.require_consent,
+                      consent_heading: selectedVersion.consent_heading,
+                      consent_text: selectedVersion.consent_text,
+                      consent_require_location: selectedVersion.consent_require_location,
+                      is_active: true,
+                      allow_multiple_responses: false,
+                      status: 'published',
+                      current_version: selectedVersion.version,
+                      created_at: selectedVersion.published_at || '',
+                      updated_at: selectedVersion.published_at || '',
+                    }}
+                    onSubmit={(data) => {
+                      alert('นี่คือตัวอย่างฟอร์มเท่านั้น (Version History)\n\nข้อมูลที่กรอก:\n' + JSON.stringify(data, null, 2));
+                    }}
+                    submitting={false}
+                    submitLabel="ส่งคำตอบ (ตัวอย่าง)"
+                  />
                 </div>
               </div>
             </div>
@@ -302,6 +320,7 @@ export function VersionHistory({ formId, currentVersion }: VersionHistoryProps) 
             <div className="text-center py-12 text-slate-400">
               <Eye className="w-12 h-12 mx-auto mb-3 opacity-50" />
               <p>เลือก version เพื่อดูตัวอย่าง</p>
+              <p className="text-sm mt-1">กด "ดูตัวอย่าง" ที่ version ที่ต้องการ</p>
             </div>
           )}
         </div>

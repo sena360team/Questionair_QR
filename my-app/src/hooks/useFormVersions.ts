@@ -28,10 +28,7 @@ export function useFormVersions(formId: string): UseFormVersionsReturn {
       
       const { data: versionsData, error: fetchError } = await supabase
         .from('form_versions')
-        .select(`
-          *,
-          published_by_user:published_by(id, email)
-        `)
+        .select('*')
         .eq('form_id', formId)
         .order('version', { ascending: false });
       
@@ -55,17 +52,10 @@ export function useFormVersions(formId: string): UseFormVersionsReturn {
   ): Promise<RevertFormResponse> => {
     const supabase = getSupabaseBrowser();
     
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      throw new Error('User not authenticated');
-    }
-    
-    // Call the database function
+    // Call the database function (auth.uid() will be used in SQL for public access)
     const { data, error: rpcError } = await supabase.rpc('create_draft_from_version', {
       p_form_id: formId,
       p_version: version,
-      p_user_id: user.id,
       p_notes: notes || null,
     });
     

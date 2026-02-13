@@ -15,6 +15,7 @@ import {
   Rocket, History, Settings, FileEdit, Copy, RotateCcw, MoreVertical,
   Edit3, GitBranch
 } from 'lucide-react';
+// Eye is already imported
 import { getVersionBadgeStyle } from '@/lib/versionColors';
 import { cn } from '@/lib/utils';
 
@@ -166,7 +167,8 @@ export default function EditFormPage() {
       });
       showToast('success', 'บันทึก Draft สำเร็จ');
     } catch (err) {
-      showToast('error', 'เกิดข้อผิดพลาดในการบันทึก');
+      console.error('Save as draft error:', err);
+      showToast('error', 'เกิดข้อผิดพลาดในการบันทึก: ' + (err instanceof Error ? err.message : 'Unknown error'));
     } finally {
       setIsSaving(false);
     }
@@ -195,7 +197,8 @@ export default function EditFormPage() {
       if (error) throw error;
       showToast('success', 'บันทึกสำเร็จ');
     } catch (err) {
-      showToast('error', 'เกิดข้อผิดพลาดในการบันทึก');
+      console.error('Save draft error:', err);
+      showToast('error', 'เกิดข้อผิดพลาดในการบันทึก: ' + (err instanceof Error ? err.message : 'Unknown error'));
     } finally {
       setIsSaving(false);
     }
@@ -588,17 +591,39 @@ export default function EditFormPage() {
               <h3 className="font-semibold">ตัวอย่าง</h3>
               <button onClick={() => setShowPreview(false)}><X className="w-6 h-6" /></button>
             </div>
-            <div className="p-8 bg-slate-50 overflow-y-auto">
-              <div className="max-w-4xl mx-auto bg-white rounded-xl shadow overflow-hidden">
-                <div className="bg-gradient-to-b from-blue-600 to-blue-500 p-8 text-center text-white shadow-lg">
-                  {logoUrl && <img src={logoUrl} alt="Logo" className="h-16 mx-auto object-contain mb-4" />}
-                  <h1 className="text-2xl font-bold mb-3">{title}</h1>
-                  {description && <p className="text-blue-100 text-sm">{description}</p>}
-                </div>
-                <div className="p-8">
-                  <FormRenderer form={previewForm} onSubmit={() => {}} submitting={false} />
+            <div className="p-4 bg-slate-100 overflow-y-auto">
+              {/* Preview Label */}
+              <div className="max-w-3xl mx-auto mb-4">
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-center gap-3">
+                  <Eye className="w-5 h-5 text-amber-600" />
+                  <div>
+                    <p className="font-medium text-amber-800">โหมดตัวอย่าง</p>
+                    <p className="text-sm text-amber-600">ฟอร์มนี้แสดงตัวอย่างการใช้งานจริง แต่ไม่บันทึกข้อมูล</p>
+                  </div>
                 </div>
               </div>
+              
+              {/* Actual Form Preview */}
+              <div className="max-w-3xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
+                <div className="bg-gradient-to-b from-blue-600 to-blue-500 p-6 text-center text-white">
+                  {logoUrl && <img src={logoUrl} alt="Logo" className="h-16 mx-auto object-contain mb-4" />}
+                  <h1 className="text-2xl font-bold mb-2">{title || 'ชื่อแบบสอบถาม'}</h1>
+                  {description && <p className="text-blue-100 text-sm">{description}</p>}
+                </div>
+                <div className="p-6">
+                  <FormRenderer 
+                    form={previewForm} 
+                    onSubmit={(data) => {
+                      alert('นี่คือตัวอย่างฟอร์มเท่านั้น\n\nข้อมูลที่กรอก:\n' + JSON.stringify(data, null, 2));
+                    }} 
+                    submitting={false}
+                    submitLabel="ส่งคำตอบ (ตัวอย่าง)"
+                  />
+                </div>
+              </div>
+              
+              {/* Bottom spacing */}
+              <div className="h-8"></div>
             </div>
           </div>
         </div>

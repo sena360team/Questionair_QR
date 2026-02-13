@@ -59,12 +59,6 @@ export function useFormDraft(formId: string): UseFormDraftReturn {
   const saveDraft = useCallback(async (draftData: Partial<FormDraftCreateInput>) => {
     const supabase = getSupabaseBrowser();
     
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      throw new Error('User not authenticated');
-    }
-    
     const upsertData = {
       form_id: formId,
       ...draftData,
@@ -89,17 +83,10 @@ export function useFormDraft(formId: string): UseFormDraftReturn {
   const submitForReview = useCallback(async (notes?: string) => {
     const supabase = getSupabaseBrowser();
     
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      throw new Error('User not authenticated');
-    }
-    
     const { error: updateError } = await supabase
       .from('form_drafts')
       .update({
         status: 'pending_review' as DraftStatus,
-        submitted_by: user.id,
         submitted_at: new Date().toISOString(),
         submitted_notes: notes || null,
         updated_at: new Date().toISOString(),
@@ -117,17 +104,10 @@ export function useFormDraft(formId: string): UseFormDraftReturn {
   const approve = useCallback(async (reviewNotes?: string) => {
     const supabase = getSupabaseBrowser();
     
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      throw new Error('User not authenticated');
-    }
-    
     const { error: updateError } = await supabase
       .from('form_drafts')
       .update({
         status: 'approved' as DraftStatus,
-        reviewed_by: user.id,
         reviewed_at: new Date().toISOString(),
         review_notes: reviewNotes || null,
         updated_at: new Date().toISOString(),
@@ -145,17 +125,10 @@ export function useFormDraft(formId: string): UseFormDraftReturn {
   const reject = useCallback(async (reviewNotes: string) => {
     const supabase = getSupabaseBrowser();
     
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      throw new Error('User not authenticated');
-    }
-    
     const { error: updateError } = await supabase
       .from('form_drafts')
       .update({
         status: 'rejected' as DraftStatus,
-        reviewed_by: user.id,
         reviewed_at: new Date().toISOString(),
         review_notes: reviewNotes,
         updated_at: new Date().toISOString(),
