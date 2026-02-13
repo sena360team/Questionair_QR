@@ -49,27 +49,49 @@ export function DefaultTheme({
 
       {/* Form Content */}
       <div className="p-6 lg:p-8 space-y-6">
-        {form.fields.map((field, index) => (
-          <div key={field.id} className="space-y-2">
-            <div className="flex items-start gap-2">
-              <span className="flex-shrink-0 w-6 h-6 bg-blue-100 text-blue-600 rounded-full text-xs font-medium flex items-center justify-center">
-                {index + 1}
-              </span>
-              <label className="flex-1 font-medium text-slate-900">
-                {field.label}
-                {field.required && (
-                  <span className="text-red-500 ml-1">*</span>
+        {/* Calculate question numbers excluding section/heading */}
+        {(() => {
+          let questionNumber = 0;
+          return form.fields.map((field) => {
+            // Section/Heading fields render as section headers (no number, no input)
+            if (field.type === 'section' || field.type === 'heading') {
+              return (
+                <div key={field.id} className="pt-4 pb-2 border-b-2 border-slate-200">
+                  <h3 className="text-lg font-semibold text-slate-800">
+                    {field.label}
+                  </h3>
+                  {field.description && (
+                    <p className="text-sm text-slate-500 mt-1">{field.description}</p>
+                  )}
+                </div>
+              );
+            }
+            
+            // Regular question field
+            questionNumber++;
+            return (
+              <div key={field.id} className="space-y-2">
+                <div className="flex items-start gap-2">
+                  <span className="flex-shrink-0 w-6 h-6 bg-blue-100 text-blue-600 rounded-full text-xs font-medium flex items-center justify-center">
+                    {questionNumber}
+                  </span>
+                  <label className="flex-1 font-medium text-slate-900">
+                    {field.label}
+                    {field.required && (
+                      <span className="text-red-500 ml-1">*</span>
+                    )}
+                  </label>
+                </div>
+                {field.description && (
+                  <p className="text-sm text-slate-500 ml-8">{field.description}</p>
                 )}
-              </label>
-            </div>
-            {field.description && (
-              <p className="text-sm text-slate-500 ml-8">{field.description}</p>
-            )}
-            <div className="ml-8">
-              {renderField(field)}
-            </div>
-          </div>
-        ))}
+                <div className="ml-8">
+                  {renderField(field)}
+                </div>
+              </div>
+            );
+          });
+        })()}
 
         {/* Consent Section */}
         {form.require_consent && (
