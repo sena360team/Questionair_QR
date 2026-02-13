@@ -62,6 +62,8 @@ export interface Form {
   fields_hash?: string;
   published_at?: string;
   published_by?: string | null;
+  // Theme
+  theme?: 'default' | 'card-groups' | 'step-wizard' | 'minimal';
   // Consent settings
   require_consent?: boolean;
   consent_heading?: string;  // หัวข้อ Consent (e.g., "การยินยอม", "ข้อตกลง")
@@ -151,6 +153,8 @@ export interface FormDraft {
   description?: string | null;
   logo_url?: string | null;
   fields: FormField[];
+  // Theme
+  theme?: 'default' | 'card-groups' | 'step-wizard' | 'minimal';
   // Consent Settings
   require_consent: boolean;
   consent_heading: string;
@@ -190,6 +194,7 @@ export interface FormDraftCreateInput {
   title?: string;
   description?: string;
   logo_url?: string;
+  theme?: 'default' | 'card-groups' | 'step-wizard' | 'minimal';
   fields?: FormField[];
   require_consent?: boolean;
   consent_heading?: string;

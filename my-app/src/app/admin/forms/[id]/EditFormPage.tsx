@@ -47,6 +47,7 @@ export default function EditFormPage() {
   const [description, setDescription] = useState('');
   const [fields, setFields] = useState<FormField[]>([]);
   const [logoUrl, setLogoUrl] = useState('');
+  const [theme, setTheme] = useState<'default' | 'card-groups' | 'step-wizard' | 'minimal'>('default');
   const [requireConsent, setRequireConsent] = useState(false);
   const [consentHeading, setConsentHeading] = useState('การยินยอม (Consent)');
   const [consentText, setConsentText] = useState('');
@@ -88,6 +89,7 @@ export default function EditFormPage() {
           setFields(draft.fields);
           setOriginalFields(JSON.parse(JSON.stringify(draft.fields)));
           setLogoUrl(draft.logo_url || '');
+          setTheme(draft.theme || 'default');
           setRequireConsent(draft.require_consent);
           setConsentHeading(draft.consent_heading);
           setConsentText(draft.consent_text || '');
@@ -101,6 +103,7 @@ export default function EditFormPage() {
           setFields(formData.fields);
           setOriginalFields(JSON.parse(JSON.stringify(formData.fields)));
           setLogoUrl(formData.logo_url || '');
+          setTheme(formData.theme || 'default');
           setRequireConsent(formData.require_consent || false);
           setConsentHeading(formData.consent_heading || 'การยินยอม (Consent)');
           setConsentText(formData.consent_text || '');
@@ -140,6 +143,7 @@ export default function EditFormPage() {
         title,
         description,
         logo_url: logoUrl,
+        theme,
         fields,
         require_consent: requireConsent,
         consent_heading: consentHeading,
@@ -160,6 +164,7 @@ export default function EditFormPage() {
         title,
         description,
         logo_url: logoUrl,
+        theme,
         fields,
         require_consent: requireConsent,
         consent_heading: consentHeading,
@@ -240,6 +245,7 @@ export default function EditFormPage() {
           description,
           fields,
           logo_url: logoUrl,
+          theme,
           require_consent: requireConsent,
           consent_heading: consentHeading,
           consent_text: consentText,
@@ -262,6 +268,7 @@ export default function EditFormPage() {
           title,
           description,
           logo_url: logoUrl,
+          theme,
           require_consent: requireConsent,
           consent_heading: consentHeading,
           consent_text: consentText,
@@ -314,6 +321,7 @@ export default function EditFormPage() {
     title,
     description,
     logo_url: logoUrl,
+    theme,
     fields,
     require_consent: requireConsent,
     consent_heading: consentHeading,
@@ -525,7 +533,46 @@ export default function EditFormPage() {
         )}
 
         {activeTab === 'settings' && (
-          <div className="max-w-2xl">
+          <div className="max-w-2xl space-y-6">
+            {/* Theme Selector */}
+            <div className="bg-white p-6 rounded-2xl border-2 border-slate-300">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                  <span className="text-lg">🎨</span>
+                </div>
+                <h2 className="text-lg font-semibold">ธีมฟอร์ม</h2>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { value: 'default', label: 'ดั้งเดิม', desc: 'คลาสสิก เรียบง่าย' },
+                  { value: 'card-groups', label: 'การ์ดแยกกลุ่ม', desc: 'แบ่งเป็นหมวดหมู่' },
+                  { value: 'step-wizard', label: 'ขั้นตอน Step', desc: 'กรอกทีละขั้น' },
+                  { value: 'minimal', label: 'มินิมอล', desc: 'เรียบง่ายที่สุด' },
+                ].map((t) => (
+                  <label
+                    key={t.value}
+                    className={`p-4 border-2 rounded-xl cursor-pointer transition-all ${
+                      theme === t.value
+                        ? 'border-purple-500 bg-purple-50'
+                        : 'border-slate-200 hover:border-slate-300'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="theme"
+                      value={t.value}
+                      checked={theme === t.value}
+                      onChange={(e) => setTheme(e.target.value as any)}
+                      className="sr-only"
+                    />
+                    <div className="font-medium text-slate-900">{t.label}</div>
+                    <div className="text-xs text-slate-500 mt-1">{t.desc}</div>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Consent Settings */}
             <div className="bg-white p-6 rounded-2xl border-2 border-slate-300">
               <div className="flex items-center gap-3 mb-4">
                 <Shield className="w-5 h-5 text-green-600" />

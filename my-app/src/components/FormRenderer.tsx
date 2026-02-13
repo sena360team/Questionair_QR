@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Form, FormField, FieldType } from '@/types';
 import { cn, isValidEmail } from '@/lib/utils';
-import { Star, Check, Shield, MapPin } from 'lucide-react';
+import { Star, Check } from 'lucide-react';
+import { DefaultTheme, CardGroupsTheme, StepWizardTheme, MinimalTheme } from './themes';
 
 interface FormRendererProps {
   form: Form;
@@ -75,7 +76,6 @@ export function FormRenderer({
         }
         break;
       case 'tel':
-        // No pattern validation for phone
         break;
       case 'number':
         if (isNaN(Number(value))) {
@@ -131,11 +131,47 @@ export function FormRenderer({
 
   const updateResponse = (fieldId: string, value: unknown) => {
     setResponses(prev => ({ ...prev, [fieldId]: value }));
-    // Clear error when user types
     if (errors[fieldId]) {
       setErrors(prev => ({ ...prev, [fieldId]: '' }));
     }
   };
+
+  // Render individual field
+  const renderField = useCallback((field: FormField) => {
+    return (
+      <FieldControl 
+        field={field} 
+        value={responses[field.id]} 
+        onChange={(value) => updateResponse(field.id, value)} 
+      />
+    );
+  }, [responses]);
+
+  // Render submit button
+  const renderSubmitButton = useCallback(() => (
+    <button
+      type="submit"
+      disabled={submitting || (form.require_consent && !consentChecked)}
+      className={cn(
+        "w-full py-3 px-6 rounded-lg font-medium text-white transition-all",
+        submitting || (form.require_consent && !consentChecked)
+          ? "bg-slate-400 cursor-not-allowed" 
+          : "bg-blue-600 hover:bg-blue-700 active:scale-[0.98]"
+      )}
+    >
+      {submitting ? (
+        <span className="flex items-center justify-center gap-2">
+          <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+          </svg>
+          กำลังส่ง...
+        </span>
+      ) : (
+        submitLabel
+      )}
+    </button>
+  ), [submitting, form.require_consent, consentChecked, submitLabel]);
 
   if (submitted) {
     return (
@@ -153,147 +189,42 @@ export function FormRenderer({
     );
   }
 
+  const themeProps = {
+    form,
+    responses,
+    errors,
+    consentChecked,
+    consentLocation,
+    locationStatus,
+    submitting,
+    onResponseChange: updateResponse,
+    onConsentChange: setConsentChecked,
+    renderField,
+    renderSubmitButton,
+  };
+
+  // Select theme based on form.theme
+  const theme = form.theme || 'default';
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {form.fields.map((field) => (
-        <FormFieldInput
-          key={field.id}
-          field={field}
-          value={responses[field.id]}
-          error={errors[field.id]}
-          onChange={(value) => updateResponse(field.id, value)}
-        />
-      ))}
-
-      {/* Consent Section */}
-      {form.require_consent && (
-        <div className="border border-green-200 bg-green-50 rounded-xl p-5 space-y-4">
-          <div className="flex items-start gap-3">
-            <Shield className="w-5 h-5 text-green-600 mt-0.5 shrink-0" />
-            <div className="flex-1">
-              <h4 className="font-medium text-slate-900 mb-1">{form.consent_heading || 'การยินยอม (Consent)'}</h4>
-              <p className="text-sm text-slate-600">{form.consent_text || 'ข้าพเจ้ายินยอมให้เก็บข้อมูลส่วนบุคคล'}</p>
-            </div>
-          </div>
-          
-          <label className="flex items-center gap-3 cursor-pointer p-3 bg-white rounded-lg border border-green-200 hover:border-green-400 transition-colors">
-            <input
-              type="checkbox"
-              checked={consentChecked}
-              onChange={(e) => {
-                setConsentChecked(e.target.checked);
-                if (errors._consent) {
-                  setErrors(prev => ({ ...prev, _consent: '' }));
-                }
-              }}
-              className="w-5 h-5 text-green-600 border-slate-300 rounded focus:ring-green-500"
-            />
-            <span className="text-sm font-medium text-slate-700">ข้าพเจ้ายินยอมตามข้อความข้างต้น</span>
-          </label>
-          
-          {errors._consent && (
-            <p className="text-sm text-red-500 flex items-center gap-1">
-              <span>⚠</span> {errors._consent}
-            </p>
-          )}
-          
-          {/* Location Status - แสดงเฉพาะเมื่อตั้งค่าให้ขอตำแหน่ง */}
-          {consentChecked && form.consent_require_location && (
-            <div className="text-xs text-slate-500 space-y-1">
-              {locationStatus === 'requesting' && (
-                <div className="flex items-center gap-2 text-amber-600">
-                  <div className="animate-spin w-3 h-3 border-2 border-amber-600 border-t-transparent rounded-full" />
-                  กำลังขออนุญาตเข้าถึงตำแหน่ง...
-                </div>
-              )}
-              {locationStatus === 'granted' && consentLocation && (
-                <div className="flex items-center gap-2 text-green-600">
-                  <MapPin className="w-3 h-3" />
-                  บันทึกตำแหน่ง: {consentLocation.latitude.toFixed(4)}, {consentLocation.longitude.toFixed(4)}
-                  (คลาดเคลื่อน ~{Math.round(consentLocation.accuracy || 0)} เมตร)
-                </div>
-              )}
-              {locationStatus === 'denied' && (
-                <div className="text-slate-400">
-                  ไม่สามารถเข้าถึงตำแหน่งได้ (ผู้ใช้ไม่อนุญาต หรือเบราว์เซอร์ไม่รองรับ)
-                </div>
-              )}
-            </div>
-          )}
-          
-          {/* IP Address - แสดงเสมอเมื่อ consent ถูกติ๊ก */}
-          {consentChecked && consentIp && (
-            <div className="text-xs text-slate-400">
-              IP: {consentIp}
-            </div>
-          )}
-        </div>
-      )}
-
-      <button
-        type="submit"
-        disabled={submitting || (form.require_consent && !consentChecked)}
-        className={cn(
-          "w-full py-3 px-6 rounded-lg font-medium text-white transition-all",
-          submitting || (form.require_consent && !consentChecked)
-            ? "bg-slate-400 cursor-not-allowed" 
-            : "bg-blue-600 hover:bg-blue-700 active:scale-[0.98]"
-        )}
-      >
-        {submitting ? (
-          <span className="flex items-center justify-center gap-2">
-            <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-            </svg>
-            กำลังส่ง...
-          </span>
-        ) : (
-          submitLabel
-        )}
-      </button>
+    <form id="form-renderer" onSubmit={handleSubmit}>
+      {theme === 'card-groups' && <CardGroupsTheme {...themeProps} />}
+      {theme === 'step-wizard' && <StepWizardTheme {...themeProps} />}
+      {theme === 'minimal' && <MinimalTheme {...themeProps} />}
+      {(!theme || theme === 'default') && <DefaultTheme {...themeProps} />}
     </form>
   );
 }
 
-// ==================== Individual Field Components ====================
+// ==================== Field Control Component ====================
 
-interface FormFieldInputProps {
+interface FieldControlProps {
   field: FormField;
   value: unknown;
-  error?: string;
   onChange: (value: unknown) => void;
 }
 
-function FormFieldInput({ field, value, error, onChange }: FormFieldInputProps) {
-  // heading, section และ info_box มีการแสดง label ใน FieldControl แล้ว
-  const isLayoutField = field.type === 'heading' || field.type === 'section' || field.type === 'info_box';
-
-  return (
-    <div className="space-y-2 select-none">
-      {!isLayoutField && (
-        <label className="block font-medium text-slate-900">
-          {field.label}
-          {field.required && <span className="text-red-500 ml-1">*</span>}
-        </label>
-      )}
-      
-      {field.helpText && !isLayoutField && (
-        <p className="text-sm text-slate-500">{field.helpText}</p>
-      )}
-
-      <FieldControl field={field} value={value} onChange={onChange} />
-
-      {error && (
-        <p className="text-sm text-red-500 flex items-center gap-1">
-          <span>⚠</span> {error}
-        </p>
-      )}
-    </div>
-  );
-}
-
-function FieldControl({ field, value, onChange }: Omit<FormFieldInputProps, 'error'>) {
+function FieldControl({ field, value, onChange }: FieldControlProps) {
   const baseClassName = cn(
     "w-full px-4 py-3 border rounded-lg transition-all",
     "focus:ring-2 focus:ring-blue-500 focus:border-blue-500",
