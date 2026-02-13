@@ -624,6 +624,15 @@ export default function EditFormPage() {
                   </p>
                 </div>
               )}
+              {theme === 'step-wizard' && (
+                <div className="mt-4 p-4 bg-blue-50 rounded-xl border border-blue-200">
+                  <p className="text-sm text-blue-800">
+                    <span className="font-medium">💡 วิธีใช้ขั้นตอน Step:</span> เพิ่ม field ประเภท 
+                    <span className="font-medium">"Section"</span> หรือ <span className="font-medium">"Heading"</span> เพื่อแบ่งขั้นตอน 
+                    แต่ละ Section/Heading จะเริ่ม Step ใหม่
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Consent Settings */}

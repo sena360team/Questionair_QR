@@ -14,23 +14,32 @@ interface StepWizardThemeProps {
   renderSubmitButton: () => React.ReactNode;
 }
 
-// Split fields into steps (1-2 fields per step)
+// Split fields into steps by section/heading markers
+// User controls step breaks by adding 'section' or 'heading' fields
 function createSteps(fields: FormField[]): { title: string; fields: FormField[] }[] {
   const steps: { title: string; fields: FormField[] }[] = [];
-  const stepTitles = [
-    'ข้อมูลพื้นฐาน',
-    'รายละเอียด',
-    'ความคิดเห็น',
-    'ข้อมูลเพิ่มเติม',
-    'สรุป'
-  ];
+  let currentStepFields: FormField[] = [];
+  let currentStepTitle = 'ข้อมูลพื้นฐาน';
 
-  for (let i = 0; i < fields.length; i += 2) {
-    const stepFields = fields.slice(i, i + 2);
-    steps.push({
-      title: stepTitles[Math.min(Math.floor(i / 2), stepTitles.length - 1)],
-      fields: stepFields
-    });
+  fields.forEach((field) => {
+    // Section or Heading field = start new step with this title
+    if (field.type === 'section' || field.type === 'heading') {
+      // Save previous step if has fields
+      if (currentStepFields.length > 0) {
+        steps.push({ title: currentStepTitle, fields: currentStepFields });
+        currentStepFields = [];
+      }
+      // Use this field's label as new step title
+      currentStepTitle = field.label || 'หัวข้อใหม่';
+      // Don't include section/heading field itself in the step (it's just a marker)
+    } else {
+      currentStepFields.push(field);
+    }
+  });
+
+  // Add remaining fields as last step
+  if (currentStepFields.length > 0) {
+    steps.push({ title: currentStepTitle, fields: currentStepFields });
   }
 
   return steps;
