@@ -570,6 +570,17 @@ export default function EditFormPage() {
                   </label>
                 ))}
               </div>
+              
+              {/* Theme Help Text */}
+              {theme === 'card-groups' && (
+                <div className="mt-4 p-4 bg-blue-50 rounded-xl border border-blue-200">
+                  <p className="text-sm text-blue-800">
+                    <span className="font-medium">💡 วิธีใช้การ์ดแยกกลุ่ม:</span> เพิ่ม field ประเภท 
+                    <span className="font-medium">"Section"</span> หรือ <span className="font-medium">"Heading"</span> เพื่อแบ่งกลุ่มคำถาม 
+                    แต่ละ Section/Heading จะเริ่มการ์ดใหม่
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Consent Settings */}
