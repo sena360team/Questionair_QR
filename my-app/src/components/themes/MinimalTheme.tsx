@@ -23,7 +23,7 @@ export function MinimalTheme({
   renderSubmitButton,
 }: MinimalThemeProps) {
   return (
-    <div className="max-w-xl mx-auto bg-white rounded-xl p-8 shadow-sm">
+    <div className="max-w-3xl mx-auto bg-white rounded-xl p-8 shadow-sm">
       {/* Simple Header */}
       <div className="mb-8 pb-6 border-b border-slate-200">
         {form.logo_url && (
