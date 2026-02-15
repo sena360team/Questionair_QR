@@ -12,6 +12,32 @@ interface DefaultThemeProps {
   renderSubmitButton: () => React.ReactNode;
 }
 
+// Get logo size classes
+const getLogoSizeClasses = (size?: string) => {
+  switch (size) {
+    case 'small':
+      return 'h-12 lg:h-16';
+    case 'large':
+      return 'h-28 lg:h-32';
+    case 'medium':
+    default:
+      return 'h-20 lg:h-24';
+  }
+};
+
+// Get logo position classes
+const getLogoPositionClasses = (position?: string) => {
+  switch (position) {
+    case 'left':
+      return 'text-left';
+    case 'right':
+      return 'text-right';
+    case 'center':
+    default:
+      return 'text-center';
+  }
+};
+
 export function DefaultTheme({
   form,
   consentChecked,
@@ -20,16 +46,19 @@ export function DefaultTheme({
   renderField,
   renderSubmitButton,
 }: DefaultThemeProps) {
+  const logoSizeClass = getLogoSizeClasses(form.logo_size);
+  const logoPositionClass = getLogoPositionClasses(form.logo_position);
+
   return (
     <div className="bg-white rounded-xl overflow-hidden shadow-lg">
       {/* Header */}
-      <div className="bg-gradient-to-b from-blue-600 to-blue-500 p-8 lg:p-10 text-center text-white">
+      <div className={`bg-gradient-to-b from-blue-600 to-blue-500 p-8 lg:p-10 text-white ${logoPositionClass}`}>
         {form.logo_url ? (
           <>
             <img 
               src={form.logo_url} 
               alt={form.title || 'Logo'} 
-              className="h-20 lg:h-24 mx-auto object-contain mb-4"
+              className={`${logoSizeClass} object-contain mb-4 ${form.logo_position === 'center' ? 'mx-auto' : form.logo_position === 'right' ? 'ml-auto' : ''}`}
             />
             <h1 className="text-xl lg:text-2xl font-bold">
               {form.title}

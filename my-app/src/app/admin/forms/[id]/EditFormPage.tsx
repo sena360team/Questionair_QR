@@ -48,6 +48,8 @@ export default function EditFormPage() {
   const [description, setDescription] = useState('');
   const [fields, setFields] = useState<FormField[]>([]);
   const [logoUrl, setLogoUrl] = useState('');
+  const [logoPosition, setLogoPosition] = useState<'left' | 'center' | 'right'>('center');
+  const [logoSize, setLogoSize] = useState<'small' | 'medium' | 'large'>('medium');
   const [theme, setTheme] = useState<'default' | 'card-groups' | 'step-wizard' | 'minimal'>('default');
   const [requireConsent, setRequireConsent] = useState(false);
   const [consentHeading, setConsentHeading] = useState('การยินยอม (Consent)');
@@ -90,6 +92,8 @@ export default function EditFormPage() {
           setFields(draft.fields);
           setOriginalFields(JSON.parse(JSON.stringify(draft.fields)));
           setLogoUrl(draft.logo_url || '');
+          setLogoPosition(draft.logo_position || 'center');
+          setLogoSize(draft.logo_size || 'medium');
           setTheme(draft.theme || 'default');
           setRequireConsent(draft.require_consent);
           setConsentHeading(draft.consent_heading);
@@ -104,6 +108,8 @@ export default function EditFormPage() {
           setFields(formData.fields);
           setOriginalFields(JSON.parse(JSON.stringify(formData.fields)));
           setLogoUrl(formData.logo_url || '');
+          setLogoPosition(formData.logo_position || 'center');
+          setLogoSize(formData.logo_size || 'medium');
           setTheme(formData.theme || 'default');
           setRequireConsent(formData.require_consent || false);
           setConsentHeading(formData.consent_heading || 'การยินยอม (Consent)');
@@ -145,6 +151,8 @@ export default function EditFormPage() {
         description,
         logo_url: logoUrl,
         theme,
+        logo_position: logoPosition,
+        logo_size: logoSize,
         fields,
         require_consent: requireConsent,
         consent_heading: consentHeading,
@@ -166,6 +174,8 @@ export default function EditFormPage() {
         description,
         logo_url: logoUrl,
         theme,
+        logo_position: logoPosition,
+        logo_size: logoSize,
         fields,
         require_consent: requireConsent,
         consent_heading: consentHeading,
@@ -246,6 +256,8 @@ export default function EditFormPage() {
           description,
           fields,
           logo_url: logoUrl,
+          logo_position: logoPosition,
+          logo_size: logoSize,
           theme,
           require_consent: requireConsent,
           consent_heading: consentHeading,
@@ -324,6 +336,8 @@ export default function EditFormPage() {
       title,
       description,
       logo_url: logoUrl,
+      logo_position: logoPosition,
+      logo_size: logoSize,
       theme,
       fields,
       require_consent: requireConsent,
@@ -346,6 +360,8 @@ export default function EditFormPage() {
     title,
     description,
     logo_url: logoUrl,
+    logo_position: logoPosition,
+    logo_size: logoSize,
     theme,
     fields,
     require_consent: requireConsent,
@@ -552,6 +568,63 @@ export default function EditFormPage() {
                       </div>
                     )}
                   </div>
+                  
+                  {/* Logo Position & Size */}
+                  {logoUrl && (
+                    <div className="grid grid-cols-2 gap-4 mt-4">
+                      {/* Position */}
+                      <div>
+                        <label className="block text-xs font-medium text-slate-600 mb-2">
+                          ตำแหน่ง
+                        </label>
+                        <div className="flex gap-1 bg-slate-100 p-1 rounded-lg">
+                          {[
+                            { value: 'left', label: 'ซ้าย', icon: '←' },
+                            { value: 'center', label: 'กลาง', icon: '◆' },
+                            { value: 'right', label: 'ขวา', icon: '→' },
+                          ].map((pos) => (
+                            <button
+                              key={pos.value}
+                              onClick={() => setLogoPosition(pos.value as any)}
+                              className={`flex-1 py-1.5 px-2 text-xs font-medium rounded-md transition-all ${
+                                logoPosition === pos.value
+                                  ? 'bg-white text-slate-900 shadow-sm'
+                                  : 'text-slate-500 hover:text-slate-700'
+                              }`}
+                            >
+                              {pos.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      {/* Size */}
+                      <div>
+                        <label className="block text-xs font-medium text-slate-600 mb-2">
+                          ขนาด
+                        </label>
+                        <div className="flex gap-1 bg-slate-100 p-1 rounded-lg">
+                          {[
+                            { value: 'small', label: 'เล็ก' },
+                            { value: 'medium', label: 'กลาง' },
+                            { value: 'large', label: 'ใหญ่' },
+                          ].map((size) => (
+                            <button
+                              key={size.value}
+                              onClick={() => setLogoSize(size.value as any)}
+                              className={`flex-1 py-1.5 px-2 text-xs font-medium rounded-md transition-all ${
+                                logoSize === size.value
+                                  ? 'bg-white text-slate-900 shadow-sm'
+                                  : 'text-slate-500 hover:text-slate-700'
+                              }`}
+                            >
+                              {size.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 
                 {/* Description */}

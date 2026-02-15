@@ -13,7 +13,7 @@ interface CardGroupsThemeProps {
   renderSubmitButton: () => React.ReactNode;
 }
 
-// Group fields by section/heading markers
+// Group fields by section or heading markers
 // User controls grouping by adding "section" or "heading" fields
 function groupFields(fields: FormField[]): { title: string; fields: FormField[] }[] {
   const groups: { title: string; fields: FormField[] }[] = [];
@@ -44,6 +44,19 @@ function groupFields(fields: FormField[]): { title: string; fields: FormField[] 
   return groups;
 }
 
+// Get logo size classes
+const getLogoSizeClasses = (size?: string) => {
+  switch (size) {
+    case 'small':
+      return 'h-12';
+    case 'large':
+      return 'h-24';
+    case 'medium':
+    default:
+      return 'h-16';
+  }
+};
+
 export function CardGroupsTheme({
   form,
   consentChecked,
@@ -53,23 +66,28 @@ export function CardGroupsTheme({
   renderSubmitButton,
 }: CardGroupsThemeProps) {
   const groups = useMemo(() => groupFields(form.fields), [form.fields]);
+  const logoSizeClass = getLogoSizeClasses(form.logo_size);
 
   return (
     <div className="max-w-3xl mx-auto space-y-6 bg-white rounded-xl p-6 shadow-sm">
       {/* Header Card */}
-      <div className="bg-gradient-to-br from-indigo-600 via-blue-600 to-cyan-500 rounded-2xl p-8 text-white shadow-xl">
+      <div className={`bg-gradient-to-br from-indigo-600 via-blue-600 to-cyan-500 rounded-2xl p-8 text-white shadow-xl ${
+        form.logo_position === 'left' ? 'text-left' : form.logo_position === 'right' ? 'text-right' : 'text-center'
+      }`}>
         {form.logo_url && (
           <img 
             src={form.logo_url} 
             alt="Logo" 
-            className="h-16 mx-auto object-contain mb-4"
+            className={`${logoSizeClass} object-contain mb-4 ${
+              form.logo_position === 'center' ? 'mx-auto' : form.logo_position === 'right' ? 'ml-auto' : ''
+            }`}
           />
         )}
-        <h1 className="text-2xl lg:text-3xl font-bold mb-2 text-center">
+        <h1 className="text-2xl lg:text-3xl font-bold mb-2">
           {form.title || 'แบบสอบถาม'}
         </h1>
         {form.description && (
-          <p className="text-blue-100 text-center max-w-xl mx-auto">
+          <p className="text-blue-100 max-w-xl mx-auto">
             {form.description}
           </p>
         )}

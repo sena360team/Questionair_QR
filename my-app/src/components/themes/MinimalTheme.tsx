@@ -13,6 +13,19 @@ interface MinimalThemeProps {
   renderSubmitButton: () => React.ReactNode;
 }
 
+// Get logo size classes
+const getLogoSizeClasses = (size?: string) => {
+  switch (size) {
+    case 'small':
+      return 'h-8';
+    case 'large':
+      return 'h-16';
+    case 'medium':
+    default:
+      return 'h-10';
+  }
+};
+
 export function MinimalTheme({
   form,
   errors,
@@ -22,15 +35,21 @@ export function MinimalTheme({
   renderField,
   renderSubmitButton,
 }: MinimalThemeProps) {
+  const logoSizeClass = getLogoSizeClasses(form.logo_size);
+
   return (
     <div className="max-w-3xl mx-auto bg-white rounded-xl p-8 shadow-sm">
       {/* Simple Header */}
-      <div className="mb-8 pb-6 border-b border-slate-200">
+      <div className={`mb-8 pb-6 border-b border-slate-200 ${
+        form.logo_position === 'left' ? 'text-left' : form.logo_position === 'right' ? 'text-right' : 'text-left'
+      }`}>
         {form.logo_url && (
           <img 
             src={form.logo_url} 
             alt="Logo" 
-            className="h-10 mb-4 opacity-80"
+            className={`${logoSizeClass} mb-4 opacity-80 ${
+              form.logo_position === 'center' ? 'mx-auto' : form.logo_position === 'right' ? 'ml-auto' : ''
+            }`}
           />
         )}
         <h1 className="text-xl font-medium text-slate-900 mb-1">

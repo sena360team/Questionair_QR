@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { Form, FormField } from '@/types';
-import { Shield, MapPin, ChevronLeft, ChevronRight, Check } from 'lucide-react';
+import { Shield, MapPin, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface StepWizardThemeProps {
   form: Form;
@@ -45,6 +45,19 @@ function createSteps(fields: FormField[]): { title: string; fields: FormField[] 
   return steps;
 }
 
+// Get logo size classes
+const getLogoSizeClasses = (size?: string) => {
+  switch (size) {
+    case 'small':
+      return 'h-12';
+    case 'large':
+      return 'h-24';
+    case 'medium':
+    default:
+      return 'h-16';
+  }
+};
+
 export function StepWizardTheme({
   form,
   errors,
@@ -60,6 +73,7 @@ export function StepWizardTheme({
   const totalSteps = steps.length + (form.require_consent ? 1 : 0);
   const isLastStep = currentStep === steps.length - 1 && !form.require_consent;
   const isConsentStep = form.require_consent && currentStep === steps.length;
+  const logoSizeClass = getLogoSizeClasses(form.logo_size);
 
   const handleNext = () => {
     if (currentStep < totalSteps - 1) {
@@ -76,12 +90,16 @@ export function StepWizardTheme({
   return (
     <div className="max-w-2xl mx-auto bg-white rounded-xl p-8 shadow-sm">
       {/* Header */}
-      <div className="text-center mb-8">
+      <div className={`mb-8 ${
+        form.logo_position === 'left' ? 'text-left' : form.logo_position === 'right' ? 'text-right' : 'text-center'
+      }`}>
         {form.logo_url && (
           <img 
             src={form.logo_url} 
             alt="Logo" 
-            className="h-16 mx-auto object-contain mb-4"
+            className={`${logoSizeClass} object-contain mb-4 ${
+              form.logo_position === 'center' ? 'mx-auto' : form.logo_position === 'right' ? 'ml-auto' : ''
+            }`}
           />
         )}
         <h1 className="text-2xl font-bold text-slate-900 mb-2">

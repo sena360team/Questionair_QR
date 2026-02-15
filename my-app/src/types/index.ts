@@ -64,6 +64,9 @@ export interface Form {
   published_by?: string | null;
   // Theme
   theme?: 'default' | 'card-groups' | 'step-wizard' | 'minimal';
+  // Logo Settings
+  logo_position?: 'left' | 'center' | 'right';
+  logo_size?: 'small' | 'medium' | 'large';
   // Consent settings
   require_consent?: boolean;
   consent_heading?: string;  // หัวข้อ Consent (e.g., "การยินยอม", "ข้อตกลง")
@@ -155,6 +158,9 @@ export interface FormDraft {
   fields: FormField[];
   // Theme
   theme?: 'default' | 'card-groups' | 'step-wizard' | 'minimal';
+  // Logo Settings
+  logo_position?: 'left' | 'center' | 'right';
+  logo_size?: 'small' | 'medium' | 'large';
   // Consent Settings
   require_consent: boolean;
   consent_heading: string;
@@ -195,6 +201,8 @@ export interface FormDraftCreateInput {
   description?: string;
   logo_url?: string;
   theme?: 'default' | 'card-groups' | 'step-wizard' | 'minimal';
+  logo_position?: 'left' | 'center' | 'right';
+  logo_size?: 'small' | 'medium' | 'large';
   fields?: FormField[];
   require_consent?: boolean;
   consent_heading?: string;
