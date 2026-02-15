@@ -62,23 +62,43 @@ export function MinimalTheme({
 
       {/* Fields */}
       <div className="space-y-6">
-        {form.fields.map((field) => (
-          <div key={field.id} className="space-y-1.5">
-            <label className="block text-sm font-medium text-slate-700">
-              {field.label}
-              {field.required && (
-                <span className="text-red-500 ml-0.5">*</span>
+        {form.fields.map((field) => {
+          // Section/Heading fields - render as simple text without border
+          if (field.type === 'section' || field.type === 'heading') {
+            // Skip if no label content
+            if (!field.label && !field.description) return null;
+            return (
+              <div key={field.id} className="pt-4 pb-2">
+                {field.label && (
+                  <h3 className="text-lg font-semibold text-slate-800">
+                    {field.label}
+                  </h3>
+                )}
+                {field.description && (
+                  <p className="text-sm text-slate-500 mt-1">{field.description}</p>
+                )}
+              </div>
+            );
+          }
+          
+          return (
+            <div key={field.id} className="space-y-1.5">
+              <label className="block text-sm font-medium text-slate-700">
+                {field.label}
+                {field.required && (
+                  <span className="text-red-500 ml-0.5">*</span>
+                )}
+              </label>
+              {field.description && (
+                <p className="text-xs text-slate-400">{field.description}</p>
               )}
-            </label>
-            {field.description && (
-              <p className="text-xs text-slate-400">{field.description}</p>
-            )}
-            {renderField(field)}
-            {errors[field.id] && (
-              <p className="text-xs text-red-500">{errors[field.id]}</p>
-            )}
-          </div>
-        ))}
+              {renderField(field)}
+              {errors[field.id] && (
+                <p className="text-xs text-red-500">{errors[field.id]}</p>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {/* Divider */}
