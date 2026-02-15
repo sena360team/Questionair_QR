@@ -70,16 +70,16 @@ export function CardGroupsTheme({
 
   return (
     <div className="max-w-3xl mx-auto space-y-6 bg-white rounded-xl p-6 shadow-sm">
-      {/* Header Card */}
-      <div className={`bg-gradient-to-br from-indigo-600 via-blue-600 to-cyan-500 rounded-2xl p-8 text-white shadow-xl ${
-        form.logo_position === 'left' ? 'text-left' : form.logo_position === 'right' ? 'text-right' : 'text-center'
-      }`}>
+      {/* Header Card - Title always centered, logo position independent */}
+      <div className="bg-gradient-to-br from-indigo-600 via-blue-600 to-cyan-500 rounded-2xl p-8 text-white shadow-xl text-center">
         {form.logo_url && (
           <img 
             src={form.logo_url} 
             alt="Logo" 
             className={`${logoSizeClass} object-contain mb-4 ${
-              form.logo_position === 'center' ? 'mx-auto' : form.logo_position === 'right' ? 'ml-auto' : ''
+              form.logo_position === 'center' ? 'mx-auto' : 
+              form.logo_position === 'right' ? 'ml-auto' : 
+              'mr-auto'
             }`}
           />
         )}

@@ -25,19 +25,6 @@ const getLogoSizeClasses = (size?: string) => {
   }
 };
 
-// Get logo position classes
-const getLogoPositionClasses = (position?: string) => {
-  switch (position) {
-    case 'left':
-      return 'text-left';
-    case 'right':
-      return 'text-right';
-    case 'center':
-    default:
-      return 'text-center';
-  }
-};
-
 export function DefaultTheme({
   form,
   consentChecked,
@@ -47,18 +34,21 @@ export function DefaultTheme({
   renderSubmitButton,
 }: DefaultThemeProps) {
   const logoSizeClass = getLogoSizeClasses(form.logo_size);
-  const logoPositionClass = getLogoPositionClasses(form.logo_position);
 
   return (
     <div className="bg-white rounded-xl overflow-hidden shadow-lg">
-      {/* Header */}
-      <div className={`bg-gradient-to-b from-blue-600 to-blue-500 p-8 lg:p-10 text-white ${logoPositionClass}`}>
+      {/* Header - Title always centered, logo position independent */}
+      <div className="bg-gradient-to-b from-blue-600 to-blue-500 p-8 lg:p-10 text-white text-center">
         {form.logo_url ? (
           <>
             <img 
               src={form.logo_url} 
               alt={form.title || 'Logo'} 
-              className={`${logoSizeClass} object-contain mb-4 ${form.logo_position === 'center' ? 'mx-auto' : form.logo_position === 'right' ? 'ml-auto' : ''}`}
+              className={`${logoSizeClass} object-contain mb-4 ${
+                form.logo_position === 'center' ? 'mx-auto' : 
+                form.logo_position === 'right' ? 'ml-auto' : 
+                'mr-auto'
+              }`}
             />
             <h1 className="text-xl lg:text-2xl font-bold">
               {form.title}

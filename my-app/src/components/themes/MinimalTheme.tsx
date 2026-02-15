@@ -39,16 +39,16 @@ export function MinimalTheme({
 
   return (
     <div className="max-w-3xl mx-auto bg-white rounded-xl p-8 shadow-sm">
-      {/* Simple Header */}
-      <div className={`mb-8 pb-6 border-b border-slate-200 ${
-        form.logo_position === 'left' ? 'text-left' : form.logo_position === 'right' ? 'text-right' : 'text-left'
-      }`}>
+      {/* Simple Header - Title always left-aligned (minimal style), logo position independent */}
+      <div className="mb-8 pb-6 border-b border-slate-200">
         {form.logo_url && (
           <img 
             src={form.logo_url} 
             alt="Logo" 
             className={`${logoSizeClass} mb-4 opacity-80 ${
-              form.logo_position === 'center' ? 'mx-auto' : form.logo_position === 'right' ? 'ml-auto' : ''
+              form.logo_position === 'center' ? 'mx-auto' : 
+              form.logo_position === 'right' ? 'ml-auto' : 
+              ''
             }`}
           />
         )}

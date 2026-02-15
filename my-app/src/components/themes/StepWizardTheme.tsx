@@ -89,16 +89,16 @@ export function StepWizardTheme({
 
   return (
     <div className="max-w-2xl mx-auto bg-white rounded-xl p-8 shadow-sm">
-      {/* Header */}
-      <div className={`mb-8 ${
-        form.logo_position === 'left' ? 'text-left' : form.logo_position === 'right' ? 'text-right' : 'text-center'
-      }`}>
+      {/* Header - Title always centered, logo position independent */}
+      <div className="mb-8 text-center">
         {form.logo_url && (
           <img 
             src={form.logo_url} 
             alt="Logo" 
             className={`${logoSizeClass} object-contain mb-4 ${
-              form.logo_position === 'center' ? 'mx-auto' : form.logo_position === 'right' ? 'ml-auto' : ''
+              form.logo_position === 'center' ? 'mx-auto' : 
+              form.logo_position === 'right' ? 'ml-auto' : 
+              'mr-auto'
             }`}
           />
         )}
