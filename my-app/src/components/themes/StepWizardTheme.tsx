@@ -19,7 +19,7 @@ interface StepWizardThemeProps {
 function createSteps(fields: FormField[]): { title: string; fields: FormField[] }[] {
   const steps: { title: string; fields: FormField[] }[] = [];
   let currentStepFields: FormField[] = [];
-  let currentStepTitle = 'ข้อมูลพื้นฐาน';
+  let currentStepTitle = 'เริ่มต้น';
 
   fields.forEach((field) => {
     // Section or Heading field = start new step with this title
