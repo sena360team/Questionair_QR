@@ -114,8 +114,10 @@ export function CardGroupsTheme({
               {field.label && (
                 <h4 className="font-medium text-blue-900 mb-2">{field.label}</h4>
               )}
-              {field.description && (
-                <p className="text-sm text-blue-700">{field.description}</p>
+              {(field.helpText || field.description) && (
+                <div className="text-sm text-blue-700 whitespace-pre-wrap">
+                  {field.helpText || field.description}
+                </div>
               )}
             </div>
           ))}
