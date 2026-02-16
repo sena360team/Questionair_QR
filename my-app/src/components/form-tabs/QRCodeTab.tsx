@@ -11,7 +11,9 @@ import {
   Calendar,
   Plus,
   Copy,
-  CheckCircle
+  CheckCircle,
+  Edit,
+  Trash2
 } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 
@@ -20,13 +22,8 @@ interface QRCodeTabProps {
   formCode: string;
 }
 
-interface QRCodeWithProject extends QRCode {
-  project?: { id: string; name: string } | null;
-  qr_image_url?: string;
-}
-
 export function QRCodeTab({ formId, formCode }: QRCodeTabProps) {
-  const [qrCodes, setQrCodes] = useState<QRCodeWithProject[]>([]);
+  const [qrCodes, setQrCodes] = useState<QRCode[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -64,8 +61,7 @@ export function QRCodeTab({ formId, formCode }: QRCodeTabProps) {
   };
 
   const getQRImageUrl = (qrSlug: string) => {
-    // Generate QR code image using QR Server API
-    return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`${window.location.origin}/qr/${qrSlug}`)}`;
+    return `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`${window.location.origin}/qr/${qrSlug}`)}`;
   };
 
   if (loading) {
@@ -93,9 +89,9 @@ export function QRCodeTab({ formId, formCode }: QRCodeTabProps) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-slate-900">QR Codes ของแบบสอบถามนี้</h2>
+          <h2 className="text-lg font-semibold text-slate-900">QR Codes</h2>
           <p className="text-sm text-slate-500 mt-1">
-            มี {qrCodes.length} QR Code{qrCodes.length !== 1 ? 's' : ''}
+            มี {qrCodes.length} QR Code
           </p>
         </div>
         <Link
@@ -107,7 +103,7 @@ export function QRCodeTab({ formId, formCode }: QRCodeTabProps) {
         </Link>
       </div>
 
-      {/* QR Codes Grid */}
+      {/* QR Codes List */}
       {qrCodes.length === 0 ? (
         <div className="text-center py-16 bg-white rounded-2xl border border-slate-200">
           <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -124,122 +120,130 @@ export function QRCodeTab({ formId, formCode }: QRCodeTabProps) {
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {qrCodes.map((qr) => (
-            <div
-              key={qr.id}
-              className="bg-white rounded-2xl border border-slate-200 p-5 hover:border-blue-300 hover:shadow-lg transition-all"
-            >
-              <div className="flex gap-5">
-                {/* QR Code Image */}
-                <div className="flex-shrink-0">
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+          {/* List Header */}
+          <div className="hidden md:grid md:grid-cols-12 gap-4 px-6 py-3 bg-slate-50 border-b border-slate-200 text-sm font-medium text-slate-600">
+            <div className="col-span-1">QR</div>
+            <div className="col-span-4">ชื่อ</div>
+            <div className="col-span-2">UTM</div>
+            <div className="col-span-2">สถิติ</div>
+            <div className="col-span-3 text-right">จัดการ</div>
+          </div>
+
+          {/* List Items */}
+          <div className="divide-y divide-slate-100">
+            {qrCodes.map((qr) => (
+              <div
+                key={qr.id}
+                className="grid grid-cols-1 md:grid-cols-12 gap-4 px-6 py-4 items-center hover:bg-slate-50 transition-colors"
+              >
+                {/* QR Image */}
+                <div className="col-span-1 flex md:block items-center gap-4 md:gap-0">
                   <img
                     src={getQRImageUrl(qr.qr_slug)}
                     alt={qr.name}
-                    className="w-28 h-28 object-contain border border-slate-200 rounded-xl"
+                    className="w-16 h-16 md:w-12 md:h-12 object-contain border border-slate-200 rounded-lg"
                   />
+                  <span className="md:hidden font-medium text-slate-900">{qr.name}</span>
                 </div>
 
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-slate-900 text-lg mb-1 truncate" title={qr.name}>
+                {/* Name & URL */}
+                <div className="col-span-4 hidden md:block">
+                  <h3 className="font-medium text-slate-900 mb-1" title={qr.name}>
                     {qr.name}
                   </h3>
-                  
-                  {/* UTM Info */}
-                  <div className="flex flex-wrap gap-1.5 mb-3">
-                    {qr.utm_source && (
-                      <span className="px-2 py-0.5 bg-blue-50 text-blue-700 text-xs rounded">
-                        source: {qr.utm_source}
-                      </span>
-                    )}
-                    {qr.utm_medium && (
-                      <span className="px-2 py-0.5 bg-purple-50 text-purple-700 text-xs rounded">
-                        medium: {qr.utm_medium}
-                      </span>
-                    )}
-                    {qr.utm_campaign && (
-                      <span className="px-2 py-0.5 bg-green-50 text-green-700 text-xs rounded">
-                        campaign: {qr.utm_campaign}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Stats */}
-                  <div className="flex items-center gap-4 text-sm text-slate-500 mb-3">
-                    <div className="flex items-center gap-1.5">
-                      <BarChart3 className="w-4 h-4" />
-                      <span>{qr.scan_count.toLocaleString()} สแกน</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <Calendar className="w-4 h-4" />
-                      <span>{formatDate(qr.created_at, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                    </div>
-                  </div>
-
-
-
-                  {/* URL & Actions */}
                   <div className="flex items-center gap-2">
-                    <div className="flex-1 relative">
-                      <input
-                        type="text"
-                        value={getQRCodeUrl(qr.qr_slug)}
-                        readOnly
-                        className="w-full px-3 py-1.5 pr-10 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-600"
-                      />
-                      <button
-                        onClick={() => copyToClipboard(getQRCodeUrl(qr.qr_slug), qr.id)}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-blue-600 transition-colors"
-                        title="คัดลอก URL"
-                      >
-                        {copiedId === qr.id ? (
-                          <CheckCircle className="w-4 h-4 text-green-600" />
-                        ) : (
-                          <Copy className="w-4 h-4" />
-                        )}
-                      </button>
-                    </div>
+                    <input
+                      type="text"
+                      value={getQRCodeUrl(qr.qr_slug)}
+                      readOnly
+                      className="flex-1 min-w-0 px-2 py-1 bg-slate-50 border border-slate-200 rounded text-xs text-slate-500"
+                    />
+                    <button
+                      onClick={() => copyToClipboard(getQRCodeUrl(qr.qr_slug), qr.id)}
+                      className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                      title="คัดลอก URL"
+                    >
+                      {copiedId === qr.id ? (
+                        <CheckCircle className="w-4 h-4 text-green-600" />
+                      ) : (
+                        <Copy className="w-4 h-4" />
+                      )}
+                    </button>
                   </div>
                 </div>
-              </div>
 
-              {/* Action Buttons */}
-              <div className="flex items-center gap-2 mt-4 pt-4 border-t border-slate-100">
-                <a
-                  href={qr.qr_image_url || '#'}
-                  download={`${qr.qr_slug}.png`}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
-                >
-                  <Download className="w-4 h-4" />
-                  ดาวน์โหลด
-                </a>
-                <Link
-                  href={`/admin/qr-codes/${qr.id}`}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
-                >
-                  <QrCode className="w-4 h-4" />
-                  แก้ไข
-                </Link>
-                <Link
-                  href={`/admin/qr-codes/${qr.id}/stats`}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
-                >
-                  <BarChart3 className="w-4 h-4" />
-                  สถิติ
-                </Link>
-                <a
-                  href={`/qr/${qr.qr_slug}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition-colors ml-auto"
-                >
-                  <ExternalLink className="w-4 h-4" />
-                  ทดสอบ
-                </a>
+                {/* UTM Tags */}
+                <div className="col-span-2 flex flex-wrap gap-1">
+                  {qr.utm_source && (
+                    <span className="px-2 py-0.5 bg-blue-50 text-blue-700 text-xs rounded">
+                      {qr.utm_source}
+                    </span>
+                  )}
+                  {qr.utm_medium && (
+                    <span className="px-2 py-0.5 bg-purple-50 text-purple-700 text-xs rounded">
+                      {qr.utm_medium}
+                    </span>
+                  )}
+                  {qr.utm_campaign && (
+                    <span className="px-2 py-0.5 bg-green-50 text-green-700 text-xs rounded">
+                      {qr.utm_campaign}
+                    </span>
+                  )}
+                  {!qr.utm_source && !qr.utm_medium && !qr.utm_campaign && (
+                    <span className="text-xs text-slate-400">-</span>
+                  )}
+                </div>
+
+                {/* Stats */}
+                <div className="col-span-2 text-sm">
+                  <div className="flex items-center gap-1.5 text-slate-600">
+                    <BarChart3 className="w-4 h-4" />
+                    <span>{qr.scan_count.toLocaleString()} สแกน</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-slate-400 text-xs mt-1">
+                    <Calendar className="w-3 h-3" />
+                    <span>{formatDate(qr.created_at, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="col-span-3 flex items-center justify-end gap-1">
+                  <a
+                    href={getQRImageUrl(qr.qr_slug)}
+                    download={`${qr.qr_slug}.png`}
+                    className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
+                    title="ดาวน์โหลด"
+                  >
+                    <Download className="w-4 h-4" />
+                  </a>
+                  <Link
+                    href={`/admin/qr-codes/${qr.id}`}
+                    className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    title="แก้ไข"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </Link>
+                  <Link
+                    href={`/admin/qr-codes/${qr.id}/stats`}
+                    className="p-2 text-slate-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                    title="สถิติ"
+                  >
+                    <BarChart3 className="w-4 h-4" />
+                  </Link>
+                  <a
+                    href={`/qr/${qr.qr_slug}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-2 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                    title="ทดสอบ"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
     </div>
