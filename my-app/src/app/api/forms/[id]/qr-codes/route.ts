@@ -4,9 +4,7 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase';
-
-const supabase = createServerClient();
+import { createClient } from '@supabase/supabase-js';
 
 interface Params {
   params: Promise<{ id: string }>;
@@ -15,6 +13,19 @@ interface Params {
 export async function GET(request: NextRequest, { params }: Params) {
   try {
     const { id } = await params;
+    
+    // Create Supabase client with service role
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
+    if (!supabaseUrl || !supabaseKey) {
+      return NextResponse.json(
+        { success: false, error: 'Missing Supabase configuration' },
+        { status: 500 }
+      );
+    }
+    
+    const supabase = createClient(supabaseUrl, supabaseKey);
     
     // Get QR codes by form_id
     const { data, error } = await supabase
