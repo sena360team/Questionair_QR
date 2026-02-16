@@ -34,26 +34,22 @@ export async function GET(request: NextRequest, { params }: Params) {
         id,
         name,
         qr_slug,
-        qr_image_url,
+        redirect_url,
         utm_source,
         utm_medium,
         utm_campaign,
         utm_content,
         scan_count,
         last_scanned_at,
-        created_at,
-        project:project_id (
-          id,
-          name
-        )
+        created_at
       `)
       .eq('form_id', id)
       .order('created_at', { ascending: false });
     
     if (error) {
-      console.error('Error fetching QR codes:', error);
+      console.error('Database Error:', error);
       return NextResponse.json(
-        { success: false, error: 'Failed to fetch QR codes' },
+        { success: false, error: 'Failed to fetch QR codes: ' + error.message },
         { status: 500 }
       );
     }

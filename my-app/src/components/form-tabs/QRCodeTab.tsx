@@ -22,6 +22,7 @@ interface QRCodeTabProps {
 
 interface QRCodeWithProject extends QRCode {
   project?: { id: string; name: string } | null;
+  qr_image_url?: string;
 }
 
 export function QRCodeTab({ formId, formCode }: QRCodeTabProps) {
@@ -60,6 +61,11 @@ export function QRCodeTab({ formId, formCode }: QRCodeTabProps) {
 
   const getQRCodeUrl = (qrSlug: string) => {
     return `${window.location.origin}/qr/${qrSlug}`;
+  };
+
+  const getQRImageUrl = (qrSlug: string) => {
+    // Generate QR code image using QR Server API
+    return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`${window.location.origin}/qr/${qrSlug}`)}`;
   };
 
   if (loading) {
@@ -127,17 +133,11 @@ export function QRCodeTab({ formId, formCode }: QRCodeTabProps) {
               <div className="flex gap-5">
                 {/* QR Code Image */}
                 <div className="flex-shrink-0">
-                  {qr.qr_image_url ? (
-                    <img
-                      src={qr.qr_image_url}
-                      alt={qr.name}
-                      className="w-28 h-28 object-contain border border-slate-200 rounded-xl"
-                    />
-                  ) : (
-                    <div className="w-28 h-28 bg-slate-100 rounded-xl flex items-center justify-center border border-slate-200">
-                      <QrCode className="w-12 h-12 text-slate-300" />
-                    </div>
-                  )}
+                  <img
+                    src={getQRImageUrl(qr.qr_slug)}
+                    alt={qr.name}
+                    className="w-28 h-28 object-contain border border-slate-200 rounded-xl"
+                  />
                 </div>
 
                 {/* Info */}
@@ -177,12 +177,7 @@ export function QRCodeTab({ formId, formCode }: QRCodeTabProps) {
                     </div>
                   </div>
 
-                  {/* Project */}
-                  {qr.project && (
-                    <div className="text-sm text-slate-500 mb-3">
-                      โครงการ: <span className="text-slate-700">{qr.project.name}</span>
-                    </div>
-                  )}
+
 
                   {/* URL & Actions */}
                   <div className="flex items-center gap-2">
