@@ -11,13 +11,15 @@ import { FormField } from '@/types';
 import { ArrowLeft, Save, Eye, X, Hash, FileText, Shield, Rocket, Edit3, CheckCircle, AlertCircle } from 'lucide-react';
 
 // Mock form data for preview
-const createMockForm = (code: string, title: string, description: string, fields: FormField[], logoUrl?: string, requireConsent?: boolean, consentHeading?: string, consentText?: string, consentRequireLocation?: boolean) => ({
+const createMockForm = (code: string, title: string, description: string, fields: FormField[], logoUrl?: string, logoPosition?: string, logoSize?: string, requireConsent?: boolean, consentHeading?: string, consentText?: string, consentRequireLocation?: boolean) => ({
   id: 'preview',
   code,
   slug: 'preview',
   title,
   description,
   logo_url: logoUrl,
+  logo_position: logoPosition,
+  logo_size: logoSize,
   fields,
   is_active: true,
   allow_multiple_responses: false,
@@ -40,6 +42,8 @@ export default function CreateFormPage() {
   const [description, setDescription] = useState('');
   const [fields, setFields] = useState<FormField[]>([]);
   const [logoUrl, setLogoUrl] = useState('');
+  const [logoPosition, setLogoPosition] = useState<'left' | 'center' | 'right'>('center');
+  const [logoSize, setLogoSize] = useState<'small' | 'medium' | 'large'>('medium');
   const [requireConsent, setRequireConsent] = useState(false);
   const [consentHeading, setConsentHeading] = useState('การยินยอม (Consent)');
   const [consentText, setConsentText] = useState('ข้าพเจ้ายินยอมให้เก็บข้อมูลส่วนบุคคลตามที่ระบุในแบบสอบถามนี้');
@@ -87,6 +91,8 @@ export default function CreateFormPage() {
         slug,
         description,
         logo_url: logoUrl,
+        logo_position: logoPosition,
+        logo_size: logoSize,
         fields,
         status: 'draft',
         require_consent: requireConsent,
@@ -117,6 +123,8 @@ export default function CreateFormPage() {
         slug,
         description,
         logo_url: logoUrl,
+        logo_position: logoPosition,
+        logo_size: logoSize,
         fields,
         status: 'published',
         require_consent: requireConsent,
@@ -138,7 +146,7 @@ export default function CreateFormPage() {
   const isValid = code && title && slug && fields.length > 0;
 
   // Create mock form for preview
-  const previewForm = createMockForm(code || 'FRM-XXX', title || 'ชื่อแบบสอบถาม', description, fields, logoUrl, requireConsent, consentHeading, consentText, consentRequireLocation);
+  const previewForm = createMockForm(code || 'FRM-XXX', title || 'ชื่อแบบสอบถาม', description, fields, logoUrl, logoPosition, logoSize, requireConsent, consentHeading, consentText, consentRequireLocation);
 
   return (
     <div className="space-y-6">
@@ -267,10 +275,67 @@ export default function CreateFormPage() {
               </div>
 
               {logoUrl && (
-                <div className="p-4 bg-slate-50 rounded-xl">
-                  <p className="text-xs text-slate-500 mb-2">ตัวอย่าง Logo:</p>
-                  <img src={logoUrl} alt="Logo preview" className="h-12 object-contain" />
-                </div>
+                <>
+                  <div className="p-4 bg-slate-50 rounded-xl">
+                    <p className="text-xs text-slate-500 mb-2">ตัวอย่าง Logo:</p>
+                    <img src={logoUrl} alt="Logo preview" className="h-12 object-contain" />
+                  </div>
+                  
+                  {/* Logo Position & Size */}
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* Position */}
+                    <div>
+                      <label className="block text-xs font-medium text-slate-600 mb-2">
+                        ตำแหน่ง
+                      </label>
+                      <div className="flex gap-1 bg-slate-100 p-1 rounded-lg">
+                        {[
+                          { value: 'left', label: 'ซ้าย' },
+                          { value: 'center', label: 'กลาง' },
+                          { value: 'right', label: 'ขวา' },
+                        ].map((pos) => (
+                          <button
+                            key={pos.value}
+                            onClick={() => setLogoPosition(pos.value as any)}
+                            className={`flex-1 py-1.5 px-2 text-xs font-medium rounded-md transition-all ${
+                              logoPosition === pos.value
+                                ? 'bg-white text-slate-900 shadow-sm'
+                                : 'text-slate-500 hover:text-slate-700'
+                            }`}
+                          >
+                            {pos.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    {/* Size */}
+                    <div>
+                      <label className="block text-xs font-medium text-slate-600 mb-2">
+                        ขนาด
+                      </label>
+                      <div className="flex gap-1 bg-slate-100 p-1 rounded-lg">
+                        {[
+                          { value: 'small', label: 'เล็ก' },
+                          { value: 'medium', label: 'กลาง' },
+                          { value: 'large', label: 'ใหญ่' },
+                        ].map((size) => (
+                          <button
+                            key={size.value}
+                            onClick={() => setLogoSize(size.value as any)}
+                            className={`flex-1 py-1.5 px-2 text-xs font-medium rounded-md transition-all ${
+                              logoSize === size.value
+                                ? 'bg-white text-slate-900 shadow-sm'
+                                : 'text-slate-500 hover:text-slate-700'
+                            }`}
+                          >
+                            {size.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </>
               )}
             </div>
           </div>
