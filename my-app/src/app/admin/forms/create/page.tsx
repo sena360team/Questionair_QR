@@ -247,37 +247,34 @@ export default function CreateFormPage() {
               </div>
               
               {/* Logo Section - Before Description */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                  🖼️ Logo (URL)
-                </label>
-                <input
-                  type="text"
-                  value={logoUrl}
-                  onChange={(e) => setLogoUrl(e.target.value)}
-                  placeholder="https://example.com/logo.png"
-                  className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500"
-                />
-                <p className="text-xs text-slate-500 mt-1.5">
-                  แนะนำ: ใช้รูป PNG หรือ SVG พื้นหลังโปร่งใส
-                </p>
-              </div>
-              
-              {logoUrl && (
-                <>
-                  <div className="p-4 bg-slate-50 rounded-xl">
-                    <p className="text-xs text-slate-500 mb-2">ตัวอย่าง Logo:</p>
-                    <img src={logoUrl} alt="Logo preview" className="h-12 object-contain" />
-                  </div>
-                  
-                  {/* Logo Position & Size */}
-                  <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                {/* Logo URL - Left */}
+                <div className="lg:col-span-2">
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                    🖼️ Logo (URL)
+                  </label>
+                  <input
+                    type="text"
+                    value={logoUrl}
+                    onChange={(e) => setLogoUrl(e.target.value)}
+                    placeholder="https://example.com/logo.png"
+                    className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500"
+                  />
+                  <p className="text-xs text-slate-500 mt-1.5">
+                    แนะนำ: ใช้รูป PNG หรือ SVG พื้นหลังโปร่งใส
+                  </p>
+                </div>
+                
+                {/* Logo Preview & Settings - Right */}
+                {logoUrl ? (
+                  <div className="bg-slate-50 rounded-xl p-4">
+                    <p className="text-xs text-slate-500 mb-2">ตัวอย่าง:</p>
+                    <img src={logoUrl} alt="Logo preview" className="h-10 object-contain mb-3" />
+                    
                     {/* Position */}
-                    <div>
-                      <label className="block text-xs font-medium text-slate-600 mb-2">
-                        ตำแหน่ง
-                      </label>
-                      <div className="flex gap-1 bg-slate-100 p-1 rounded-lg">
+                    <div className="mb-2">
+                      <label className="text-xs text-slate-500">ตำแหน่ง</label>
+                      <div className="flex gap-1 mt-1">
                         {[
                           { value: 'left', label: 'ซ้าย' },
                           { value: 'center', label: 'กลาง' },
@@ -286,10 +283,10 @@ export default function CreateFormPage() {
                           <button
                             key={pos.value}
                             onClick={() => setLogoPosition(pos.value as any)}
-                            className={`flex-1 py-1.5 px-2 text-xs font-medium rounded-md transition-all ${
+                            className={`flex-1 py-1 px-1 text-xs rounded ${
                               logoPosition === pos.value
                                 ? 'bg-white text-slate-900 shadow-sm'
-                                : 'text-slate-500 hover:text-slate-700'
+                                : 'text-slate-500 hover:bg-slate-200'
                             }`}
                           >
                             {pos.label}
@@ -300,10 +297,8 @@ export default function CreateFormPage() {
                     
                     {/* Size */}
                     <div>
-                      <label className="block text-xs font-medium text-slate-600 mb-2">
-                        ขนาด
-                      </label>
-                      <div className="flex gap-1 bg-slate-100 p-1 rounded-lg">
+                      <label className="text-xs text-slate-500">ขนาด</label>
+                      <div className="flex gap-1 mt-1">
                         {[
                           { value: 'small', label: 'เล็ก' },
                           { value: 'medium', label: 'กลาง' },
@@ -312,10 +307,10 @@ export default function CreateFormPage() {
                           <button
                             key={size.value}
                             onClick={() => setLogoSize(size.value as any)}
-                            className={`flex-1 py-1.5 px-2 text-xs font-medium rounded-md transition-all ${
+                            className={`flex-1 py-1 px-1 text-xs rounded ${
                               logoSize === size.value
                                 ? 'bg-white text-slate-900 shadow-sm'
-                                : 'text-slate-500 hover:text-slate-700'
+                                : 'text-slate-500 hover:bg-slate-200'
                             }`}
                           >
                             {size.label}
@@ -324,8 +319,12 @@ export default function CreateFormPage() {
                       </div>
                     </div>
                   </div>
-                </>
-              )}
+                ) : (
+                  <div className="bg-slate-50 rounded-xl p-4 flex items-center justify-center">
+                    <p className="text-xs text-slate-400">ใส่ URL เพื่อดูตัวอย่าง</p>
+                  </div>
+                )}
+              </div>
               
               {/* Description - After Logo */}
               <div className="pt-4 border-t border-slate-200">
