@@ -687,25 +687,28 @@ export default function EditFormPage() {
                 ))}
               </div>
               
-              {/* Theme Help Text */}
-              {theme === 'card-groups' && (
-                <div className="mt-4 p-4 bg-blue-50 rounded-xl border border-blue-200">
-                  <p className="text-sm text-blue-800">
-                    <span className="font-medium">💡 วิธีใช้การ์ดแยกกลุ่ม:</span> เพิ่ม field ประเภท 
-                    <span className="font-medium">"Section"</span> หรือ <span className="font-medium">"Heading"</span> เพื่อแบ่งกลุ่มคำถาม 
-                    แต่ละ Section/Heading จะเริ่มการ์ดใหม่
-                  </p>
-                </div>
-              )}
-              {theme === 'step-wizard' && (
-                <div className="mt-4 p-4 bg-blue-50 rounded-xl border border-blue-200">
-                  <p className="text-sm text-blue-800">
-                    <span className="font-medium">💡 วิธีใช้ขั้นตอน Step:</span> เพิ่ม field ประเภท 
-                    <span className="font-medium">"Section"</span> หรือ <span className="font-medium">"Heading"</span> เพื่อแบ่งขั้นตอน 
-                    แต่ละ Section/Heading จะเริ่ม Step ใหม่
-                  </p>
-                </div>
-              )}
+              {/* Theme Help Text - Show for all themes */}
+              <div className="mt-4 p-4 bg-blue-50 rounded-xl border border-blue-200">
+                <p className="text-sm text-blue-800">
+                  <span className="font-medium">โครงสร้างฟอร์ม:</span>
+                </p>
+                <ul className="mt-2 space-y-1 text-sm text-blue-700">
+                  <li className="flex items-start gap-2">
+                    <span className="font-medium">Section</span> - 
+                    {theme === 'card-groups' ? 'เริ่มการ์ดใหม่' : 
+                     theme === 'step-wizard' ? 'เริ่มขั้นตอนใหม่' : 
+                     'หัวข้อหลัก (ใหญ่)'}
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="font-medium">Heading</span> - 
+                    หัวข้อย่อยภายใน Section 
+                    {theme === 'default' || theme === 'minimal' ? '(เล็กกว่า Section)' : ''}
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="font-medium">คำถามปกติ</span> - มีเลขลำดับ 1, 2, 3...
+                  </li>
+                </ul>
+              </div>
             </div>
 
             {/* Consent Settings */}

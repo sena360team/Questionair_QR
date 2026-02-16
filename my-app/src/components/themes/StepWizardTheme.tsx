@@ -14,16 +14,16 @@ interface StepWizardThemeProps {
   renderSubmitButton: () => React.ReactNode;
 }
 
-// Split fields into steps by section/heading markers
-// User controls step breaks by adding 'section' or 'heading' fields
-function createSteps(fields: FormField[]): { title: string; fields: FormField[] }[] {
-  const steps: { title: string; fields: FormField[] }[] = [];
-  let currentStepFields: FormField[] = [];
+// Split fields into steps by section markers only
+// Section starts new step, Heading is just a text element inside the step
+function createSteps(fields: FormField[]): { title: string; fields: (FormField | { type: 'heading_render'; label: string; helpText?: string })[] }[] {
+  const steps: { title: string; fields: (FormField | { type: 'heading_render'; label: string; helpText?: string })[] }[] = [];
+  let currentStepFields: (FormField | { type: 'heading_render'; label: string; helpText?: string })[] = [];
   let currentStepTitle = 'เริ่มต้น';
 
   fields.forEach((field) => {
-    // Section or Heading field = start new step with this title
-    if (field.type === 'section' || field.type === 'heading') {
+    // Section field = start new step with this title
+    if (field.type === 'section') {
       // Save previous step if has fields
       if (currentStepFields.length > 0) {
         steps.push({ title: currentStepTitle, fields: currentStepFields });
@@ -31,8 +31,17 @@ function createSteps(fields: FormField[]): { title: string; fields: FormField[] 
       }
       // Use this field's label as new step title
       currentStepTitle = field.label || 'หัวข้อใหม่';
-      // Don't include section/heading field itself in the step (it's just a marker)
-    } else {
+      // Don't include section field itself in the step (it's just a marker)
+    } 
+    // Heading field = render as text element inside current step
+    else if (field.type === 'heading') {
+      currentStepFields.push({ 
+        type: 'heading_render', 
+        label: field.label || '',
+        helpText: field.helpText || field.description
+      });
+    }
+    else {
       currentStepFields.push(field);
     }
   });
@@ -174,23 +183,41 @@ export function StepWizardTheme({
           ) : (
             // Field Step
             <div className="space-y-6">
-              {steps[currentStep]?.fields.map((field, index) => (
-                <div key={field.id} className="space-y-2">
-                  <label className="block font-medium text-slate-900">
-                    {field.label}
-                    {field.required && (
-                      <span className="text-red-500 ml-1">*</span>
+              {steps[currentStep]?.fields.map((field, index) => {
+                // Heading render
+                if ('type' in field && field.type === 'heading_render') {
+                  return (
+                    <div key={`heading-${index}`} className="space-y-1">
+                      <h3 className="text-base font-semibold text-slate-800">
+                        {field.label}
+                      </h3>
+                      {field.helpText && (
+                        <p className="text-sm text-slate-500">{field.helpText}</p>
+                      )}
+                    </div>
+                  );
+                }
+                
+                // Regular field
+                const regularField = field as FormField;
+                return (
+                  <div key={regularField.id} className="space-y-2">
+                    <label className="block font-medium text-slate-900">
+                      {regularField.label}
+                      {regularField.required && (
+                        <span className="text-red-500 ml-1">*</span>
+                      )}
+                    </label>
+                    {regularField.description && (
+                      <p className="text-sm text-slate-500">{regularField.description}</p>
                     )}
-                  </label>
-                  {field.description && (
-                    <p className="text-sm text-slate-500">{field.description}</p>
-                  )}
-                  {renderField(field)}
-                  {errors[field.id] && (
-                    <p className="text-sm text-red-500">{errors[field.id]}</p>
-                  )}
-                </div>
-              ))}
+                    {renderField(regularField)}
+                    {errors[regularField.id] && (
+                      <p className="text-sm text-red-500">{errors[regularField.id]}</p>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>

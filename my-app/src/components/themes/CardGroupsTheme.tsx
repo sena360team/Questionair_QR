@@ -13,15 +13,14 @@ interface CardGroupsThemeProps {
   renderSubmitButton: () => React.ReactNode;
 }
 
-// Group fields by section or heading markers
-// User controls grouping by adding "section" or "heading" fields
-// Info boxes at the beginning are returned separately
+// Group fields by section markers only
+// Section starts new card, Heading is just a text element inside the card
 function groupFields(fields: FormField[]): { 
   introBoxes: FormField[];
-  groups: { title: string; fields: FormField[] }[] 
+  groups: { title: string; fields: (FormField | { type: 'heading_render'; label: string; helpText?: string })[] }[] 
 } {
-  const groups: { title: string; fields: FormField[] }[] = [];
-  let currentGroup: FormField[] = [];
+  const groups: { title: string; fields: (FormField | { type: 'heading_render'; label: string; helpText?: string })[] }[] = [];
+  let currentGroup: (FormField | { type: 'heading_render'; label: string; helpText?: string })[] = [];
   let currentTitle = 'ข้อมูลทั่วไป';
   let foundFirstSection = false;
   const introBoxes: FormField[] = [];
@@ -33,8 +32,8 @@ function groupFields(fields: FormField[]): {
       return;
     }
     
-    // Section or Heading field = start new group with this title
-    if (field.type === 'section' || field.type === 'heading') {
+    // Section field = start new group with this title
+    if (field.type === 'section') {
       foundFirstSection = true;
       // Save previous group if has fields
       if (currentGroup.length > 0) {
@@ -43,8 +42,18 @@ function groupFields(fields: FormField[]): {
       }
       // Use this field's label as new group title
       currentTitle = field.label || 'หัวข้อใหม่';
-      // Don't include section/heading field itself in the group (it's just a marker)
-    } else {
+      // Don't include section field itself in the group (it's just a marker)
+    } 
+    // Heading field = render as text element inside current group
+    else if (field.type === 'heading') {
+      foundFirstSection = true;
+      currentGroup.push({ 
+        type: 'heading_render', 
+        label: field.label || '',
+        helpText: field.helpText || field.description
+      });
+    }
+    else {
       currentGroup.push(field);
     }
   });
@@ -130,7 +139,7 @@ export function CardGroupsTheme({
           key={groupIndex} 
           className="bg-white rounded-xl shadow-md border border-slate-200 overflow-hidden hover:shadow-lg transition-shadow"
         >
-          {/* Group Header */}
+          {/* Group Header - Only Section */}
           <div className="bg-slate-50 px-6 py-3 border-b border-slate-200 flex items-center gap-2">
             <Layers className="w-4 h-4 text-slate-400" />
             <span className="text-sm font-medium text-slate-600">
@@ -143,27 +152,49 @@ export function CardGroupsTheme({
 
           {/* Group Fields */}
           <div className="p-6 space-y-5">
-            {group.fields.map((field, fieldIndex) => (
-              <div key={field.id} className="space-y-2">
-                <label className="flex items-start gap-2 font-medium text-slate-900">
-                  <span className="flex-shrink-0 w-5 h-5 bg-indigo-100 text-indigo-600 rounded text-xs font-medium flex items-center justify-center">
-                    {fieldIndex + 1}
-                  </span>
-                  <span className="flex-1">
-                    {field.label}
-                    {field.required && (
-                      <span className="text-red-500 ml-1">*</span>
+            {(() => {
+              let questionNumber = 0;
+              return group.fields.map((field, fieldIndex) => {
+                // Heading render
+                if ('type' in field && field.type === 'heading_render') {
+                  return (
+                    <div key={`heading-${fieldIndex}`} className="space-y-1">
+                      <h3 className="text-base font-semibold text-slate-800">
+                        {field.label}
+                      </h3>
+                      {field.helpText && (
+                        <p className="text-sm text-slate-500">{field.helpText}</p>
+                      )}
+                    </div>
+                  );
+                }
+                
+                // Regular field
+                const regularField = field as FormField;
+                questionNumber++;
+                return (
+                  <div key={regularField.id} className="space-y-2">
+                    <label className="flex items-start gap-2 font-medium text-slate-900">
+                      <span className="flex-shrink-0 w-5 h-5 bg-indigo-100 text-indigo-600 rounded text-xs font-medium flex items-center justify-center">
+                        {questionNumber}
+                      </span>
+                      <span className="flex-1">
+                        {regularField.label}
+                        {regularField.required && (
+                          <span className="text-red-500 ml-1">*</span>
+                        )}
+                      </span>
+                    </label>
+                    {regularField.description && (
+                      <p className="text-sm text-slate-500 ml-7">{regularField.description}</p>
                     )}
-                  </span>
-                </label>
-                {field.description && (
-                  <p className="text-sm text-slate-500 ml-7">{field.description}</p>
-                )}
-                <div className="ml-7">
-                  {renderField(field)}
-                </div>
-              </div>
-            ))}
+                    <div className="ml-7">
+                      {renderField(regularField)}
+                    </div>
+                  </div>
+                );
+              });
+            })()}
           </div>
         </div>
       ))}

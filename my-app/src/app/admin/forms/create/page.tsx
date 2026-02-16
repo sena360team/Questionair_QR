@@ -11,7 +11,7 @@ import { FormField } from '@/types';
 import { ArrowLeft, Save, Eye, X, Hash, FileText, Shield, Rocket, Edit3, CheckCircle, AlertCircle } from 'lucide-react';
 
 // Mock form data for preview
-const createMockForm = (code: string, title: string, description: string, fields: FormField[], logoUrl?: string, logoPosition?: string, logoSize?: string, requireConsent?: boolean, consentHeading?: string, consentText?: string, consentRequireLocation?: boolean) => ({
+const createMockForm = (code: string, title: string, description: string, fields: FormField[], logoUrl?: string, logoPosition?: string, logoSize?: string, theme?: string, requireConsent?: boolean, consentHeading?: string, consentText?: string, consentRequireLocation?: boolean) => ({
   id: 'preview',
   code,
   slug: 'preview',
@@ -20,6 +20,7 @@ const createMockForm = (code: string, title: string, description: string, fields
   logo_url: logoUrl,
   logo_position: logoPosition,
   logo_size: logoSize,
+  theme,
   fields,
   is_active: true,
   allow_multiple_responses: false,
@@ -44,6 +45,7 @@ export default function CreateFormPage() {
   const [logoUrl, setLogoUrl] = useState('');
   const [logoPosition, setLogoPosition] = useState<'left' | 'center' | 'right'>('center');
   const [logoSize, setLogoSize] = useState<'small' | 'medium' | 'large'>('medium');
+  const [theme, setTheme] = useState<'default' | 'card-groups' | 'step-wizard' | 'minimal'>('default');
   const [requireConsent, setRequireConsent] = useState(false);
   const [consentHeading, setConsentHeading] = useState('การยินยอม (Consent)');
   const [consentText, setConsentText] = useState('ข้าพเจ้ายินยอมให้เก็บข้อมูลส่วนบุคคลตามที่ระบุในแบบสอบถามนี้');
@@ -93,6 +95,7 @@ export default function CreateFormPage() {
         logo_url: logoUrl,
         logo_position: logoPosition,
         logo_size: logoSize,
+        theme,
         fields,
         status: 'draft',
         require_consent: requireConsent,
@@ -125,6 +128,7 @@ export default function CreateFormPage() {
         logo_url: logoUrl,
         logo_position: logoPosition,
         logo_size: logoSize,
+        theme,
         fields,
         status: 'published',
         require_consent: requireConsent,
@@ -146,7 +150,7 @@ export default function CreateFormPage() {
   const isValid = code && title && slug && fields.length > 0;
 
   // Create mock form for preview
-  const previewForm = createMockForm(code || 'FRM-XXX', title || 'ชื่อแบบสอบถาม', description, fields, logoUrl, logoPosition, logoSize, requireConsent, consentHeading, consentText, consentRequireLocation);
+  const previewForm = createMockForm(code || 'FRM-XXX', title || 'ชื่อแบบสอบถาม', description, fields, logoUrl, logoPosition, logoSize, theme, requireConsent, consentHeading, consentText, consentRequireLocation);
 
   return (
     <div className="space-y-6">
@@ -247,34 +251,46 @@ export default function CreateFormPage() {
               </div>
               
               {/* Logo Section - Before Description */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                {/* Logo URL - Left */}
-                <div className="lg:col-span-2">
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                    🖼️ Logo (URL)
-                  </label>
-                  <input
-                    type="text"
-                    value={logoUrl}
-                    onChange={(e) => setLogoUrl(e.target.value)}
-                    placeholder="https://example.com/logo.png"
-                    className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500"
-                  />
-                  <p className="text-xs text-slate-500 mt-1.5">
-                    แนะนำ: ใช้รูป PNG หรือ SVG พื้นหลังโปร่งใส
-                  </p>
+              <div>
+                {/* Row 1: URL + Preview */}
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+                  {/* Logo URL - Left (3/4) */}
+                  <div className="lg:col-span-3">
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                      🖼️ Logo (URL)
+                    </label>
+                    <input
+                      type="text"
+                      value={logoUrl}
+                      onChange={(e) => setLogoUrl(e.target.value)}
+                      placeholder="https://example.com/logo.png"
+                      className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500"
+                    />
+                    <p className="text-xs text-slate-500 mt-1.5">
+                      แนะนำ: ใช้รูป PNG หรือ SVG พื้นหลังโปร่งใส
+                    </p>
+                  </div>
+                  
+                  {/* Logo Preview - Right (1/4) */}
+                  <div className="bg-slate-50 rounded-xl p-4 flex flex-col items-center justify-center">
+                    <p className="text-xs text-slate-500 mb-2">ตัวอย่าง:</p>
+                    {logoUrl ? (
+                      <img src={logoUrl} alt="Logo preview" className="h-12 object-contain" />
+                    ) : (
+                      <p className="text-xs text-slate-400">-</p>
+                    )}
+                  </div>
                 </div>
                 
-                {/* Logo Preview & Settings - Right */}
-                {logoUrl ? (
-                  <div className="bg-slate-50 rounded-xl p-4">
-                    <p className="text-xs text-slate-500 mb-2">ตัวอย่าง:</p>
-                    <img src={logoUrl} alt="Logo preview" className="h-10 object-contain mb-3" />
-                    
+                {/* Row 2: Position & Size (when logo exists) */}
+                {logoUrl && (
+                  <div className="grid grid-cols-2 gap-4 mt-4">
                     {/* Position */}
-                    <div className="mb-2">
-                      <label className="text-xs text-slate-500">ตำแหน่ง</label>
-                      <div className="flex gap-1 mt-1">
+                    <div>
+                      <label className="block text-xs font-medium text-slate-600 mb-2">
+                        ตำแหน่ง
+                      </label>
+                      <div className="flex gap-1 bg-slate-100 p-1 rounded-lg">
                         {[
                           { value: 'left', label: 'ซ้าย' },
                           { value: 'center', label: 'กลาง' },
@@ -283,10 +299,10 @@ export default function CreateFormPage() {
                           <button
                             key={pos.value}
                             onClick={() => setLogoPosition(pos.value as any)}
-                            className={`flex-1 py-1 px-1 text-xs rounded ${
+                            className={`flex-1 py-1.5 px-2 text-xs font-medium rounded-md transition-all ${
                               logoPosition === pos.value
                                 ? 'bg-white text-slate-900 shadow-sm'
-                                : 'text-slate-500 hover:bg-slate-200'
+                                : 'text-slate-500 hover:text-slate-700'
                             }`}
                           >
                             {pos.label}
@@ -297,8 +313,10 @@ export default function CreateFormPage() {
                     
                     {/* Size */}
                     <div>
-                      <label className="text-xs text-slate-500">ขนาด</label>
-                      <div className="flex gap-1 mt-1">
+                      <label className="block text-xs font-medium text-slate-600 mb-2">
+                        ขนาด
+                      </label>
+                      <div className="flex gap-1 bg-slate-100 p-1 rounded-lg">
                         {[
                           { value: 'small', label: 'เล็ก' },
                           { value: 'medium', label: 'กลาง' },
@@ -307,10 +325,10 @@ export default function CreateFormPage() {
                           <button
                             key={size.value}
                             onClick={() => setLogoSize(size.value as any)}
-                            className={`flex-1 py-1 px-1 text-xs rounded ${
+                            className={`flex-1 py-1.5 px-2 text-xs font-medium rounded-md transition-all ${
                               logoSize === size.value
                                 ? 'bg-white text-slate-900 shadow-sm'
-                                : 'text-slate-500 hover:bg-slate-200'
+                                : 'text-slate-500 hover:text-slate-700'
                             }`}
                           >
                             {size.label}
@@ -318,10 +336,6 @@ export default function CreateFormPage() {
                         ))}
                       </div>
                     </div>
-                  </div>
-                ) : (
-                  <div className="bg-slate-50 rounded-xl p-4 flex items-center justify-center">
-                    <p className="text-xs text-slate-400">ใส่ URL เพื่อดูตัวอย่าง</p>
                   </div>
                 )}
               </div>
@@ -339,6 +353,63 @@ export default function CreateFormPage() {
                   className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 resize-none"
                 />
               </div>
+            </div>
+          </div>
+
+          {/* Theme Selector */}
+          <div className="bg-white p-6 rounded-2xl border-2 border-slate-300">
+            <h2 className="text-lg font-semibold text-slate-900 mb-4">🎨 Theme (รูปแบบการแสดงผล)</h2>
+            
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              {[
+                { value: 'default', label: 'ค่าเริ่มต้น', desc: 'เรียบง่าย สะอาดตา' },
+                { value: 'card-groups', label: 'การ์ดแยกกลุ่ม', desc: 'แบ่งกลุ่มคำถามเป็นการ์ด' },
+                { value: 'step-wizard', label: 'ขั้นตอน Step', desc: 'แบ่งเป็นขั้นตอน' },
+                { value: 'minimal', label: 'มินิมอล', desc: 'เรียบง่ายที่สุด' },
+              ].map((t) => (
+                <label
+                  key={t.value}
+                  className={`p-4 border-2 rounded-xl cursor-pointer transition-all ${
+                    theme === t.value
+                      ? 'border-purple-500 bg-purple-50'
+                      : 'border-slate-200 hover:border-slate-300'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="theme"
+                    value={t.value}
+                    checked={theme === t.value}
+                    onChange={(e) => setTheme(e.target.value as any)}
+                    className="sr-only"
+                  />
+                  <div className="font-medium text-slate-900">{t.label}</div>
+                  <div className="text-xs text-slate-500 mt-1">{t.desc}</div>
+                </label>
+              ))}
+            </div>
+            
+            {/* Theme Help Text - Show for all themes */}
+            <div className="mt-4 p-4 bg-blue-50 rounded-xl border border-blue-200">
+              <p className="text-sm text-blue-800">
+                <span className="font-medium">โครงสร้างฟอร์ม:</span>
+              </p>
+              <ul className="mt-2 space-y-1 text-sm text-blue-700">
+                <li className="flex items-start gap-2">
+                  <span className="font-medium">Section</span> - 
+                  {theme === 'card-groups' ? 'เริ่มการ์ดใหม่' : 
+                   theme === 'step-wizard' ? 'เริ่มขั้นตอนใหม่' : 
+                   'หัวข้อหลัก (ใหญ่)'}
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="font-medium">Heading</span> - 
+                  หัวข้อย่อยภายใน Section 
+                  {theme === 'default' || theme === 'minimal' ? '(เล็กกว่า Section)' : ''}
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="font-medium">คำถามปกติ</span> - มีเลขลำดับ 1, 2, 3...
+                </li>
+              </ul>
             </div>
           </div>
 

@@ -27,8 +27,8 @@ import {
 } from 'lucide-react';
 
 const FIELD_TYPES = [
-  { type: 'heading' as FieldType, label: 'หัวข้อ', icon: <Heading className="w-4 h-4" />, category: 'layout' as const },
   { type: 'section' as FieldType, label: 'Section', icon: <LayoutTemplate className="w-4 h-4" />, category: 'layout' as const },
+  { type: 'heading' as FieldType, label: 'หัวข้อ', icon: <Heading className="w-4 h-4" />, category: 'layout' as const },
   { type: 'info_box' as FieldType, label: 'กล่องข้อความ', icon: <Info className="w-4 h-4" />, category: 'layout' as const },
   { type: 'text' as FieldType, label: 'ข้อความสั้น', icon: <Type className="w-4 h-4" />, category: 'input' as const },
   { type: 'textarea' as FieldType, label: 'ข้อความยาว', icon: <AlignLeft className="w-4 h-4" />, category: 'input' as const },
