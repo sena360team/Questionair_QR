@@ -15,14 +15,27 @@ interface CardGroupsThemeProps {
 
 // Group fields by section or heading markers
 // User controls grouping by adding "section" or "heading" fields
-function groupFields(fields: FormField[]): { title: string; fields: FormField[] }[] {
+// Info boxes at the beginning are returned separately
+function groupFields(fields: FormField[]): { 
+  introBoxes: FormField[];
+  groups: { title: string; fields: FormField[] }[] 
+} {
   const groups: { title: string; fields: FormField[] }[] = [];
   let currentGroup: FormField[] = [];
   let currentTitle = 'ข้อมูลทั่วไป';
+  let foundFirstSection = false;
+  const introBoxes: FormField[] = [];
 
   fields.forEach((field) => {
+    // Info boxes before first section are intro boxes
+    if (!foundFirstSection && field.type === 'info_box') {
+      introBoxes.push(field);
+      return;
+    }
+    
     // Section or Heading field = start new group with this title
     if (field.type === 'section' || field.type === 'heading') {
+      foundFirstSection = true;
       // Save previous group if has fields
       if (currentGroup.length > 0) {
         groups.push({ title: currentTitle, fields: currentGroup });
@@ -41,7 +54,7 @@ function groupFields(fields: FormField[]): { title: string; fields: FormField[] 
     groups.push({ title: currentTitle, fields: currentGroup });
   }
 
-  return groups;
+  return { introBoxes, groups };
 }
 
 // Get logo size classes
@@ -65,7 +78,7 @@ export function CardGroupsTheme({
   renderField,
   renderSubmitButton,
 }: CardGroupsThemeProps) {
-  const groups = useMemo(() => groupFields(form.fields), [form.fields]);
+  const { introBoxes, groups } = useMemo(() => groupFields(form.fields), [form.fields]);
   const logoSizeClass = getLogoSizeClasses(form.logo_size);
 
   return (
@@ -92,6 +105,22 @@ export function CardGroupsTheme({
           </p>
         )}
       </div>
+
+      {/* Intro Info Boxes (before first section) - no card border */}
+      {introBoxes.length > 0 && (
+        <div className="space-y-4">
+          {introBoxes.map((field) => (
+            <div key={field.id} className="bg-blue-50 rounded-xl p-4 border border-blue-100">
+              {field.label && (
+                <h4 className="font-medium text-blue-900 mb-2">{field.label}</h4>
+              )}
+              {field.description && (
+                <p className="text-sm text-blue-700">{field.description}</p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Field Groups */}
       {groups.map((group, groupIndex) => (
