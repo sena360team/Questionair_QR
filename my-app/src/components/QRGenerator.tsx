@@ -434,7 +434,7 @@ export function QRGenerator({
       {/* Custom Confirm Dialog */}
       {showConfirm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl">
+          <div className="bg-white rounded-2xl w-full max-w-xl p-6 shadow-2xl">
             {/* Header */}
             <div className="flex items-start gap-4 mb-4">
               <div className={cn(

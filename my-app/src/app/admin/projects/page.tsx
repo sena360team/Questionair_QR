@@ -193,7 +193,7 @@ export default function ProjectsPage() {
 
       {/* Search & Template */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-        <div className="relative flex-1 max-w-md w-full">
+        <div className="relative flex-1 max-w-lg w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
           <input
             type="text"
@@ -324,7 +324,7 @@ export default function ProjectsPage() {
       {/* Delete Confirmation */}
       {showDeleteId && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl p-6 max-w-sm w-full">
+          <div className="bg-white rounded-xl p-6 max-w-xl w-full">
             <h3 className="font-semibold text-slate-900 mb-2">ยืนยันการลบ?</h3>
             <p className="text-slate-500 text-sm mb-4">การลบไม่สามารถเรียกคืนได้</p>
             <div className="flex gap-3">
@@ -368,7 +368,7 @@ function ProjectModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl w-full max-w-md p-6">
+      <div className="bg-white rounded-xl w-full max-w-xl p-6">
         <h2 className="text-xl font-bold text-slate-900 mb-6">
           {project ? 'แก้ไขโครงการ' : 'เพิ่มโครงการ'}
         </h2>

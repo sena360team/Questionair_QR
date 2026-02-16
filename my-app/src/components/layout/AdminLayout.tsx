@@ -62,13 +62,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           <span className="font-semibold text-slate-900">QR Survey</span>
         </div>
 
-        {/* Page Content - Wide Container */}
-        <div className={`
-          mx-auto p-4 sm:p-6 lg:p-8 xl:p-10 2xl:p-12
-          max-w-none
-          2xl:max-w-[1920px]
-          3xl:max-w-[2400px]
-        `}>
+        {/* Page Content - Full Width */}
+        <div className="w-full h-full p-4 sm:p-6 lg:p-8">
           {children}
         </div>
       </main>

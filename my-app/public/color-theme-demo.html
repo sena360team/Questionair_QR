@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Color Theme Demo - SenX Brand Colors</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* ========================================
+           SENX COLOR SYSTEM
+           ======================================== */
+        :root {
+            /* Primary - Banner Color */
+            --banner-color: #2563EB;
+            --banner-dark: #1D4ED8;
+            --banner-light: #3B82F6;
+            
+            /* Secondary - Button & Heading */
+            --accent-color: #2563EB;
+            --accent-dark: #1D4ED8;
+            --accent-light: #3B82F6;
+            --accent-50: #EFF6FF;
+            --accent-100: #DBEAFE;
+            
+            /* Neutral */
+            --neutral-black: #0F172A;
+            --neutral-gray-900: #1E293B;
+            --neutral-gray-700: #334155;
+            --neutral-gray-500: #64748B;
+            --neutral-gray-300: #CBD5E1;
+            --neutral-gray-100: #F1F5F9;
+            --neutral-gray-50: #F8FAFC;
+            --neutral-white: #FFFFFF;
+            
+            /* Section */
+            --section-bg: var(--neutral-gray-50);
+            --section-text: var(--neutral-gray-700);
+        }
+        
+        /* ========================================
+           BANNER COLORS - 4 OPTIONS ONLY
+           ======================================== */
+        [data-banner="blue"] {
+            --banner-color: #2563EB;
+            --banner-dark: #1D4ED8;
+            --banner-light: #3B82F6;
+        }
+        
+        [data-banner="black"] {
+            --banner-color: #0F172A;
+            --banner-dark: #020617;
+            --banner-light: #1E293B;
+        }
+        
+        [data-banner="white"] {
+            --banner-color: #FFFFFF;
+            --banner-dark: #F1F5F9;
+            --banner-light: #FFFFFF;
+        }
+        
+        /* ========================================
+           ACCENT COLORS (Button & Heading)
+           ======================================== */
+        [data-accent="blue"] {
+            --accent-color: #2563EB;
+            --accent-dark: #1D4ED8;
+            --accent-light: #3B82F6;
+            --accent-50: #EFF6FF;
+            --accent-100: #DBEAFE;
+        }
+        
+        [data-accent="sky"] {
+            --accent-color: #0EA5E9;
+            --accent-dark: #0284C7;
+            --accent-light: #38BDF8;
+            --accent-50: #F0F9FF;
+            --accent-100: #E0F2FE;
+        }
+        
+        [data-accent="teal"] {
+            --accent-color: #0D9488;
+            --accent-dark: #0F766E;
+            --accent-light: #14B8A6;
+            --accent-50: #F0FDFA;
+            --accent-100: #CCFBF1;
+        }
+        
+        [data-accent="emerald"] {
+            --accent-color: #059669;
+            --accent-dark: #047857;
+            --accent-light: #10B981;
+            --accent-50: #ECFDF5;
+            --accent-100: #D1FAE5;
+        }
+        
+        [data-accent="violet"] {
+            --accent-color: #7C3AED;
+            --accent-dark: #6D28D9;
+            --accent-light: #8B5CF6;
+            --accent-50: #F5F3FF;
+            --accent-100: #EDE9FE;
+        }
+        
+        [data-accent="rose"] {
+            --accent-color: #E11D48;
+            --accent-dark: #BE123C;
+            --accent-light: #FB7185;
+            --accent-50: #FFF1F2;
+            --accent-100: #FFE4E6;
+        }
+        
+        [data-accent="orange"] {
+            --accent-color: #EA580C;
+            --accent-dark: #C2410C;
+            --accent-light: #FB923C;
+            --accent-50: #FFF7ED;
+            --accent-100: #FFEDD5;
+        }
+        
+        [data-accent="slate"] {
+            --accent-color: #475569;
+            --accent-dark: #334155;
+            --accent-light: #64748B;
+            --accent-50: #F8FAFC;
+            --accent-100: #F1F5F9;
+        }
+        
+        [data-accent="black"] {
+            --accent-color: #0F172A;
+            --accent-dark: #020617;
+            --accent-light: #1E293B;
+            --accent-50: #F8FAFC;
+            --accent-100: #F1F5F9;
+        }
+        
+        /* ========================================
+           APPLY STYLES
+           ======================================== */
+        .banner-bg {
+            background: var(--banner-color);
+        }
+        
+        .banner-bg-gradient {
+            background: linear-gradient(135deg, var(--banner-color) 0%, var(--banner-light) 100%);
+        }
+        
+        /* Banner text color based on background */
+        [data-banner="white"] .banner-bg,
+        [data-banner="white"] .banner-bg-gradient {
+            color: #0F172A;
+            border: 1px solid #E2E8F0;
+        }
+        
+        [data-banner="white"] .banner-text-muted {
+            color: #64748B;
+        }
+        
+        .section-header {
+            background-color: var(--section-bg);
+            color: var(--section-text);
+            border-left: 3px solid var(--accent-color);
+        }
+        
+        .btn-primary {
+            background-color: var(--accent-color);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--accent-dark);
+        }
+        
+        .text-accent {
+            color: var(--accent-color);
+        }
+        
+        .badge-accent {
+            background-color: var(--accent-100);
+            color: var(--accent-dark);
+        }
+        
+        .progress-bar {
+            background: linear-gradient(90deg, var(--accent-color), var(--accent-light));
+        }
+        
+        /* Indicator dot */
+        .dot-active {
+            background-color: var(--accent-color);
+        }
+        
+        /* Custom color picker button style */
+        .custom-color-btn,
+        .custom-banner-btn {
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen" data-banner="blue" data-accent="blue">
+    
+    <div class="max-w-6xl mx-auto p-4">
+        
+        <!-- ======================================== -->
+        <!-- CONTROL PANEL                            -->
+        <!-- ======================================== -->
+        <div class="bg-white rounded-2xl shadow-lg p-6 mb-6">
+            <div class="flex items-center gap-4 mb-6">
+                <div class="w-10 h-10 bg-[#2563EB] rounded-lg flex items-center justify-center text-white font-bold">X</div>
+                <div>
+                    <h2 class="text-xl font-bold text-gray-900">ตั้งค่าสีธีม</h2>
+                    <p class="text-sm text-gray-500">เลือกสี Banner และสีรอง (Button, Heading)</p>
+                </div>
+            </div>
+            
+            <!-- Banner Color Selection - 4 OPTIONS ONLY -->
+            <div class="mb-6">
+                <h3 class="text-sm font-medium text-gray-700 mb-3">สี Banner (พื้นหลังหัวเว็บ)</h3>
+                <div class="flex flex-wrap items-center gap-2">
+                    <!-- Blue -->
+                    <button onclick="setBanner('blue')" class="banner-btn w-8 h-8 rounded-lg bg-[#2563EB] hover:scale-110 transition-transform ring-2 ring-offset-1 ring-transparent focus:ring-gray-400" title="Blue" data-banner-btn="blue"></button>
+                    <!-- Black -->
+                    <button onclick="setBanner('black')" class="banner-btn w-8 h-8 rounded-lg bg-[#0F172A] hover:scale-110 transition-transform ring-2 ring-offset-1 ring-transparent focus:ring-gray-400" title="Black" data-banner-btn="black"></button>
+                    <!-- White -->
+                    <button onclick="setBanner('white')" class="banner-btn w-8 h-8 rounded-lg bg-white border-2 border-gray-300 hover:scale-110 transition-transform ring-2 ring-offset-1 ring-transparent focus:ring-gray-400" title="White" data-banner-btn="white"></button>
+                    <!-- Custom - styled like other buttons -->
+                    <button onclick="document.getElementById('bannerColorPicker').click()" class="banner-btn custom-banner-btn w-8 h-8 rounded-lg bg-gradient-to-br from-gray-100 to-gray-300 border-2 border-gray-300 hover:scale-110 transition-transform ring-2 ring-offset-1 ring-transparent focus:ring-gray-400 flex items-center justify-center" title="Custom">
+                        <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                        </svg>
+                    </button>
+                    <!-- Hidden color input -->
+                    <input type="color" id="bannerColorPicker" class="absolute opacity-0 pointer-events-none" value="#2563EB" onchange="setBannerCustom(this.value)">
+                </div>
+            </div>
+            
+            <!-- Accent Color Selection - SINGLE ROW -->
+            <div class="mb-6">
+                <h3 class="text-sm font-medium text-gray-700 mb-3">สีรอง (Button, Heading, Section ขีด)</h3>
+                <div class="flex flex-wrap items-center gap-2">
+                    <!-- Blue tones -->
+                    <button onclick="setAccent('blue')" class="accent-btn w-8 h-8 rounded-lg bg-[#2563EB] hover:scale-110 transition-transform ring-2 ring-offset-1 ring-transparent focus:ring-gray-400" title="Blue" data-accent-btn="blue"></button>
+                    <button onclick="setAccent('sky')" class="accent-btn w-8 h-8 rounded-lg bg-[#0EA5E9] hover:scale-110 transition-transform ring-2 ring-offset-1 ring-transparent focus:ring-gray-400" title="Sky" data-accent-btn="sky"></button>
+                    <button onclick="setAccent('teal')" class="accent-btn w-8 h-8 rounded-lg bg-[#0D9488] hover:scale-110 transition-transform ring-2 ring-offset-1 ring-transparent focus:ring-gray-400" title="Teal" data-accent-btn="teal"></button>
+                    <button onclick="setAccent('emerald')" class="accent-btn w-8 h-8 rounded-lg bg-[#059669] hover:scale-110 transition-transform ring-2 ring-offset-1 ring-transparent focus:ring-gray-400" title="Emerald" data-accent-btn="emerald"></button>
+                    <button onclick="setAccent('violet')" class="accent-btn w-8 h-8 rounded-lg bg-[#7C3AED] hover:scale-110 transition-transform ring-2 ring-offset-1 ring-transparent focus:ring-gray-400" title="Violet" data-accent-btn="violet"></button>
+                    <button onclick="setAccent('rose')" class="accent-btn w-8 h-8 rounded-lg bg-[#E11D48] hover:scale-110 transition-transform ring-2 ring-offset-1 ring-transparent focus:ring-gray-400" title="Rose" data-accent-btn="rose"></button>
+                    <button onclick="setAccent('orange')" class="accent-btn w-8 h-8 rounded-lg bg-[#EA580C] hover:scale-110 transition-transform ring-2 ring-offset-1 ring-transparent focus:ring-gray-400" title="Orange" data-accent-btn="orange"></button>
+                    <!-- Neutral tones -->
+                    <button onclick="setAccent('slate')" class="accent-btn w-8 h-8 rounded-lg bg-[#475569] hover:scale-110 transition-transform ring-2 ring-offset-1 ring-transparent focus:ring-gray-400" title="Slate" data-accent-btn="slate"></button>
+                    <button onclick="setAccent('black')" class="accent-btn w-8 h-8 rounded-lg bg-[#0F172A] hover:scale-110 transition-transform ring-2 ring-offset-1 ring-transparent focus:ring-gray-400" title="Black" data-accent-btn="black"></button>
+                    <!-- Custom - styled like other buttons -->
+                    <button onclick="document.getElementById('accentColorPicker').click()" class="accent-btn custom-color-btn w-8 h-8 rounded-lg bg-gradient-to-br from-gray-100 to-gray-300 border-2 border-gray-300 hover:scale-110 transition-transform ring-2 ring-offset-1 ring-transparent focus:ring-gray-400 flex items-center justify-center" title="Custom">
+                        <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                        </svg>
+                    </button>
+                    <!-- Hidden color input -->
+                    <input type="color" id="accentColorPicker" class="absolute opacity-0 pointer-events-none" value="#2563EB" onchange="setAccentCustom(this.value)">
+                </div>
+            </div>
+            
+            <!-- Banner Mode -->
+            <div class="border-t border-gray-200 pt-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <h3 class="text-sm font-medium text-gray-600">รูปแบบ Banner:</h3>
+                        <div class="flex gap-2">
+                            <button onclick="setBannerMode('gradient')" id="btn-gradient" class="px-3 py-1.5 text-sm font-medium rounded-md bg-[#2563EB] text-white">Gradient</button>
+                            <button onclick="setBannerMode('solid')" id="btn-solid" class="px-3 py-1.5 text-sm font-medium rounded-md bg-gray-200 text-gray-700">Solid</button>
+                        </div>
+                    </div>
+                    <button onclick="resetAll()" class="text-sm text-red-500 hover:text-red-700 flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                        รีเซ็ตทั้งหมด
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ======================================== -->
+        <!-- THEME PREVIEWS                           -->
+        <!-- ======================================== -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            
+            <!-- CardGroups Theme -->
+            <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                    <h3 class="font-semibold text-gray-800">CardGroups Theme</h3>
+                </div>
+                <div class="p-4">
+                    <div id="cardgroups-banner" class="banner-bg-gradient rounded-2xl p-6 text-white text-center shadow-xl mb-4">
+                        <h1 class="text-2xl font-bold">แบบสอบถามความพึงพอใจ</h1>
+                        <p class="banner-text-muted text-sm mt-1">กรุณากรอกข้อมูลให้ครบถ้วน</p>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
+                        <div class="section-header px-4 py-3 border-b border-gray-200 flex items-center justify-between">
+                            <span class="text-sm font-medium">ข้อมูลส่วนตัล</span>
+                            <span class="text-xs text-gray-400">1/2</span>
+                        </div>
+                        <div class="p-4 space-y-4">
+                            <div>
+                                <label class="text-sm font-medium text-gray-700">1. ชื่อ</label>
+                                <div class="mt-1 px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-400 text-sm">กรอกชื่อ</div>
+                            </div>
+                            <div>
+                                <label class="text-sm font-medium text-gray-700">2. อีเมล</label>
+                                <div class="mt-1 px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-400 text-sm">email@example.com</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button class="btn-primary w-full mt-4 py-2.5 font-medium rounded-xl transition-colors">
+                        ส่งแบบสอบถาม
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Step Wizard Theme -->
+            <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                    <h3 class="font-semibold text-gray-800">Step Wizard Theme</h3>
+                </div>
+                <div class="p-4">
+                    <div class="text-center mb-4">
+                        <h1 class="text-xl font-bold text-accent">แบบสอบถามความพึงพอใจ</h1>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <div class="flex justify-between text-xs text-gray-500 mb-1">
+                            <span>ขั้นตอน 1 จาก 2</span>
+                            <span>50%</span>
+                        </div>
+                        <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
+                            <div class="progress-bar h-full w-1/2 rounded-full"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+                        <div class="section-header px-4 py-3 border-b border-gray-200">
+                            <h2 class="font-semibold">ข้อมูลส่วนตัล</h2>
+                        </div>
+                        <div class="p-4 space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-accent mb-1">ชื่อ</label>
+                                <div class="px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-400 text-sm">กรอกชื่อ</div>
+                            </div>
+                        </div>
+                        <div class="px-4 py-3 bg-gray-50 border-t border-gray-200 flex justify-between">
+                            <button class="text-gray-400 text-sm">← ย้อนกลับ</button>
+                            <button class="btn-primary px-4 py-2 text-sm font-medium rounded-lg">ถัดไป →</button>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-center gap-2 mt-4">
+                        <span class="dot-active w-6 h-2 rounded-full"></span>
+                        <span class="w-2 h-2 rounded-full bg-gray-300"></span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Default Theme -->
+            <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                    <h3 class="font-semibold text-gray-800">Default Theme</h3>
+                </div>
+                <div class="p-4">
+                    <div id="default-banner" class="banner-bg-gradient rounded-xl p-8 text-white text-center shadow-lg mb-4">
+                        <h1 class="text-2xl font-bold">แบบสอบถามความพึงพอใจ</h1>
+                        <p class="banner-text-muted text-sm mt-2">กรุณากรอกข้อมูลให้ครบถ้วน</p>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <h2 class="text-lg font-bold text-accent pt-2">ข้อมูลส่วนตัล</h2>
+                        
+                        <div class="flex items-start gap-3">
+                            <span class="badge-accent w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium">1</span>
+                            <div class="flex-1">
+                                <label class="font-medium text-gray-800">ชื่อ <span class="text-red-500">*</span></label>
+                                <div class="mt-1 px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-400 text-sm">กรอกชื่อ</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button class="btn-primary w-full mt-6 py-3 font-medium rounded-xl transition-colors">
+                        ส่งแบบสอบถาม
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Minimal Theme -->
+            <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                    <h3 class="font-semibold text-gray-800">Minimal Theme</h3>
+                </div>
+                <div class="p-4">
+                    <div class="mb-6 pb-4 border-b border-gray-200">
+                        <h1 class="text-xl font-medium text-accent">แบบสอบถามความพึงพอใจ</h1>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <h2 class="text-base font-semibold text-accent">ข้อมูลส่วนตัล</h2>
+                        <div>
+                            <label class="text-sm font-medium text-accent">ชื่อ</label>
+                            <div class="mt-1.5 px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-400 text-sm">กรอกชื่อ</div>
+                        </div>
+                    </div>
+                    
+                    <button class="btn-primary w-full mt-6 py-2.5 font-medium rounded-lg transition-colors">
+                        ส่งแบบสอบถาม
+                    </button>
+                </div>
+            </div>
+            
+        </div>
+        
+        <!-- ======================================== -->
+        <!-- CODE REFERENCE                           -->
+        <!-- ======================================== -->
+        <div class="bg-[#0F172A] rounded-2xl shadow-lg p-6 mt-6 text-gray-300">
+            <h3 class="text-lg font-bold text-white mb-4">💻 Database Schema</h3>
+            <pre class="text-sm overflow-x-auto"><code>-- Form Color Settings
+ALTER TABLE forms ADD COLUMN banner_color VARCHAR(20) DEFAULT 'blue';
+ALTER TABLE forms ADD COLUMN banner_mode VARCHAR(20) DEFAULT 'gradient';
+ALTER TABLE forms ADD COLUMN accent_color VARCHAR(20) DEFAULT 'blue';
+
+-- Banner: blue, black, white, custom
+-- Accent: blue, sky, teal, emerald, violet, rose, orange, slate, black, custom</code></pre>
+        </div>
+        
+    </div>
+
+    <script>
+        // Banner Color - 4 Options Only
+        function setBanner(color) {
+            document.body.setAttribute('data-banner', color);
+            updateBannerBtnState(color);
+            
+            const bannerColors = {
+                'blue': '#2563EB',
+                'black': '#0F172A',
+                'white': '#FFFFFF'
+            };
+            document.getElementById('bannerColorPicker').value = bannerColors[color] || '#2563EB';
+        }
+        
+        function setBannerCustom(hex) {
+            document.body.setAttribute('data-banner', 'custom');
+            document.documentElement.style.setProperty('--banner-color', hex);
+            document.documentElement.style.setProperty('--banner-dark', adjustBrightness(hex, -15));
+            document.documentElement.style.setProperty('--banner-light', adjustBrightness(hex, 20));
+            
+            document.querySelectorAll('[data-banner-btn]').forEach(btn => {
+                btn.classList.remove('ring-2', 'ring-offset-1', 'ring-gray-400');
+            });
+            
+            // Update custom button background
+            document.querySelector('.custom-banner-btn').style.background = hex;
+            document.querySelector('.custom-banner-btn').style.borderColor = hex;
+        }
+        
+        function updateBannerBtnState(activeColor) {
+            document.querySelectorAll('[data-banner-btn]').forEach(btn => {
+                const btnColor = btn.getAttribute('data-banner-btn');
+                if (btnColor === activeColor) {
+                    btn.classList.add('ring-2', 'ring-offset-1', 'ring-gray-400');
+                } else {
+                    btn.classList.remove('ring-2', 'ring-offset-1', 'ring-gray-400');
+                }
+            });
+        }
+        
+        // Accent Color
+        function setAccent(color) {
+            document.body.setAttribute('data-accent', color);
+            updateAccentBtnState(color);
+        }
+        
+        function setAccentCustom(hex) {
+            document.body.setAttribute('data-accent', 'custom');
+            document.documentElement.style.setProperty('--accent-color', hex);
+            document.documentElement.style.setProperty('--accent-dark', adjustBrightness(hex, -15));
+            document.documentElement.style.setProperty('--accent-light', adjustBrightness(hex, 20));
+            document.documentElement.style.setProperty('--accent-100', adjustBrightness(hex, 85));
+            
+            document.querySelectorAll('[data-accent-btn]').forEach(btn => {
+                btn.classList.remove('ring-2', 'ring-offset-1', 'ring-gray-400');
+            });
+            
+            // Update custom button background and border
+            document.querySelector('.custom-color-btn').style.background = hex;
+            document.querySelector('.custom-color-btn').style.borderColor = hex;
+        }
+        
+        function updateAccentBtnState(activeColor) {
+            document.querySelectorAll('[data-accent-btn]').forEach(btn => {
+                const btnColor = btn.getAttribute('data-accent-btn');
+                if (btnColor === activeColor) {
+                    btn.classList.add('ring-2', 'ring-offset-1', 'ring-gray-400');
+                } else {
+                    btn.classList.remove('ring-2', 'ring-offset-1', 'ring-gray-400');
+                }
+            });
+        }
+        
+        // Banner Mode
+        function setBannerMode(mode) {
+            const banners = document.querySelectorAll('[id$="-banner"]');
+            const btnGradient = document.getElementById('btn-gradient');
+            const btnSolid = document.getElementById('btn-solid');
+            
+            const accentColor = getComputedStyle(document.body).getPropertyValue('--accent-color').trim();
+            
+            if (mode === 'gradient') {
+                banners.forEach(banner => {
+                    banner.classList.remove('banner-bg');
+                    banner.classList.add('banner-bg-gradient');
+                });
+                btnGradient.classList.remove('bg-gray-200', 'text-gray-700');
+                btnGradient.style.backgroundColor = accentColor;
+                btnGradient.classList.add('text-white');
+                btnSolid.classList.add('bg-gray-200', 'text-gray-700');
+                btnSolid.style.backgroundColor = '';
+            } else {
+                banners.forEach(banner => {
+                    banner.classList.remove('banner-bg-gradient');
+                    banner.classList.add('banner-bg');
+                });
+                btnSolid.classList.remove('bg-gray-200', 'text-gray-700');
+                btnSolid.style.backgroundColor = accentColor;
+                btnSolid.classList.add('text-white');
+                btnGradient.classList.add('bg-gray-200', 'text-gray-700');
+                btnGradient.style.backgroundColor = '';
+            }
+        }
+        
+        // Reset
+        function resetAll() {
+            document.body.setAttribute('data-banner', 'blue');
+            document.body.setAttribute('data-accent', 'blue');
+            
+            // Clear custom styles
+            document.documentElement.style.removeProperty('--banner-color');
+            document.documentElement.style.removeProperty('--banner-dark');
+            document.documentElement.style.removeProperty('--banner-light');
+            document.documentElement.style.removeProperty('--accent-color');
+            document.documentElement.style.removeProperty('--accent-dark');
+            document.documentElement.style.removeProperty('--accent-light');
+            document.documentElement.style.removeProperty('--accent-100');
+            
+            // Reset custom button backgrounds
+            document.querySelector('.custom-color-btn').style.background = '';
+            document.querySelector('.custom-color-btn').style.borderColor = '';
+            document.querySelector('.custom-banner-btn').style.background = '';
+            document.querySelector('.custom-banner-btn').style.borderColor = '';
+            
+            document.getElementById('bannerColorPicker').value = '#2563EB';
+            document.getElementById('accentColorPicker').value = '#2563EB';
+            
+            updateBannerBtnState('blue');
+            updateAccentBtnState('blue');
+            setBannerMode('gradient');
+        }
+        
+        // Helper
+        function adjustBrightness(hex, percent) {
+            hex = hex.replace('#', '');
+            let r = parseInt(hex.substring(0, 2), 16);
+            let g = parseInt(hex.substring(2, 4), 16);
+            let b = parseInt(hex.substring(4, 6), 16);
+            
+            r = Math.min(255, Math.max(0, r + (r * percent / 100)));
+            g = Math.min(255, Math.max(0, g + (g * percent / 100)));
+            b = Math.min(255, Math.max(0, b + (b * percent / 100)));
+            
+            const toHex = (n) => Math.round(n).toString(16).padStart(2, '0');
+            return '#' + toHex(r) + toHex(g) + toHex(b);
+        }
+        
+        // Initialize
+        updateBannerBtnState('blue');
+        updateAccentBtnState('blue');
+    </script>
+    
+</body>
+</html>

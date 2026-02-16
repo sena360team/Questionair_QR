@@ -289,7 +289,7 @@ export default function FormPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 py-8 px-4">
-      <div className="max-w-2xl mx-auto">
+      <div className="w-full max-w-7xl mx-auto">
         {/* Draft Warning Banner */}
         {isDraft && (
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">

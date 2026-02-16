@@ -64,6 +64,12 @@ export interface Form {
   published_by?: string | null;
   // Theme
   theme?: 'default' | 'card-groups' | 'step-wizard' | 'minimal';
+  // Color Theme Settings
+  banner_color?: 'blue' | 'black' | 'white' | 'custom';
+  banner_custom_color?: string;
+  banner_mode?: 'gradient' | 'solid';
+  accent_color?: 'blue' | 'sky' | 'teal' | 'emerald' | 'violet' | 'rose' | 'orange' | 'slate' | 'black' | 'custom';
+  accent_custom_color?: string;
   // Logo Settings
   logo_position?: 'left' | 'center' | 'right';
   logo_size?: 'small' | 'medium' | 'large';
@@ -94,6 +100,14 @@ export interface FormCreateInput {
   allow_multiple_responses?: boolean;
   // Status & Version
   status?: 'draft' | 'published' | 'archived';
+  // Theme
+  theme?: 'default' | 'card-groups' | 'step-wizard' | 'minimal';
+  // Color Theme Settings
+  banner_color?: 'blue' | 'black' | 'white' | 'custom';
+  banner_custom_color?: string;
+  banner_mode?: 'gradient' | 'solid';
+  accent_color?: 'blue' | 'sky' | 'teal' | 'emerald' | 'violet' | 'rose' | 'orange' | 'slate' | 'black' | 'custom';
+  accent_custom_color?: string;
   // Consent settings
   require_consent?: boolean;
   consent_heading?: string;
@@ -158,6 +172,12 @@ export interface FormDraft {
   fields: FormField[];
   // Theme
   theme?: 'default' | 'card-groups' | 'step-wizard' | 'minimal';
+  // Color Theme Settings
+  banner_color?: 'blue' | 'black' | 'white' | 'custom';
+  banner_custom_color?: string;
+  banner_mode?: 'gradient' | 'solid';
+  accent_color?: 'blue' | 'sky' | 'teal' | 'emerald' | 'violet' | 'rose' | 'orange' | 'slate' | 'black' | 'custom';
+  accent_custom_color?: string;
   // Logo Settings
   logo_position?: 'left' | 'center' | 'right';
   logo_size?: 'small' | 'medium' | 'large';
@@ -201,6 +221,12 @@ export interface FormDraftCreateInput {
   description?: string;
   logo_url?: string;
   theme?: 'default' | 'card-groups' | 'step-wizard' | 'minimal';
+  // Color Theme Settings
+  banner_color?: 'blue' | 'black' | 'white' | 'custom';
+  banner_custom_color?: string;
+  banner_mode?: 'gradient' | 'solid';
+  accent_color?: 'blue' | 'sky' | 'teal' | 'emerald' | 'violet' | 'rose' | 'orange' | 'slate' | 'black' | 'custom';
+  accent_custom_color?: string;
   logo_position?: 'left' | 'center' | 'right';
   logo_size?: 'small' | 'medium' | 'large';
   fields?: FormField[];

@@ -25,6 +25,55 @@ const getLogoSizeClasses = (size?: string) => {
   }
 };
 
+// Get banner color
+const getBannerColor = (form: Form) => {
+  const colorMap: Record<string, string> = {
+    blue: '#2563EB',
+    black: '#0F172A',
+    white: '#FFFFFF',
+  };
+  
+  if (form.banner_color === 'custom' && form.banner_custom_color) {
+    return form.banner_custom_color;
+  }
+  return colorMap[form.banner_color || 'blue'] || '#2563EB';
+};
+
+// Get accent color
+const getAccentColor = (form: Form) => {
+  const colorMap: Record<string, string> = {
+    blue: '#2563EB',
+    sky: '#0EA5E9',
+    teal: '#0D9488',
+    emerald: '#059669',
+    violet: '#7C3AED',
+    rose: '#E11D48',
+    orange: '#EA580C',
+    slate: '#475569',
+    black: '#0F172A',
+  };
+  
+  if (form.accent_color === 'custom' && form.accent_custom_color) {
+    return form.accent_custom_color;
+  }
+  return colorMap[form.accent_color || 'blue'] || '#2563EB';
+};
+
+// Adjust brightness for gradient
+const adjustBrightness = (hex: string, percent: number) => {
+  hex = hex.replace('#', '');
+  let r = parseInt(hex.substring(0, 2), 16);
+  let g = parseInt(hex.substring(2, 4), 16);
+  let b = parseInt(hex.substring(4, 6), 16);
+  
+  r = Math.min(255, Math.max(0, r + (r * percent / 100)));
+  g = Math.min(255, Math.max(0, g + (g * percent / 100)));
+  b = Math.min(255, Math.max(0, b + (b * percent / 100)));
+  
+  const toHex = (n: number) => Math.round(n).toString(16).padStart(2, '0');
+  return '#' + toHex(r) + toHex(g) + toHex(b);
+};
+
 export function DefaultTheme({
   form,
   consentChecked,
@@ -34,11 +83,30 @@ export function DefaultTheme({
   renderSubmitButton,
 }: DefaultThemeProps) {
   const logoSizeClass = getLogoSizeClasses(form.logo_size);
+  const bannerColor = getBannerColor(form);
+  const accentColor = getAccentColor(form);
+  const bannerMode = form.banner_mode || 'gradient';
+  const isWhiteBanner = bannerColor.toLowerCase() === '#ffffff';
+  
+  // Generate banner style
+  const getBannerStyle = () => {
+    if (bannerMode === 'solid') {
+      return { backgroundColor: bannerColor };
+    }
+    // Gradient mode
+    const lighterColor = adjustBrightness(bannerColor, 20);
+    return {
+      background: `linear-gradient(135deg, ${bannerColor} 0%, ${lighterColor} 100%)`,
+    };
+  };
 
   return (
     <div className="bg-white rounded-xl overflow-hidden shadow-lg">
-      {/* Header - Title always centered, logo position independent */}
-      <div className="bg-gradient-to-b from-blue-600 to-blue-500 p-8 lg:p-10 text-white text-center">
+      {/* Header - with custom color */}
+      <div 
+        className={`p-8 lg:p-10 text-center ${isWhiteBanner ? 'text-slate-800 border-b border-slate-200' : 'text-white'}`}
+        style={getBannerStyle()}
+      >
         {form.logo_url ? (
           <>
             <img 
@@ -60,7 +128,7 @@ export function DefaultTheme({
           </h1>
         )}
         {form.description && (
-          <p className="text-blue-100 max-w-2xl mx-auto mt-3 text-base lg:text-lg">
+          <p className={`max-w-2xl mx-auto mt-3 text-base lg:text-lg ${isWhiteBanner ? 'text-slate-600' : 'text-white/80'}`}>
             {form.description}
           </p>
         )}
@@ -90,7 +158,7 @@ export function DefaultTheme({
             if (field.type === 'heading') {
               return (
                 <div key={field.id} className="pt-4 pb-1">
-                  <h3 className="text-lg font-semibold text-slate-700">
+                  <h3 className="text-lg font-semibold" style={{ color: accentColor }}>
                     {field.label}
                   </h3>
                   {(field.helpText || field.description) && (
@@ -114,7 +182,10 @@ export function DefaultTheme({
             return (
               <div key={field.id} className="space-y-2">
                 <div className="flex items-start gap-2">
-                  <span className="flex-shrink-0 w-6 h-6 bg-blue-100 text-blue-600 rounded-full text-xs font-medium flex items-center justify-center">
+                  <span 
+                    className="flex-shrink-0 w-6 h-6 rounded-full text-xs font-medium flex items-center justify-center text-white"
+                    style={{ backgroundColor: accentColor }}
+                  >
                     {questionNumber}
                   </span>
                   <label className="flex-1 font-medium text-slate-900">
@@ -155,7 +226,8 @@ export function DefaultTheme({
                       type="checkbox"
                       checked={consentChecked}
                       onChange={(e) => onConsentChange(e.target.checked)}
-                      className="w-5 h-5 mt-0.5 rounded border-2 border-green-300 text-green-600 focus:ring-green-500"
+                      className="w-5 h-5 mt-0.5 rounded border-2 border-green-300"
+                      style={{ accentColor: accentColor }}
                     />
                     <span className="text-sm text-green-800 font-medium">
                       ข้าพเจ้าได้อ่านและยินยอมตามข้อความข้างต้น
@@ -183,7 +255,13 @@ export function DefaultTheme({
 
         {/* Submit Button */}
         <div className="pt-4">
-          {renderSubmitButton()}
+          <button
+            type="submit"
+            className="w-full py-3 px-6 rounded-xl font-medium text-white transition-all hover:opacity-90 active:scale-[0.98]"
+            style={{ backgroundColor: accentColor }}
+          >
+            ส่งคำตอบ
+          </button>
         </div>
       </div>
     </div>

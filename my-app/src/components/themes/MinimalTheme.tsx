@@ -26,6 +26,26 @@ const getLogoSizeClasses = (size?: string) => {
   }
 };
 
+// Get accent color
+const getAccentColor = (form: Form) => {
+  const colorMap: Record<string, string> = {
+    blue: '#2563EB',
+    sky: '#0EA5E9',
+    teal: '#0D9488',
+    emerald: '#059669',
+    violet: '#7C3AED',
+    rose: '#E11D48',
+    orange: '#EA580C',
+    slate: '#475569',
+    black: '#0F172A',
+  };
+  
+  if (form.accent_color === 'custom' && form.accent_custom_color) {
+    return form.accent_custom_color;
+  }
+  return colorMap[form.accent_color || 'blue'] || '#2563EB';
+};
+
 export function MinimalTheme({
   form,
   errors,
@@ -36,9 +56,10 @@ export function MinimalTheme({
   renderSubmitButton,
 }: MinimalThemeProps) {
   const logoSizeClass = getLogoSizeClasses(form.logo_size);
+  const accentColor = getAccentColor(form);
 
   return (
-    <div className="max-w-3xl mx-auto bg-white rounded-xl p-8 shadow-sm">
+    <div className="max-w-5xl mx-auto bg-white rounded-xl p-8 shadow-sm">
       {/* Simple Header - Title always left-aligned (minimal style), logo position independent */}
       <div className="mb-8 pb-6 border-b border-slate-200">
         {form.logo_url && (
@@ -52,7 +73,7 @@ export function MinimalTheme({
             }`}
           />
         )}
-        <h1 className="text-xl font-medium text-slate-900 mb-1">
+        <h1 className="text-xl font-medium mb-1" style={{ color: accentColor }}>
           {form.title || 'แบบสอบถาม'}
         </h1>
         {form.description && (
@@ -81,7 +102,7 @@ export function MinimalTheme({
           if (field.type === 'heading') {
             return (
               <div key={field.id} className="pt-4 pb-1">
-                <h3 className="text-base font-medium text-slate-700">
+                <h3 className="text-base font-medium" style={{ color: accentColor }}>
                   {field.label}
                 </h3>
                 {(field.helpText || field.description) && (
@@ -93,7 +114,7 @@ export function MinimalTheme({
           
           return (
             <div key={field.id} className="space-y-1.5">
-              <label className="block text-sm font-medium text-slate-700">
+              <label className="block text-sm font-medium" style={{ color: accentColor }}>
                 {field.label}
                 {field.required && (
                   <span className="text-red-500 ml-0.5">*</span>
@@ -117,8 +138,8 @@ export function MinimalTheme({
       {/* Consent - White background with green accents */}
       {form.require_consent && (
         <div className="mb-6 p-4 bg-white rounded-xl border border-slate-200">
-          <h4 className="text-sm font-medium text-slate-800 mb-3 flex items-center gap-2">
-            <Shield className="w-4 h-4 text-green-600" />
+          <h4 className="text-sm font-medium mb-3 flex items-center gap-2" style={{ color: accentColor }}>
+            <Shield className="w-4 h-4" />
             {form.consent_heading || 'การยินยอม'}
           </h4>
           {form.consent_text && (
@@ -126,19 +147,20 @@ export function MinimalTheme({
               {form.consent_text}
             </p>
           )}
-          <label className="flex items-start gap-2 cursor-pointer p-3 bg-green-50 rounded-lg border border-green-200">
+          <label className="flex items-start gap-2 cursor-pointer p-3 rounded-lg border transition-colors hover:opacity-90" style={{ backgroundColor: `${accentColor}10`, borderColor: `${accentColor}30` }}>
             <input
               type="checkbox"
               checked={consentChecked}
               onChange={(e) => onConsentChange(e.target.checked)}
-              className="w-4 h-4 mt-0.5 rounded border-green-300 text-green-600 focus:ring-green-500"
+              className="w-4 h-4 mt-0.5 rounded"
+              style={{ accentColor: accentColor }}
             />
-            <span className="text-sm text-green-800 font-medium">
+            <span className="text-sm font-medium" style={{ color: accentColor }}>
               ยินยอมตามข้อความข้างต้น
             </span>
           </label>
           {form.consent_require_location && consentChecked && (
-            <div className="mt-2 flex items-center gap-1.5 text-xs text-green-600 ml-6">
+            <div className="mt-2 flex items-center gap-1.5 text-xs ml-6" style={{ color: accentColor }}>
               <MapPin className="w-3 h-3" />
               {locationStatus === 'requesting' && 'กำลังขอตำแหน่ง...'}
               {locationStatus === 'granted' && 'ได้รับตำแหน่งแล้ว'}
@@ -149,7 +171,13 @@ export function MinimalTheme({
       )}
 
       {/* Submit */}
-      {renderSubmitButton()}
+      <button
+        type="submit"
+        className="w-full py-3 px-6 rounded-xl font-medium text-white transition-all hover:opacity-90 active:scale-[0.98]"
+        style={{ backgroundColor: accentColor }}
+      >
+        ส่งคำตอบ
+      </button>
 
       {/* Footer Note */}
       <p className="mt-6 text-center text-xs text-slate-400">

@@ -305,7 +305,7 @@ export default function QRCodesPage() {
       {/* Create Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-auto p-6 lg:p-8">
+          <div className="bg-white rounded-2xl w-full max-w-6xl max-h-[90vh] overflow-auto p-6 lg:p-8">
             <h2 className="text-xl font-bold text-slate-900 mb-6">สร้าง QR Code ใหม่</h2>
             
             {!selectedForm ? (
@@ -525,7 +525,7 @@ function QRCodeRow({ qr, form, project, submissionCount, onDelete }: QRCodeRowPr
       {/* QR Preview Modal - Portal ออกนอก table */}
       {showQR && typeof document !== 'undefined' && createPortal(
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-8 max-w-md w-full text-center">
+          <div className="bg-white rounded-2xl p-8 max-w-lg w-full text-center">
             <h3 className="font-semibold text-slate-900 mb-2">{qr.name}</h3>
             <p className="text-sm text-slate-500 mb-6">/{qr.qr_slug}</p>
             

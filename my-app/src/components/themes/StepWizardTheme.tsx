@@ -14,14 +14,35 @@ interface StepWizardThemeProps {
   renderSubmitButton: () => React.ReactNode;
 }
 
-// Split fields into steps by section markers only
-// Section starts new step, Heading is just a text element inside the step
-function createSteps(fields: FormField[]): { title: string; fields: (FormField | { type: 'heading_render'; label: string; helpText?: string })[] }[] {
-  const steps: { title: string; fields: (FormField | { type: 'heading_render'; label: string; helpText?: string })[] }[] = [];
+// Split fields into steps
+// Info Box fields go to Welcome step first
+// Section fields start new steps
+// Heading is just a text element inside the step
+function createSteps(fields: FormField[]): { title: string; isWelcome?: boolean; fields: (FormField | { type: 'heading_render'; label: string; helpText?: string })[] }[] {
+  const steps: { title: string; isWelcome?: boolean; fields: (FormField | { type: 'heading_render'; label: string; helpText?: string })[] }[] = [];
+  
+  // Step 1: Extract Info Box fields as Welcome step
+  const infoBoxFields: (FormField | { type: 'heading_render'; label: string; helpText?: string })[] = [];
+  const remainingFields: FormField[] = [];
+  
+  fields.forEach((field) => {
+    if (field.type === 'info_box') {
+      infoBoxFields.push(field);
+    } else {
+      remainingFields.push(field);
+    }
+  });
+  
+  // Add Welcome step if there are Info Box fields
+  if (infoBoxFields.length > 0) {
+    steps.push({ title: 'ยินดีต้อนรับ', isWelcome: true, fields: infoBoxFields });
+  }
+  
+  // Create steps from remaining fields (sections, headings, questions)
   let currentStepFields: (FormField | { type: 'heading_render'; label: string; helpText?: string })[] = [];
   let currentStepTitle = 'เริ่มต้น';
 
-  fields.forEach((field) => {
+  remainingFields.forEach((field) => {
     // Section field = start new step with this title
     if (field.type === 'section') {
       // Save previous step if has fields
@@ -67,6 +88,41 @@ const getLogoSizeClasses = (size?: string) => {
   }
 };
 
+// Get accent color
+const getAccentColor = (form: Form) => {
+  const colorMap: Record<string, string> = {
+    blue: '#2563EB',
+    sky: '#0EA5E9',
+    teal: '#0D9488',
+    emerald: '#059669',
+    violet: '#7C3AED',
+    rose: '#E11D48',
+    orange: '#EA580C',
+    slate: '#475569',
+    black: '#0F172A',
+  };
+  
+  if (form.accent_color === 'custom' && form.accent_custom_color) {
+    return form.accent_custom_color;
+  }
+  return colorMap[form.accent_color || 'blue'] || '#2563EB';
+};
+
+// Adjust brightness for gradient
+const adjustBrightness = (hex: string, percent: number) => {
+  hex = hex.replace('#', '');
+  let r = parseInt(hex.substring(0, 2), 16);
+  let g = parseInt(hex.substring(2, 4), 16);
+  let b = parseInt(hex.substring(4, 6), 16);
+  
+  r = Math.min(255, Math.max(0, r + (r * percent / 100)));
+  g = Math.min(255, Math.max(0, g + (g * percent / 100)));
+  b = Math.min(255, Math.max(0, b + (b * percent / 100)));
+  
+  const toHex = (n: number) => Math.round(n).toString(16).padStart(2, '0');
+  return '#' + toHex(r) + toHex(g) + toHex(b);
+};
+
 export function StepWizardTheme({
   form,
   errors,
@@ -83,21 +139,26 @@ export function StepWizardTheme({
   const isLastStep = currentStep === steps.length - 1 && !form.require_consent;
   const isConsentStep = form.require_consent && currentStep === steps.length;
   const logoSizeClass = getLogoSizeClasses(form.logo_size);
+  const accentColor = getAccentColor(form);
+  const lighterAccent = adjustBrightness(accentColor, 20);
 
-  const handleNext = () => {
+  const handleNext = (e?: React.MouseEvent) => {
+    e?.preventDefault();
+    e?.stopPropagation();
     if (currentStep < totalSteps - 1) {
       setCurrentStep(prev => prev + 1);
     }
   };
 
-  const handlePrev = () => {
+  const handlePrev = (e?: React.MouseEvent) => {
+    e?.preventDefault();
     if (currentStep > 0) {
       setCurrentStep(prev => prev - 1);
     }
   };
 
   return (
-    <div className="max-w-2xl mx-auto bg-white rounded-xl p-8 shadow-sm">
+    <div className="max-w-5xl mx-auto bg-white rounded-xl p-8 shadow-sm">
       {/* Header - Title always centered, logo position independent */}
       <div className="mb-8 text-center">
         {form.logo_url && (
@@ -111,7 +172,7 @@ export function StepWizardTheme({
             }`}
           />
         )}
-        <h1 className="text-2xl font-bold text-slate-900 mb-2">
+        <h1 className="text-2xl font-bold mb-2" style={{ color: accentColor }}>
           {form.title || 'แบบสอบถาม'}
         </h1>
         {form.description && (
@@ -131,8 +192,11 @@ export function StepWizardTheme({
         </div>
         <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
           <div 
-            className="h-full bg-gradient-to-r from-blue-500 to-cyan-500 transition-all duration-300"
-            style={{ width: `${((currentStep + 1) / totalSteps) * 100}%` }}
+            className="h-full transition-all duration-300"
+            style={{ 
+              width: `${((currentStep + 1) / totalSteps) * 100}%`,
+              background: `linear-gradient(to right, ${accentColor}, ${lighterAccent})`
+            }}
           />
         </div>
       </div>
@@ -151,28 +215,33 @@ export function StepWizardTheme({
           {isConsentStep ? (
             // Consent Step
             <div className="space-y-4">
-              <div className="flex items-center gap-3 text-green-600 mb-4">
-                <Shield className="w-6 h-6" />
-                <h3 className="font-medium text-lg text-green-800">{form.consent_heading || 'การยินยอม'}</h3>
+              <div className="flex items-center gap-3 mb-4">
+                <Shield className="w-6 h-6" style={{ color: accentColor }} />
+                <h3 className="font-medium text-lg text-slate-800">{form.consent_heading || 'การยินยอม'}</h3>
               </div>
-              {form.consent_text && (
-                <div className="bg-green-50 rounded-lg p-4 text-sm text-green-700 border border-green-200">
-                  {form.consent_text}
-                </div>
-              )}
-              <label className="flex items-start gap-3 cursor-pointer p-4 border-2 border-green-200 rounded-xl bg-green-50/50 hover:bg-green-100 transition-colors">
+              <div className="bg-slate-50 rounded-lg p-4 text-sm text-slate-700 border border-slate-200">
+                {form.consent_text || (
+                  <div className="space-y-2">
+                    <p className="font-medium">ข้อตกลงการใช้งาน</p>
+                    <p>กรุณาอ่านและยินยอมข้อตกลงก่อนดำเนินการต่อ</p>
+                    <p className="text-xs text-slate-500 mt-2">หมายเหตุ: ผู้สร้างฟอร์มยังไม่ได้ระบุรายละเอียดการยินยอม</p>
+                  </div>
+                )}
+              </div>
+              <label className="flex items-start gap-3 cursor-pointer p-4 border-2 rounded-xl hover:bg-slate-50 transition-colors" style={{ borderColor: accentColor }}>
                 <input
                   type="checkbox"
                   checked={consentChecked}
                   onChange={(e) => onConsentChange(e.target.checked)}
-                  className="w-5 h-5 mt-0.5 rounded border-2 border-green-300 text-green-600 focus:ring-green-500"
+                  className="w-5 h-5 mt-0.5 rounded border-2"
+                  style={{ accentColor: accentColor }}
                 />
-                <span className="text-green-800 font-medium">
+                <span className="font-medium" style={{ color: accentColor }}>
                   ข้าพเจ้าได้อ่านและยินยอมตามข้อความข้างต้น
                 </span>
               </label>
               {form.consent_require_location && consentChecked && (
-                <div className="flex items-center gap-2 text-sm ml-8 text-green-600">
+                <div className="flex items-center gap-2 text-sm ml-8" style={{ color: accentColor }}>
                   <MapPin className="w-4 h-4" />
                   {locationStatus === 'requesting' && 'กำลังขอตำแหน่ง...'}
                   {locationStatus === 'granted' && 'ได้รับตำแหน่งแล้ว'}
@@ -188,7 +257,7 @@ export function StepWizardTheme({
                 if ('type' in field && field.type === 'heading_render') {
                   return (
                     <div key={`heading-${index}`} className="space-y-1">
-                      <h3 className="text-base font-semibold text-slate-800">
+                      <h3 className="text-base font-semibold" style={{ color: accentColor }}>
                         {field.label}
                       </h3>
                       {field.helpText && (
@@ -198,8 +267,24 @@ export function StepWizardTheme({
                   );
                 }
                 
-                // Regular field
+                // Info Box field
                 const regularField = field as FormField;
+                if (regularField.type === 'info_box') {
+                  return (
+                    <div key={regularField.id} className="border-l-4 border-slate-300 bg-slate-50 rounded-r-xl p-6 my-4">
+                      {regularField.label && (
+                        <h4 className="text-lg font-semibold text-slate-900 mb-3">{regularField.label}</h4>
+                      )}
+                      {regularField.description && (
+                        <div className="text-slate-600 whitespace-pre-wrap leading-relaxed">
+                          {regularField.description}
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+                
+                // Regular field
                 return (
                   <div key={regularField.id} className="space-y-2">
                     <label className="block font-medium text-slate-900">
@@ -225,6 +310,7 @@ export function StepWizardTheme({
         {/* Step Footer */}
         <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
           <button
+            type="button"
             onClick={handlePrev}
             disabled={currentStep === 0}
             className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-slate-900 hover:bg-slate-200 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -233,18 +319,39 @@ export function StepWizardTheme({
             ย้อนกลับ
           </button>
 
-          {isLastStep || isConsentStep ? (
-            <div className="flex-1 ml-4">
-              {renderSubmitButton()}
-            </div>
-          ) : (
+          {/* Next/Submit Button */}
+          {steps[currentStep]?.isWelcome || (!isLastStep && !isConsentStep) ? (
+            // Not last step - show Next button
             <button
-              onClick={handleNext}
-              className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              type="button"
+              onClick={(e) => handleNext(e)}
+              className="flex items-center gap-2 px-6 py-2 text-white rounded-lg hover:opacity-90 transition-colors"
+              style={{ backgroundColor: accentColor }}
             >
-              ถัดไป
-              <ChevronRight className="w-4 h-4" />
+              {steps[currentStep]?.isWelcome ? (
+                <>
+                  เริ่มต้น
+                  <ChevronRight className="w-4 h-4" />
+                </>
+              ) : (
+                <>
+                  ถัดไป
+                  <ChevronRight className="w-4 h-4" />
+                </>
+              )}
             </button>
+          ) : isConsentStep ? (
+            // Consent step - show custom submit button
+            <button
+              type="submit"
+              className="flex items-center gap-2 px-6 py-2 text-white rounded-lg hover:opacity-90 transition-colors"
+              style={{ backgroundColor: accentColor }}
+            >
+              ส่งคำตอบ
+            </button>
+          ) : (
+            // Last step - use renderSubmitButton from FormRenderer
+            renderSubmitButton()
           )}
         </div>
       </div>
@@ -254,14 +361,13 @@ export function StepWizardTheme({
         {Array.from({ length: totalSteps }).map((_, index) => (
           <button
             key={index}
+            type="button"
             onClick={() => setCurrentStep(index)}
-            className={`w-2.5 h-2.5 rounded-full transition-all ${
-              index === currentStep
-                ? 'bg-blue-600 w-6'
-                : index < currentStep
-                ? 'bg-blue-300'
-                : 'bg-slate-300'
-            }`}
+            className="h-2.5 rounded-full transition-all"
+            style={{
+              width: index === currentStep ? '1.5rem' : '0.625rem',
+              backgroundColor: index === currentStep ? accentColor : index < currentStep ? lighterAccent : '#cbd5e1'
+            }}
           />
         ))}
       </div>

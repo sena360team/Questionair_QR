@@ -11,7 +11,25 @@ import { FormField } from '@/types';
 import { ArrowLeft, Save, Eye, X, Hash, FileText, Shield, Rocket, Edit3, CheckCircle, AlertCircle } from 'lucide-react';
 
 // Mock form data for preview
-const createMockForm = (code: string, title: string, description: string, fields: FormField[], logoUrl?: string, logoPosition?: string, logoSize?: string, theme?: string, requireConsent?: boolean, consentHeading?: string, consentText?: string, consentRequireLocation?: boolean) => ({
+const createMockForm = (
+  code: string, 
+  title: string, 
+  description: string, 
+  fields: FormField[], 
+  logoUrl?: string, 
+  logoPosition?: string, 
+  logoSize?: string, 
+  theme?: string,
+  bannerColor?: string,
+  bannerCustomColor?: string,
+  bannerMode?: string,
+  accentColor?: string,
+  accentCustomColor?: string,
+  requireConsent?: boolean, 
+  consentHeading?: string, 
+  consentText?: string, 
+  consentRequireLocation?: boolean
+) => ({
   id: 'preview',
   code,
   slug: 'preview',
@@ -21,6 +39,11 @@ const createMockForm = (code: string, title: string, description: string, fields
   logo_position: logoPosition,
   logo_size: logoSize,
   theme,
+  banner_color: bannerColor,
+  banner_custom_color: bannerCustomColor,
+  banner_mode: bannerMode,
+  accent_color: accentColor,
+  accent_custom_color: accentCustomColor,
   fields,
   is_active: true,
   allow_multiple_responses: false,
@@ -46,6 +69,11 @@ export default function CreateFormPage() {
   const [logoPosition, setLogoPosition] = useState<'left' | 'center' | 'right'>('center');
   const [logoSize, setLogoSize] = useState<'small' | 'medium' | 'large'>('medium');
   const [theme, setTheme] = useState<'default' | 'card-groups' | 'step-wizard' | 'minimal'>('default');
+  const [bannerColor, setBannerColor] = useState<'blue' | 'black' | 'white' | 'custom'>('blue');
+  const [bannerCustomColor, setBannerCustomColor] = useState('#2563EB');
+  const [bannerMode, setBannerMode] = useState<'gradient' | 'solid'>('gradient');
+  const [accentColor, setAccentColor] = useState<'blue' | 'sky' | 'teal' | 'emerald' | 'violet' | 'rose' | 'orange' | 'slate' | 'black' | 'custom'>('blue');
+  const [accentCustomColor, setAccentCustomColor] = useState('#2563EB');
   const [requireConsent, setRequireConsent] = useState(false);
   const [consentHeading, setConsentHeading] = useState('การยินยอม (Consent)');
   const [consentText, setConsentText] = useState('ข้าพเจ้ายินยอมให้เก็บข้อมูลส่วนบุคคลตามที่ระบุในแบบสอบถามนี้');
@@ -96,6 +124,11 @@ export default function CreateFormPage() {
         logo_position: logoPosition,
         logo_size: logoSize,
         theme,
+        banner_color: bannerColor,
+        banner_custom_color: bannerCustomColor,
+        banner_mode: bannerMode,
+        accent_color: accentColor,
+        accent_custom_color: accentCustomColor,
         fields,
         status: 'draft',
         require_consent: requireConsent,
@@ -129,6 +162,11 @@ export default function CreateFormPage() {
         logo_position: logoPosition,
         logo_size: logoSize,
         theme,
+        banner_color: bannerColor,
+        banner_custom_color: bannerCustomColor,
+        banner_mode: bannerMode,
+        accent_color: accentColor,
+        accent_custom_color: accentCustomColor,
         fields,
         status: 'published',
         require_consent: requireConsent,
@@ -150,7 +188,25 @@ export default function CreateFormPage() {
   const isValid = code && title && slug && fields.length > 0;
 
   // Create mock form for preview
-  const previewForm = createMockForm(code || 'FRM-XXX', title || 'ชื่อแบบสอบถาม', description, fields, logoUrl, logoPosition, logoSize, theme, requireConsent, consentHeading, consentText, consentRequireLocation);
+  const previewForm = createMockForm(
+    code || 'FRM-XXX', 
+    title || 'ชื่อแบบสอบถาม', 
+    description, 
+    fields, 
+    logoUrl, 
+    logoPosition, 
+    logoSize, 
+    theme,
+    bannerColor,
+    bannerCustomColor,
+    bannerMode,
+    accentColor,
+    accentCustomColor,
+    requireConsent, 
+    consentHeading, 
+    consentText, 
+    consentRequireLocation
+  );
 
   return (
     <div className="space-y-6">
@@ -195,10 +251,10 @@ export default function CreateFormPage() {
         </div>
       </div>
 
-      {/* Single Column Layout */}
-      <div className="max-w-4xl mx-auto space-y-6">
-          {/* Form Code - Auto Generated (Read Only) */}
-          <div className="bg-blue-50 border border-blue-100 p-6 rounded-2xl">
+      {/* Two Column Layout on Large Screens */}
+      <div className="w-full space-y-6">
+        {/* Form Code - Full Width */}
+        <div className="bg-blue-50 border border-blue-100 p-6 rounded-2xl">
             <div className="flex items-center gap-3 mb-3">
               <Hash className="w-5 h-5 text-blue-600" />
               <label className="text-sm font-medium text-slate-700">
@@ -413,10 +469,142 @@ export default function CreateFormPage() {
             </div>
           </div>
 
-          {/* Form Builder */}
+        {/* Two Column Grid: Color Settings & Consent Settings */}
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          {/* Color Theme Settings */}
           <div className="bg-white p-6 rounded-2xl border-2 border-slate-300">
-            <h2 className="text-lg font-semibold text-slate-900 mb-4">คำถาม</h2>
-            <FormBuilder fields={fields} onChange={setFields} currentVersion={0} />
+            <h2 className="text-lg font-semibold text-slate-900 mb-4">🎨 ตั้งค่าสี</h2>
+            
+            {/* Banner Color */}
+            <div className="mb-6">
+              <h3 className="text-sm font-medium text-slate-700 mb-3">สี Banner (พื้นหลังหัวเว็บ)</h3>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  onClick={() => setBannerColor('blue')}
+                  className={`w-8 h-8 rounded-lg bg-[#2563EB] hover:scale-110 transition-all ${
+                    bannerColor === 'blue' ? 'ring-2 ring-offset-2 ring-slate-400' : ''
+                  }`}
+                  title="Blue"
+                />
+                <button
+                  onClick={() => setBannerColor('black')}
+                  className={`w-8 h-8 rounded-lg bg-[#0F172A] hover:scale-110 transition-all ${
+                    bannerColor === 'black' ? 'ring-2 ring-offset-2 ring-slate-400' : ''
+                  }`}
+                  title="Black"
+                />
+                <button
+                  onClick={() => setBannerColor('white')}
+                  className={`w-8 h-8 rounded-lg bg-white border-2 border-slate-300 hover:scale-110 transition-all ${
+                    bannerColor === 'white' ? 'ring-2 ring-offset-2 ring-slate-400' : ''
+                  }`}
+                  title="White"
+                />
+                <button
+                  onClick={() => document.getElementById('bannerColorInput')?.click()}
+                  className={`w-8 h-8 rounded-lg bg-gradient-to-br from-slate-100 to-slate-300 border-2 border-slate-300 hover:scale-110 transition-all flex items-center justify-center ${
+                    bannerColor === 'custom' ? 'ring-2 ring-offset-2 ring-slate-400' : ''
+                  }`}
+                  title="Custom"
+                >
+                  <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                </button>
+                <input
+                  type="color"
+                  id="bannerColorInput"
+                  className="absolute opacity-0 pointer-events-none"
+                  value={bannerCustomColor}
+                  onChange={(e) => {
+                    setBannerCustomColor(e.target.value);
+                    setBannerColor('custom');
+                  }}
+                />
+              </div>
+              {bannerColor === 'custom' && (
+                <p className="text-xs text-slate-500 mt-2">สีที่เลือก: {bannerCustomColor}</p>
+              )}
+            </div>
+
+            {/* Banner Mode */}
+            <div className="mb-6">
+              <h3 className="text-sm font-medium text-slate-700 mb-3">รูปแบบ Banner</h3>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setBannerMode('gradient')}
+                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                    bannerMode === 'gradient'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  }`}
+                >
+                  Gradient
+                </button>
+                <button
+                  onClick={() => setBannerMode('solid')}
+                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                    bannerMode === 'solid'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  }`}
+                >
+                  Solid
+                </button>
+              </div>
+            </div>
+
+            {/* Accent Color */}
+            <div>
+              <h3 className="text-sm font-medium text-slate-700 mb-3">สีรอง (Button, Heading, Section ขีด)</h3>
+              <div className="flex flex-wrap items-center gap-2">
+                {[
+                  { key: 'blue', color: '#2563EB' },
+                  { key: 'sky', color: '#0EA5E9' },
+                  { key: 'teal', color: '#0D9488' },
+                  { key: 'emerald', color: '#059669' },
+                  { key: 'violet', color: '#7C3AED' },
+                  { key: 'rose', color: '#E11D48' },
+                  { key: 'orange', color: '#EA580C' },
+                  { key: 'slate', color: '#475569' },
+                  { key: 'black', color: '#0F172A' },
+                ].map(({ key, color }) => (
+                  <button
+                    key={key}
+                    onClick={() => setAccentColor(key as any)}
+                    className={`w-8 h-8 rounded-lg hover:scale-110 transition-all ${
+                      accentColor === key ? 'ring-2 ring-offset-2 ring-slate-400' : ''
+                    }`}
+                    style={{ backgroundColor: color }}
+                    title={key}
+                  />
+                ))}
+                <button
+                  onClick={() => document.getElementById('accentColorInput')?.click()}
+                  className={`w-8 h-8 rounded-lg bg-gradient-to-br from-slate-100 to-slate-300 border-2 border-slate-300 hover:scale-110 transition-all flex items-center justify-center ${
+                    accentColor === 'custom' ? 'ring-2 ring-offset-2 ring-slate-400' : ''
+                  }`}
+                  title="Custom"
+                >
+                  <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                </button>
+                <input
+                  type="color"
+                  id="accentColorInput"
+                  className="absolute opacity-0 pointer-events-none"
+                  value={accentCustomColor}
+                  onChange={(e) => {
+                    setAccentCustomColor(e.target.value);
+                    setAccentColor('custom');
+                  }}
+                />
+              </div>
+              {accentColor === 'custom' && (
+                <p className="text-xs text-slate-500 mt-2">สีที่เลือก: {accentCustomColor}</p>
+              )}
+            </div>
           </div>
 
           {/* Consent Settings */}
@@ -492,12 +680,19 @@ export default function CreateFormPage() {
               )}
             </div>
           </div>
+        </div>
+
+        {/* Form Builder - Full Width */}
+        <div className="bg-white p-6 rounded-2xl border-2 border-slate-300">
+          <h2 className="text-lg font-semibold text-slate-900 mb-4">คำถาม</h2>
+          <FormBuilder fields={fields} onChange={setFields} currentVersion={0} />
+        </div>
       </div>
 
       {/* Full Preview Modal */}
       {showPreview && (
         <div className="fixed inset-0 bg-slate-900/60 flex items-start justify-center z-50 p-4 overflow-y-auto">
-          <div className="bg-white rounded-xl w-full max-w-5xl my-4 shadow-2xl overflow-hidden max-h-[95vh] flex flex-col">
+          <div className="bg-white rounded-xl w-full max-w-7xl my-4 shadow-2xl overflow-hidden max-h-[95vh] flex flex-col">
             {/* Modal Header */}
             <div className="sticky top-0 bg-white border-b border-slate-300 p-4 flex items-center justify-between z-10 shrink-0">
               <div className="flex items-center gap-3">
@@ -517,7 +712,7 @@ export default function CreateFormPage() {
 
             {/* Full Size Form Preview */}
             <div className="p-8 bg-slate-50 overflow-y-auto">
-              <div className="max-w-4xl mx-auto">
+              <div className="w-full max-w-4xl mx-auto">
                 {fields.length === 0 ? (
                   <div className="bg-white rounded-xl shadow-lg overflow-hidden">
                     <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-8 text-white text-center">

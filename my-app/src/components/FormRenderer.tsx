@@ -147,31 +147,57 @@ export function FormRenderer({
     );
   }, [responses]);
 
+  // Get accent color from form
+  const getAccentColor = useCallback(() => {
+    const colorMap: Record<string, string> = {
+      blue: '#2563EB',
+      sky: '#0EA5E9',
+      teal: '#0D9488',
+      emerald: '#059669',
+      violet: '#7C3AED',
+      rose: '#E11D48',
+      orange: '#EA580C',
+      slate: '#475569',
+      black: '#0F172A',
+    };
+    
+    if (form.accent_color === 'custom' && form.accent_custom_color) {
+      return form.accent_custom_color;
+    }
+    return colorMap[form.accent_color || 'blue'] || '#2563EB';
+  }, [form.accent_color, form.accent_custom_color]);
+
   // Render submit button
-  const renderSubmitButton = useCallback(() => (
-    <button
-      type="submit"
-      disabled={submitting || (form.require_consent && !consentChecked)}
-      className={cn(
-        "w-full py-3 px-6 rounded-lg font-medium text-white transition-all",
-        submitting || (form.require_consent && !consentChecked)
-          ? "bg-slate-400 cursor-not-allowed" 
-          : "bg-blue-600 hover:bg-blue-700 active:scale-[0.98]"
-      )}
-    >
-      {submitting ? (
-        <span className="flex items-center justify-center gap-2">
-          <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-          </svg>
-          กำลังส่ง...
-        </span>
-      ) : (
-        submitLabel
-      )}
-    </button>
-  ), [submitting, form.require_consent, consentChecked, submitLabel]);
+  const renderSubmitButton = useCallback(() => {
+    const accentColor = getAccentColor();
+    return (
+      <button
+        type="submit"
+        disabled={submitting || (form.require_consent && !consentChecked)}
+        className={cn(
+          "w-full py-3 px-6 rounded-lg font-medium text-white transition-all",
+          submitting || (form.require_consent && !consentChecked)
+            ? "bg-slate-400 cursor-not-allowed" 
+            : "hover:opacity-90 active:scale-[0.98]"
+        )}
+        style={{ 
+          backgroundColor: submitting || (form.require_consent && !consentChecked) ? undefined : accentColor 
+        }}
+      >
+        {submitting ? (
+          <span className="flex items-center justify-center gap-2">
+            <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+            </svg>
+            กำลังส่ง...
+          </span>
+        ) : (
+          submitLabel
+        )}
+      </button>
+    );
+  }, [submitting, form.require_consent, consentChecked, submitLabel, getAccentColor]);
 
   if (submitted) {
     return (

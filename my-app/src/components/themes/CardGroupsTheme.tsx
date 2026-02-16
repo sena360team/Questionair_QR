@@ -79,6 +79,55 @@ const getLogoSizeClasses = (size?: string) => {
   }
 };
 
+// Get banner color
+const getBannerColor = (form: Form) => {
+  const colorMap: Record<string, string> = {
+    blue: '#2563EB',
+    black: '#0F172A',
+    white: '#FFFFFF',
+  };
+  
+  if (form.banner_color === 'custom' && form.banner_custom_color) {
+    return form.banner_custom_color;
+  }
+  return colorMap[form.banner_color || 'blue'] || '#2563EB';
+};
+
+// Get accent color
+const getAccentColor = (form: Form) => {
+  const colorMap: Record<string, string> = {
+    blue: '#2563EB',
+    sky: '#0EA5E9',
+    teal: '#0D9488',
+    emerald: '#059669',
+    violet: '#7C3AED',
+    rose: '#E11D48',
+    orange: '#EA580C',
+    slate: '#475569',
+    black: '#0F172A',
+  };
+  
+  if (form.accent_color === 'custom' && form.accent_custom_color) {
+    return form.accent_custom_color;
+  }
+  return colorMap[form.accent_color || 'blue'] || '#2563EB';
+};
+
+// Adjust brightness for gradient
+const adjustBrightness = (hex: string, percent: number) => {
+  hex = hex.replace('#', '');
+  let r = parseInt(hex.substring(0, 2), 16);
+  let g = parseInt(hex.substring(2, 4), 16);
+  let b = parseInt(hex.substring(4, 6), 16);
+  
+  r = Math.min(255, Math.max(0, r + (r * percent / 100)));
+  g = Math.min(255, Math.max(0, g + (g * percent / 100)));
+  b = Math.min(255, Math.max(0, b + (b * percent / 100)));
+  
+  const toHex = (n: number) => Math.round(n).toString(16).padStart(2, '0');
+  return '#' + toHex(r) + toHex(g) + toHex(b);
+};
+
 export function CardGroupsTheme({
   form,
   consentChecked,
@@ -89,11 +138,30 @@ export function CardGroupsTheme({
 }: CardGroupsThemeProps) {
   const { introBoxes, groups } = useMemo(() => groupFields(form.fields), [form.fields]);
   const logoSizeClass = getLogoSizeClasses(form.logo_size);
+  const bannerColor = getBannerColor(form);
+  const accentColor = getAccentColor(form);
+  const bannerMode = form.banner_mode || 'gradient';
+  const isWhiteBanner = bannerColor.toLowerCase() === '#ffffff';
+  
+  // Generate banner style
+  const getBannerStyle = () => {
+    if (bannerMode === 'solid') {
+      return { backgroundColor: bannerColor };
+    }
+    // Gradient mode
+    const lighterColor = adjustBrightness(bannerColor, 20);
+    return {
+      background: `linear-gradient(135deg, ${bannerColor} 0%, ${lighterColor} 100%)`,
+    };
+  };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6 bg-white rounded-xl p-6 shadow-sm">
+    <div className="max-w-5xl mx-auto space-y-6 bg-white rounded-xl p-6 shadow-sm">
       {/* Header Card - Title always centered, logo position independent */}
-      <div className="bg-gradient-to-br from-indigo-600 via-blue-600 to-cyan-500 rounded-2xl p-8 text-white shadow-xl text-center">
+      <div 
+        className={`rounded-2xl p-8 shadow-xl text-center ${isWhiteBanner ? 'text-slate-800 border border-slate-200' : 'text-white'}`}
+        style={getBannerStyle()}
+      >
         {form.logo_url && (
           <img 
             src={form.logo_url} 
@@ -109,7 +177,7 @@ export function CardGroupsTheme({
           {form.title || 'แบบสอบถาม'}
         </h1>
         {form.description && (
-          <p className="text-blue-100 max-w-xl mx-auto">
+          <p className={`max-w-xl mx-auto ${isWhiteBanner ? 'text-slate-600' : 'text-white/80'}`}>
             {form.description}
           </p>
         )}
@@ -139,7 +207,7 @@ export function CardGroupsTheme({
           key={groupIndex} 
           className="bg-white rounded-xl shadow-md border border-slate-200 overflow-hidden hover:shadow-lg transition-shadow"
         >
-          {/* Group Header - Only Section */}
+          {/* Group Header */}
           <div className="bg-slate-50 px-6 py-3 border-b border-slate-200 flex items-center gap-2">
             <Layers className="w-4 h-4 text-slate-400" />
             <span className="text-sm font-medium text-slate-600">
@@ -159,7 +227,7 @@ export function CardGroupsTheme({
                 if ('type' in field && field.type === 'heading_render') {
                   return (
                     <div key={`heading-${fieldIndex}`} className="space-y-1">
-                      <h3 className="text-base font-semibold text-slate-800">
+                      <h3 className="text-base font-semibold" style={{ color: accentColor }}>
                         {field.label}
                       </h3>
                       {field.helpText && (
@@ -175,7 +243,10 @@ export function CardGroupsTheme({
                 return (
                   <div key={regularField.id} className="space-y-2">
                     <label className="flex items-start gap-2 font-medium text-slate-900">
-                      <span className="flex-shrink-0 w-5 h-5 bg-indigo-100 text-indigo-600 rounded text-xs font-medium flex items-center justify-center">
+                      <span 
+                        className="flex-shrink-0 w-5 h-5 rounded text-xs font-medium flex items-center justify-center text-white"
+                        style={{ backgroundColor: accentColor }}
+                      >
                         {questionNumber}
                       </span>
                       <span className="flex-1">
@@ -241,7 +312,13 @@ export function CardGroupsTheme({
 
       {/* Submit */}
       <div className="pt-2">
-        {renderSubmitButton()}
+        <button
+          type="submit"
+          className="w-full py-3 px-6 rounded-xl font-medium text-white transition-all hover:opacity-90 active:scale-[0.98]"
+          style={{ backgroundColor: accentColor }}
+        >
+          ส่งคำตอบ
+        </button>
       </div>
     </div>
   );

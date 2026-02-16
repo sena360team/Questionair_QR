@@ -51,6 +51,11 @@ export default function EditFormPage() {
   const [logoPosition, setLogoPosition] = useState<'left' | 'center' | 'right'>('center');
   const [logoSize, setLogoSize] = useState<'small' | 'medium' | 'large'>('medium');
   const [theme, setTheme] = useState<'default' | 'card-groups' | 'step-wizard' | 'minimal'>('default');
+  const [bannerColor, setBannerColor] = useState<'blue' | 'black' | 'white' | 'custom'>('blue');
+  const [bannerCustomColor, setBannerCustomColor] = useState('#2563EB');
+  const [bannerMode, setBannerMode] = useState<'gradient' | 'solid'>('gradient');
+  const [accentColor, setAccentColor] = useState<'blue' | 'sky' | 'teal' | 'emerald' | 'violet' | 'rose' | 'orange' | 'slate' | 'black' | 'custom'>('blue');
+  const [accentCustomColor, setAccentCustomColor] = useState('#2563EB');
   const [requireConsent, setRequireConsent] = useState(false);
   const [consentHeading, setConsentHeading] = useState('การยินยอม (Consent)');
   const [consentText, setConsentText] = useState('');
@@ -95,6 +100,11 @@ export default function EditFormPage() {
           setLogoPosition(draft.logo_position || 'center');
           setLogoSize(draft.logo_size || 'medium');
           setTheme(draft.theme || 'default');
+          setBannerColor(draft.banner_color || 'blue');
+          setBannerCustomColor(draft.banner_custom_color || '#2563EB');
+          setBannerMode(draft.banner_mode || 'gradient');
+          setAccentColor(draft.accent_color || 'blue');
+          setAccentCustomColor(draft.accent_custom_color || '#2563EB');
           setRequireConsent(draft.require_consent);
           setConsentHeading(draft.consent_heading);
           setConsentText(draft.consent_text || '');
@@ -111,6 +121,11 @@ export default function EditFormPage() {
           setLogoPosition(formData.logo_position || 'center');
           setLogoSize(formData.logo_size || 'medium');
           setTheme(formData.theme || 'default');
+          setBannerColor(formData.banner_color || 'blue');
+          setBannerCustomColor(formData.banner_custom_color || '#2563EB');
+          setBannerMode(formData.banner_mode || 'gradient');
+          setAccentColor(formData.accent_color || 'blue');
+          setAccentCustomColor(formData.accent_custom_color || '#2563EB');
           setRequireConsent(formData.require_consent || false);
           setConsentHeading(formData.consent_heading || 'การยินยอม (Consent)');
           setConsentText(formData.consent_text || '');
@@ -139,7 +154,7 @@ export default function EditFormPage() {
     }, 30000);
     
     return () => clearInterval(interval);
-  }, [form, title, description, fields, logoUrl, requireConsent, consentHeading, consentText, consentRequireLocation, showPreview]);
+  }, [form, title, description, fields, logoUrl, logoPosition, logoSize, theme, bannerColor, bannerCustomColor, bannerMode, accentColor, accentCustomColor, requireConsent, consentHeading, consentText, consentRequireLocation, showPreview]);
 
   const handleAutoSave = async () => {
     if (!form || form.status !== 'published') return;
@@ -151,6 +166,11 @@ export default function EditFormPage() {
         description,
         logo_url: logoUrl,
         theme,
+        banner_color: bannerColor,
+        banner_custom_color: bannerCustomColor,
+        banner_mode: bannerMode,
+        accent_color: accentColor,
+        accent_custom_color: accentCustomColor,
         logo_position: logoPosition,
         logo_size: logoSize,
         fields,
@@ -174,6 +194,11 @@ export default function EditFormPage() {
         description,
         logo_url: logoUrl,
         theme,
+        banner_color: bannerColor,
+        banner_custom_color: bannerCustomColor,
+        banner_mode: bannerMode,
+        accent_color: accentColor,
+        accent_custom_color: accentCustomColor,
         logo_position: logoPosition,
         logo_size: logoSize,
         fields,
@@ -339,6 +364,11 @@ export default function EditFormPage() {
       logo_position: logoPosition,
       logo_size: logoSize,
       theme,
+      banner_color: bannerColor,
+      banner_custom_color: bannerCustomColor,
+      banner_mode: bannerMode,
+      accent_color: accentColor,
+      accent_custom_color: accentCustomColor,
       fields,
       require_consent: requireConsent,
       consent_heading: consentHeading,
@@ -363,6 +393,11 @@ export default function EditFormPage() {
     logo_position: logoPosition,
     logo_size: logoSize,
     theme,
+    banner_color: bannerColor,
+    banner_custom_color: bannerCustomColor,
+    banner_mode: bannerMode,
+    accent_color: accentColor,
+    accent_custom_color: accentCustomColor,
     fields,
     require_consent: requireConsent,
     consent_heading: consentHeading,
@@ -514,7 +549,7 @@ export default function EditFormPage() {
       {/* Tab Content */}
       <div className="min-h-[400px]">
         {activeTab === 'content' && (
-          <div className="max-w-4xl mx-auto space-y-6">
+          <div className="w-full space-y-6">
             {/* Basic Info */}
             <div className="bg-white p-6 rounded-2xl border-2 border-slate-300">
               <h2 className="text-lg font-semibold mb-4">ข้อมูลพื้นฐาน</h2>
@@ -711,6 +746,142 @@ export default function EditFormPage() {
               </div>
             </div>
 
+            {/* Color Theme Settings */}
+            <div className="bg-white p-6 rounded-2xl border-2 border-slate-300">
+              <h2 className="text-lg font-semibold text-slate-900 mb-4">🎨 ตั้งค่าสี</h2>
+              
+              {/* Banner Color */}
+              <div className="mb-6">
+                <h3 className="text-sm font-medium text-slate-700 mb-3">สี Banner (พื้นหลังหัวเว็บ)</h3>
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    onClick={() => setBannerColor('blue')}
+                    className={`w-8 h-8 rounded-lg bg-[#2563EB] hover:scale-110 transition-all ${
+                      bannerColor === 'blue' ? 'ring-2 ring-offset-2 ring-slate-400' : ''
+                    }`}
+                    title="Blue"
+                  />
+                  <button
+                    onClick={() => setBannerColor('black')}
+                    className={`w-8 h-8 rounded-lg bg-[#0F172A] hover:scale-110 transition-all ${
+                      bannerColor === 'black' ? 'ring-2 ring-offset-2 ring-slate-400' : ''
+                    }`}
+                    title="Black"
+                  />
+                  <button
+                    onClick={() => setBannerColor('white')}
+                    className={`w-8 h-8 rounded-lg bg-white border-2 border-slate-300 hover:scale-110 transition-all ${
+                      bannerColor === 'white' ? 'ring-2 ring-offset-2 ring-slate-400' : ''
+                    }`}
+                    title="White"
+                  />
+                  <button
+                    onClick={() => document.getElementById('editBannerColorInput')?.click()}
+                    className={`w-8 h-8 rounded-lg bg-gradient-to-br from-slate-100 to-slate-300 border-2 border-slate-300 hover:scale-110 transition-all flex items-center justify-center ${
+                      bannerColor === 'custom' ? 'ring-2 ring-offset-2 ring-slate-400' : ''
+                    }`}
+                    title="Custom"
+                  >
+                    <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                  </button>
+                  <input
+                    type="color"
+                    id="editBannerColorInput"
+                    className="absolute opacity-0 pointer-events-none"
+                    value={bannerCustomColor}
+                    onChange={(e) => {
+                      setBannerCustomColor(e.target.value);
+                      setBannerColor('custom');
+                    }}
+                  />
+                </div>
+                {bannerColor === 'custom' && (
+                  <p className="text-xs text-slate-500 mt-2">สีที่เลือก: {bannerCustomColor}</p>
+                )}
+              </div>
+
+              {/* Banner Mode */}
+              <div className="mb-6">
+                <h3 className="text-sm font-medium text-slate-700 mb-3">รูปแบบ Banner</h3>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setBannerMode('gradient')}
+                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                      bannerMode === 'gradient'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                    }`}
+                  >
+                    Gradient
+                  </button>
+                  <button
+                    onClick={() => setBannerMode('solid')}
+                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                      bannerMode === 'solid'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                    }`}
+                  >
+                    Solid
+                  </button>
+                </div>
+              </div>
+
+              {/* Accent Color */}
+              <div>
+                <h3 className="text-sm font-medium text-slate-700 mb-3">สีรอง (Button, Heading, Section ขีด)</h3>
+                <div className="flex flex-wrap items-center gap-2">
+                  {[
+                    { key: 'blue', color: '#2563EB' },
+                    { key: 'sky', color: '#0EA5E9' },
+                    { key: 'teal', color: '#0D9488' },
+                    { key: 'emerald', color: '#059669' },
+                    { key: 'violet', color: '#7C3AED' },
+                    { key: 'rose', color: '#E11D48' },
+                    { key: 'orange', color: '#EA580C' },
+                    { key: 'slate', color: '#475569' },
+                    { key: 'black', color: '#0F172A' },
+                  ].map(({ key, color }) => (
+                    <button
+                      key={key}
+                      onClick={() => setAccentColor(key as any)}
+                      className={`w-8 h-8 rounded-lg hover:scale-110 transition-all ${
+                        accentColor === key ? 'ring-2 ring-offset-2 ring-slate-400' : ''
+                      }`}
+                      style={{ backgroundColor: color }}
+                      title={key}
+                    />
+                  ))}
+                  <button
+                    onClick={() => document.getElementById('editAccentColorInput')?.click()}
+                    className={`w-8 h-8 rounded-lg bg-gradient-to-br from-slate-100 to-slate-300 border-2 border-slate-300 hover:scale-110 transition-all flex items-center justify-center ${
+                      accentColor === 'custom' ? 'ring-2 ring-offset-2 ring-slate-400' : ''
+                    }`}
+                    title="Custom"
+                  >
+                    <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                  </button>
+                  <input
+                    type="color"
+                    id="editAccentColorInput"
+                    className="absolute opacity-0 pointer-events-none"
+                    value={accentCustomColor}
+                    onChange={(e) => {
+                      setAccentCustomColor(e.target.value);
+                      setAccentColor('custom');
+                    }}
+                  />
+                </div>
+                {accentColor === 'custom' && (
+                  <p className="text-xs text-slate-500 mt-2">สีที่เลือก: {accentCustomColor}</p>
+                )}
+              </div>
+            </div>
+
             {/* Consent Settings */}
             <div className="bg-white p-6 rounded-2xl border-2 border-slate-300">
               <div className="flex items-center gap-3 mb-4">
@@ -775,14 +946,14 @@ export default function EditFormPage() {
       {/* Full Preview Modal */}
       {showPreview && (
         <div className="fixed inset-0 bg-slate-900/60 flex items-start justify-center z-50 p-4 overflow-y-auto">
-          <div className="bg-white w-full max-w-5xl my-4 rounded-xl shadow-2xl overflow-hidden max-h-[95vh] flex flex-col">
+          <div className="bg-white w-full max-w-7xl my-4 rounded-xl shadow-2xl overflow-hidden max-h-[95vh] flex flex-col">
             <div className="sticky top-0 bg-white border-b p-4 flex justify-between z-10 shrink-0">
               <h3 className="font-semibold">ตัวอย่าง</h3>
               <button onClick={handleClosePreview}><X className="w-6 h-6" /></button>
             </div>
             <div className="p-4 bg-slate-100 overflow-y-auto">
               {/* Preview Label */}
-              <div className="max-w-3xl mx-auto mb-4">
+              <div className="w-full max-w-4xl mx-auto mb-4">
                 <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-center gap-3">
                   <Eye className="w-5 h-5 text-amber-600" />
                   <div>
@@ -793,7 +964,7 @@ export default function EditFormPage() {
               </div>
               
               {/* Actual Form Preview */}
-              <div className="max-w-3xl mx-auto">
+              <div className="w-full max-w-4xl mx-auto">
                 <FormRenderer 
                   form={previewForm} 
                   onSubmit={(data) => {
@@ -833,7 +1004,7 @@ export default function EditFormPage() {
       {/* Discard Draft Confirmation Modal */}
       {showDiscardConfirm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl">
+          <div className="bg-white rounded-2xl p-6 max-w-lg w-full shadow-2xl">
             <div className="flex items-center gap-3 text-red-600 mb-4">
               <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
                 <AlertCircle className="w-6 h-6" />
