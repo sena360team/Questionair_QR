@@ -26,6 +26,7 @@ import { QRCode as QRCodeType } from '@/types';
 export default function QRCodesPage() {
   const searchParams = useSearchParams();
   const formFilterFromUrl = searchParams.get('form');
+  const actionFromUrl = searchParams.get('action');
   
   const { qrCodes, loading, deleteQRCode, createQRCode } = useQRCodes();
   const { forms } = useForms();
@@ -39,6 +40,14 @@ export default function QRCodesPage() {
   // Filters
   const [selectedFormFilter, setSelectedFormFilter] = useState<string>(formFilterFromUrl || '');
   const [selectedProjectFilter, setSelectedProjectFilter] = useState<string>('');
+  
+  // Auto-open create modal if action=create
+  useEffect(() => {
+    if (actionFromUrl === 'create' && formFilterFromUrl) {
+      setSelectedForm(formFilterFromUrl);
+      setShowCreateModal(true);
+    }
+  }, [actionFromUrl, formFilterFromUrl]);
 
   const filteredQRCodes = qrCodes.filter(qr => {
     // Search term filter
