@@ -7,19 +7,20 @@ import { FormBuilder } from '@/components/FormBuilder';
 import { FormRenderer } from '@/components/FormRenderer';
 import { VersionHistory } from '@/components/VersionHistory';
 import { DuplicateFormDialog } from '@/components/DuplicateFormDialog';
+import { QRCodeTab } from '@/components/form-tabs/QRCodeTab';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import { useFormDraft } from '@/hooks/useFormDraft';
 import { Form, FormField } from '@/types';
 import { 
   ArrowLeft, Save, Eye, Hash, X, Shield, CheckCircle, AlertCircle, 
   Rocket, History, Settings, FileEdit, Copy, RotateCcw, MoreVertical,
-  Edit3, GitBranch
+  Edit3, GitBranch, QrCode
 } from 'lucide-react';
 // Eye is already imported
 import { getVersionBadgeStyle } from '@/lib/versionColors';
 import { cn } from '@/lib/utils';
 
-type TabType = 'content' | 'settings' | 'history';
+type TabType = 'content' | 'settings' | 'history' | 'qr-codes';
 
 export default function EditFormPage() {
   const params = useParams();
@@ -527,6 +528,7 @@ export default function EditFormPage() {
           {[
             { key: 'content' as TabType, label: 'เนื้อหา', icon: <FileEdit className="w-4 h-4" /> },
             { key: 'settings' as TabType, label: 'ตั้งค่า', icon: <Settings className="w-4 h-4" /> },
+            { key: 'qr-codes' as TabType, label: 'QR Codes', icon: <QrCode className="w-4 h-4" /> },
             { key: 'history' as TabType, label: 'ประวัติ', icon: <History className="w-4 h-4" /> },
           ].map((tab) => (
             <button
@@ -940,6 +942,10 @@ export default function EditFormPage() {
 
         {activeTab === 'history' && (
           <VersionHistory formId={formId} currentVersion={form.current_version || 0} />
+        )}
+
+        {activeTab === 'qr-codes' && form && (
+          <QRCodeTab formId={formId} formCode={form.code} />
         )}
       </div>
 
