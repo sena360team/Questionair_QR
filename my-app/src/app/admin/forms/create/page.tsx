@@ -230,50 +230,39 @@ export default function CreateFormPage() {
                 />
               </div>
               
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                    URL (Slug) <span className="text-red-500">*</span>
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <span className="text-slate-400 text-sm whitespace-nowrap">/form/</span>
-                    <input
-                      type="text"
-                      value={slug}
-                      onChange={(e) => setSlug(e.target.value)}
-                      placeholder="satisfaction-survey"
-                      className="flex-1 px-4 py-3 border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 font-mono text-sm"
-                    />
-                  </div>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                    Logo (URL)
-                  </label>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  URL (Slug) <span className="text-red-500">*</span>
+                </label>
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-400 text-sm whitespace-nowrap">/form/</span>
                   <input
                     type="text"
-                    value={logoUrl}
-                    onChange={(e) => setLogoUrl(e.target.value)}
-                    placeholder="https://example.com/logo.png"
-                    className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500"
+                    value={slug}
+                    onChange={(e) => setSlug(e.target.value)}
+                    placeholder="satisfaction-survey"
+                    className="flex-1 px-4 py-3 border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 font-mono text-sm"
                   />
                 </div>
               </div>
               
+              {/* Logo Section - Before Description */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                  คำอธิบาย
+                  🖼️ Logo (URL)
                 </label>
-                <textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="คำอธิบายสั้นๆ เกี่ยวกับแบบสอบถาม"
-                  rows={3}
-                  className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 resize-none"
+                <input
+                  type="text"
+                  value={logoUrl}
+                  onChange={(e) => setLogoUrl(e.target.value)}
+                  placeholder="https://example.com/logo.png"
+                  className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500"
                 />
+                <p className="text-xs text-slate-500 mt-1.5">
+                  แนะนำ: ใช้รูป PNG หรือ SVG พื้นหลังโปร่งใส
+                </p>
               </div>
-
+              
               {logoUrl && (
                 <>
                   <div className="p-4 bg-slate-50 rounded-xl">
@@ -337,6 +326,20 @@ export default function CreateFormPage() {
                   </div>
                 </>
               )}
+              
+              {/* Description - After Logo */}
+              <div className="pt-4 border-t border-slate-200">
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  คำอธิบาย
+                </label>
+                <textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="คำอธิบายสั้นๆ เกี่ยวกับแบบสอบถาม"
+                  rows={3}
+                  className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 resize-none"
+                />
+              </div>
             </div>
           </div>
 
