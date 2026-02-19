@@ -204,9 +204,11 @@ export default function EditFormPage() {
 
   // Save changes to draft version (create new if not exists)
   const handleSaveDraft = async () => {
+    console.log('[handleSaveDraft] Called, draftVersionId:', draftVersionId);
     setIsSaving(true);
     try {
       if (draftVersionId) {
+        console.log('[handleSaveDraft] Updating existing draft:', draftVersionId);
         // Update existing draft
         await updateDraft(draftVersionId, {
           title,
@@ -227,6 +229,7 @@ export default function EditFormPage() {
           consent_require_location: consentRequireLocation,
         });
       } else {
+        console.log('[handleSaveDraft] Creating new draft');
         // Create new draft
         const newDraft = await createDraft({
           title,
@@ -248,10 +251,12 @@ export default function EditFormPage() {
         });
         setDraftVersionId(newDraft.id);
         setIsEditingDraft(true);
+        console.log('[handleSaveDraft] New draft created:', newDraft.id);
       }
+      console.log('[handleSaveDraft] Success');
       showToast('success', 'บันทึก Draft สำเร็จ');
     } catch (err) {
-      console.error('Save draft error:', err);
+      console.error('[handleSaveDraft] Error:', err);
       showToast('error', 'เกิดข้อผิดพลาดในการบันทึก: ' + (err instanceof Error ? err.message : 'Unknown error'));
     } finally {
       setIsSaving(false);
@@ -347,6 +352,7 @@ export default function EditFormPage() {
 
   // Save published form directly (for non-published forms)
   const handleSavePublished = async () => {
+    console.log('[handleSavePublished] Called');
     setIsSaving(true);
     try {
       const supabase = getSupabaseBrowser();
@@ -367,9 +373,10 @@ export default function EditFormPage() {
         .eq('id', formId);
 
       if (error) throw error;
+      console.log('[handleSavePublished] Success');
       showToast('success', 'บันทึกสำเร็จ');
     } catch (err) {
-      console.error('Save error:', err);
+      console.error('[handleSavePublished] Error:', err);
       showToast('error', 'เกิดข้อผิดพลาดในการบันทึก: ' + (err instanceof Error ? err.message : 'Unknown error'));
     } finally {
       setIsSaving(false);
@@ -565,13 +572,12 @@ export default function EditFormPage() {
             <div className="sm:ml-auto py-2 sm:py-0">
               <ActionBar
                 onPreview={handleOpenPreview}
-                onSaveDraft={isEditingDraft ? handleSaveDraft : handleSavePublished}
+                onSave={form.status === 'draft' ? handleSavePublished : undefined}
+                onSaveDraft={form.status === 'published' ? handleSaveDraft : undefined}
                 onPublish={() => setShowPublishModal(true)}
                 isSaving={isSaving}
-                showSaveDraft={true}
-                showPublish={true}
+                formStatus={form.status}
                 nextVersion={(form.current_version || 0) + 1}
-                saveDraftLabel={isEditingDraft ? 'บันทึก draft' : 'บันทึก'}
               />
             </div>
           </div>
