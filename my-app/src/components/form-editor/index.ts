@@ -4,3 +4,4 @@ export { FormTabs, type TabType } from './FormTabs';
 export { ActionBar } from './ActionBar';
 export { ConfirmDialog } from './ConfirmDialog';
 export { SuccessModal } from './SuccessModal';
+export { ApplyThemeModal } from './ApplyThemeModal';

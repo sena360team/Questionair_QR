@@ -8,12 +8,12 @@ import { FormRenderer } from '@/components/FormRenderer';
 import { VersionHistory } from '@/components/VersionHistory';
 import { DuplicateFormDialog } from '@/components/DuplicateFormDialog';
 import { QRCodeTab } from '@/components/form-tabs/QRCodeTab';
-import { DraftAlert, FormHeaderV4, FormTabs, ActionBar, ConfirmDialog, SuccessModal, type TabType } from '@/components/form-editor';
+import { DraftAlert, FormHeaderV4, FormTabs, ActionBar, ConfirmDialog, SuccessModal, ApplyThemeModal, type TabType } from '@/components/form-editor';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import { useFormDraft } from '@/hooks/useFormDraft';
 import { useFormVersions } from '@/hooks/useFormVersions';
 import { Form, FormField } from '@/types';
-import { Eye, X, Shield, CheckCircle, AlertCircle, Rocket } from 'lucide-react';
+import { Eye, X, Shield, CheckCircle, AlertCircle, Rocket, Palette } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function EditFormPage() {
@@ -82,6 +82,11 @@ export default function EditFormPage() {
 
   const [originalFields, setOriginalFields] = useState<FormField[]>([]);
   const [toast, setToast] = useState<{ type: 'success' | 'error', message: string } | null>(null);
+
+  // Apply Theme Modal
+  const [showApplyThemeModal, setShowApplyThemeModal] = useState(false);
+  const [isApplyingTheme, setIsApplyingTheme] = useState(false);
+  const [applyThemeSuccess, setApplyThemeSuccess] = useState(false);
 
   const showToast = (type: 'success' | 'error', message: string) => {
     setToast({ type, message });
@@ -534,6 +539,45 @@ export default function EditFormPage() {
     setTimeout(() => setPreviewSnapshot(null), 300);
   };
 
+  // Apply Theme - Update theme without creating new version
+  const handleApplyTheme = async () => {
+    setIsApplyingTheme(true);
+    try {
+      const response = await fetch(`/api/forms/${formId}/theme`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          theme,
+          banner_color: bannerColor,
+          banner_custom_color: bannerCustomColor,
+          banner_mode: bannerMode,
+          accent_color: accentColor,
+          accent_custom_color: accentCustomColor,
+          logo_url: logoUrl,
+          logo_position: logoPosition,
+          logo_size: logoSize,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Failed to apply theme');
+      }
+
+      // Show success state in modal
+      setApplyThemeSuccess(true);
+      
+      // Refresh to get updated data
+      router.refresh();
+    } catch (err: any) {
+      console.error('Apply theme error:', err);
+      showToast('error', err.message || 'เกิดข้อผิดพลาดในการ Apply Theme');
+    } finally {
+      setIsApplyingTheme(false);
+    }
+  };
+
   // Use snapshot if available, otherwise use current state
   const previewForm = previewSnapshot || {
     ...form,
@@ -726,193 +770,222 @@ export default function EditFormPage() {
 
           {activeTab === 'settings' && (
             <div className="space-y-6">
-              {/* Theme Selector */}
+              {/* Theme and Colors - Combined Card */}
               <div className="bg-white p-6 rounded-2xl border-2 border-slate-300">
-                <div className="flex items-center gap-3 mb-4">
+                {/* Header */}
+                <div className="flex items-center gap-3 mb-6">
                   <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
                     <span className="text-lg">🎨</span>
                   </div>
-                  <h2 className="text-lg font-semibold">ธีมฟอร์ม</h2>
-                </div>
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                  {[
-                    { value: 'default', label: 'ดั้งเดิม', desc: 'คลาสสิก เรียบง่าย' },
-                    { value: 'card-groups', label: 'การ์ดแยกกลุ่ม', desc: 'แบ่งเป็นหมวดหมู่' },
-                    { value: 'step-wizard', label: 'ขั้นตอน Step', desc: 'กรอกทีละขั้น' },
-                    { value: 'minimal', label: 'มินิมอล', desc: 'เรียบง่ายที่สุด' },
-                  ].map((t) => (
-                    <label
-                      key={t.value}
-                      className={`p-4 border-2 rounded-xl cursor-pointer transition-all ${theme === t.value
-                          ? 'border-purple-500 bg-purple-50'
-                          : 'border-slate-200 hover:border-slate-300'
-                        }`}
-                    >
-                      <input
-                        type="radio"
-                        name="theme"
-                        value={t.value}
-                        checked={theme === t.value}
-                        onChange={(e) => setTheme(e.target.value as any)}
-                        className="sr-only"
-                      />
-                      <div className="font-medium text-slate-900">{t.label}</div>
-                      <div className="text-xs text-slate-500 mt-1">{t.desc}</div>
-                    </label>
-                  ))}
-                </div>
-
-                {/* Theme Help Text - Show for all themes */}
-                <div className="mt-4 p-4 bg-blue-50 rounded-xl border border-blue-200">
-                  <p className="text-sm text-blue-800">
-                    <span className="font-medium">โครงสร้างฟอร์ม:</span>
-                  </p>
-                  <ul className="mt-2 space-y-1 text-sm text-blue-700">
-                    <li className="flex items-start gap-2">
-                      <span className="font-medium">Section</span> -
-                      {theme === 'card-groups' ? 'เริ่มการ์ดใหม่' :
-                        theme === 'step-wizard' ? 'เริ่มขั้นตอนใหม่' :
-                          'หัวข้อหลัก (ใหญ่)'}
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="font-medium">Heading</span> -
-                      หัวข้อย่อยภายใน Section
-                      {theme === 'default' || theme === 'minimal' ? '(เล็กกว่า Section)' : ''}
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="font-medium">คำถามปกติ</span> - มีเลขลำดับ 1, 2, 3...
-                    </li>
-                  </ul>
-                </div>
-              </div>
-
-              {/* Color Theme Settings */}
-              <div className="bg-white p-6 rounded-2xl border-2 border-slate-300">
-                <h2 className="text-lg font-semibold text-slate-900 mb-4">🎨 ตั้งค่าสี</h2>
-
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  {/* Banner Color */}
                   <div>
-                    <h3 className="text-sm font-medium text-slate-700 mb-3">สี Banner (พื้นหลังหัวเว็บ)</h3>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <button
-                        onClick={() => setBannerColor('blue')}
-                        className={`w-8 h-8 rounded-lg bg-[#2563EB] hover:scale-110 transition-all ${bannerColor === 'blue' ? 'ring-2 ring-offset-2 ring-slate-400' : ''
-                          }`}
-                        title="Blue"
-                      />
-                      <button
-                        onClick={() => setBannerColor('black')}
-                        className={`w-8 h-8 rounded-lg bg-[#0F172A] hover:scale-110 transition-all ${bannerColor === 'black' ? 'ring-2 ring-offset-2 ring-slate-400' : ''
-                          }`}
-                        title="Black"
-                      />
-                      <button
-                        onClick={() => setBannerColor('white')}
-                        className={`w-8 h-8 rounded-lg bg-white border-2 border-slate-300 hover:scale-110 transition-all ${bannerColor === 'white' ? 'ring-2 ring-offset-2 ring-slate-400' : ''
-                          }`}
-                        title="White"
-                      />
-                      <button
-                        onClick={() => document.getElementById('editBannerColorInput')?.click()}
-                        className={`w-8 h-8 rounded-lg bg-gradient-to-br from-slate-100 to-slate-300 border-2 border-slate-300 hover:scale-110 transition-all flex items-center justify-center ${bannerColor === 'custom' ? 'ring-2 ring-offset-2 ring-slate-400' : ''
-                          }`}
-                        title="Custom"
-                      >
-                        <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                        </svg>
-                      </button>
-                      <input
-                        type="color"
-                        id="editBannerColorInput"
-                        className="absolute opacity-0 pointer-events-none"
-                        value={bannerCustomColor}
-                        onChange={(e) => {
-                          setBannerCustomColor(e.target.value);
-                          setBannerColor('custom');
-                        }}
-                      />
-                    </div>
-                    {bannerColor === 'custom' && (
-                      <p className="text-xs text-slate-500 mt-2">สีที่เลือก: {bannerCustomColor}</p>
-                    )}
+                    <h2 className="text-lg font-semibold">ธีมและสี</h2>
+                    <p className="text-sm text-slate-500">ปรับแต่ง Theme และสีของฟอร์ม</p>
                   </div>
+                </div>
 
-                  {/* Banner Mode */}
-                  <div>
-                    <h3 className="text-sm font-medium text-slate-700 mb-3">รูปแบบ Banner</h3>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => setBannerMode('gradient')}
-                        className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${bannerMode === 'gradient'
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                {/* Section 1: Theme Selector */}
+                <div>
+                  <h3 className="text-sm font-medium text-slate-700 mb-3">รูปแบบฟอร์ม</h3>
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                    {[
+                      { value: 'default', label: 'ดั้งเดิม', desc: 'คลาสสิก เรียบง่าย' },
+                      { value: 'card-groups', label: 'การ์ดแยกกลุ่ม', desc: 'แบ่งเป็นหมวดหมู่' },
+                      { value: 'step-wizard', label: 'ขั้นตอน Step', desc: 'กรอกทีละขั้น' },
+                      { value: 'minimal', label: 'มินิมอล', desc: 'เรียบง่ายที่สุด' },
+                    ].map((t) => (
+                      <label
+                        key={t.value}
+                        className={`p-4 border-2 rounded-xl cursor-pointer transition-all ${theme === t.value
+                            ? 'border-purple-500 bg-purple-50'
+                            : 'border-slate-200 hover:border-slate-300'
                           }`}
                       >
-                        Gradient
-                      </button>
-                      <button
-                        onClick={() => setBannerMode('solid')}
-                        className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${bannerMode === 'solid'
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                          }`}
-                      >
-                        Solid
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Accent Color */}
-                  <div>
-                    <h3 className="text-sm font-medium text-slate-700 mb-3">สีรอง (Button, Heading)</h3>
-                    <div className="flex flex-wrap items-center gap-2">
-                      {[
-                        { key: 'blue', color: '#2563EB' },
-                        { key: 'sky', color: '#0EA5E9' },
-                        { key: 'teal', color: '#0D9488' },
-                        { key: 'emerald', color: '#059669' },
-                        { key: 'violet', color: '#7C3AED' },
-                        { key: 'rose', color: '#E11D48' },
-                        { key: 'orange', color: '#EA580C' },
-                        { key: 'slate', color: '#475569' },
-                        { key: 'black', color: '#0F172A' },
-                      ].map(({ key, color }) => (
-                        <button
-                          key={key}
-                          onClick={() => setAccentColor(key as any)}
-                          className={`w-8 h-8 rounded-lg hover:scale-110 transition-all ${accentColor === key ? 'ring-2 ring-offset-2 ring-slate-400' : ''
-                            }`}
-                          style={{ backgroundColor: color }}
-                          title={key}
+                        <input
+                          type="radio"
+                          name="theme"
+                          value={t.value}
+                          checked={theme === t.value}
+                          onChange={(e) => setTheme(e.target.value as any)}
+                          className="sr-only"
                         />
-                      ))}
-                      <button
-                        onClick={() => document.getElementById('editAccentColorInput')?.click()}
-                        className={`w-8 h-8 rounded-lg bg-gradient-to-br from-slate-100 to-slate-300 border-2 border-slate-300 hover:scale-110 transition-all flex items-center justify-center ${accentColor === 'custom' ? 'ring-2 ring-offset-2 ring-slate-400' : ''
-                          }`}
-                        title="Custom"
-                      >
-                        <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                        </svg>
-                      </button>
-                      <input
-                        type="color"
-                        id="editAccentColorInput"
-                        className="absolute opacity-0 pointer-events-none"
-                        value={accentCustomColor}
-                        onChange={(e) => {
-                          setAccentCustomColor(e.target.value);
-                          setAccentColor('custom');
-                        }}
-                      />
-                    </div>
-                    {accentColor === 'custom' && (
-                      <p className="text-xs text-slate-500 mt-2">สีที่เลือก: {accentCustomColor}</p>
-                    )}
+                        <div className="font-medium text-slate-900">{t.label}</div>
+                        <div className="text-xs text-slate-500 mt-1">{t.desc}</div>
+                      </label>
+                    ))}
                   </div>
+
+                  {/* Theme Help Text */}
+                  <div className="mt-4 p-4 bg-blue-50 rounded-xl border border-blue-200">
+                    <p className="text-sm text-blue-800">
+                      <span className="font-medium">โครงสร้างฟอร์ม:</span>
+                    </p>
+                    <ul className="mt-2 space-y-1 text-sm text-blue-700">
+                      <li className="flex items-start gap-2">
+                        <span className="font-medium">Section</span> -
+                        {theme === 'card-groups' ? 'เริ่มการ์ดใหม่' :
+                          theme === 'step-wizard' ? 'เริ่มขั้นตอนใหม่' :
+                            'หัวข้อหลัก (ใหญ่)'}
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="font-medium">Heading</span> -
+                        หัวข้อย่อยภายใน Section
+                        {theme === 'default' || theme === 'minimal' ? '(เล็กกว่า Section)' : ''}
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="font-medium">คำถามปกติ</span> - มีเลขลำดับ 1, 2, 3...
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+
+                {/* Divider */}
+                <div className="my-6 border-t border-slate-200" />
+
+                {/* Section 2: Color Settings */}
+                <div>
+                  <h3 className="text-sm font-medium text-slate-700 mb-4">ตั้งค่าสี</h3>
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Banner Color */}
+                    <div>
+                      <h4 className="text-sm font-medium text-slate-600 mb-3">สี Banner (พื้นหลังหัวเว็บ)</h4>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <button
+                          onClick={() => setBannerColor('blue')}
+                          className={`w-8 h-8 rounded-lg bg-[#2563EB] hover:scale-110 transition-all ${bannerColor === 'blue' ? 'ring-2 ring-offset-2 ring-slate-400' : ''
+                            }`}
+                          title="Blue"
+                        />
+                        <button
+                          onClick={() => setBannerColor('black')}
+                          className={`w-8 h-8 rounded-lg bg-[#0F172A] hover:scale-110 transition-all ${bannerColor === 'black' ? 'ring-2 ring-offset-2 ring-slate-400' : ''
+                            }`}
+                          title="Black"
+                        />
+                        <button
+                          onClick={() => setBannerColor('white')}
+                          className={`w-8 h-8 rounded-lg bg-white border-2 border-slate-300 hover:scale-110 transition-all ${bannerColor === 'white' ? 'ring-2 ring-offset-2 ring-slate-400' : ''
+                            }`}
+                          title="White"
+                        />
+                        <button
+                          onClick={() => document.getElementById('editBannerColorInput')?.click()}
+                          className={`w-8 h-8 rounded-lg bg-gradient-to-br from-slate-100 to-slate-300 border-2 border-slate-300 hover:scale-110 transition-all flex items-center justify-center ${bannerColor === 'custom' ? 'ring-2 ring-offset-2 ring-slate-400' : ''
+                            }`}
+                          title="Custom"
+                        >
+                          <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                          </svg>
+                        </button>
+                        <input
+                          type="color"
+                          id="editBannerColorInput"
+                          className="absolute opacity-0 pointer-events-none"
+                          value={bannerCustomColor}
+                          onChange={(e) => {
+                            setBannerCustomColor(e.target.value);
+                            setBannerColor('custom');
+                          }}
+                        />
+                      </div>
+                      {bannerColor === 'custom' && (
+                        <p className="text-xs text-slate-500 mt-2">สีที่เลือก: {bannerCustomColor}</p>
+                      )}
+                    </div>
+
+                    {/* Banner Mode */}
+                    <div>
+                      <h4 className="text-sm font-medium text-slate-600 mb-3">รูปแบบ Banner</h4>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setBannerMode('gradient')}
+                          className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${bannerMode === 'gradient'
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                            }`}
+                        >
+                          Gradient
+                        </button>
+                        <button
+                          onClick={() => setBannerMode('solid')}
+                          className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${bannerMode === 'solid'
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                            }`}
+                        >
+                          Solid
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Accent Color */}
+                    <div>
+                      <h4 className="text-sm font-medium text-slate-600 mb-3">สีรอง (Button, Heading)</h4>
+                      <div className="flex flex-wrap items-center gap-2">
+                        {[
+                          { key: 'blue', color: '#2563EB' },
+                          { key: 'sky', color: '#0EA5E9' },
+                          { key: 'teal', color: '#0D9488' },
+                          { key: 'emerald', color: '#059669' },
+                          { key: 'violet', color: '#7C3AED' },
+                          { key: 'rose', color: '#E11D48' },
+                          { key: 'orange', color: '#EA580C' },
+                          { key: 'slate', color: '#475569' },
+                          { key: 'black', color: '#0F172A' },
+                        ].map(({ key, color }) => (
+                          <button
+                            key={key}
+                            onClick={() => setAccentColor(key as any)}
+                            className={`w-8 h-8 rounded-lg hover:scale-110 transition-all ${accentColor === key ? 'ring-2 ring-offset-2 ring-slate-400' : ''
+                              }`}
+                            style={{ backgroundColor: color }}
+                            title={key}
+                          />
+                        ))}
+                        <button
+                          onClick={() => document.getElementById('editAccentColorInput')?.click()}
+                          className={`w-8 h-8 rounded-lg bg-gradient-to-br from-slate-100 to-slate-300 border-2 border-slate-300 hover:scale-110 transition-all flex items-center justify-center ${accentColor === 'custom' ? 'ring-2 ring-offset-2 ring-slate-400' : ''
+                            }`}
+                          title="Custom"
+                        >
+                          <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                          </svg>
+                        </button>
+                        <input
+                          type="color"
+                          id="editAccentColorInput"
+                          className="absolute opacity-0 pointer-events-none"
+                          value={accentCustomColor}
+                          onChange={(e) => {
+                            setAccentCustomColor(e.target.value);
+                            setAccentColor('custom');
+                          }}
+                        />
+                      </div>
+                      {accentColor === 'custom' && (
+                        <p className="text-xs text-slate-500 mt-2">สีที่เลือก: {accentCustomColor}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Divider */}
+                <div className="my-6 border-t border-slate-200" />
+
+                {/* Section 3: Apply Theme Button */}
+                <div className="bg-purple-50 rounded-xl p-4 flex items-center justify-between">
+                  <div className="text-sm">
+                    <p className="font-medium text-purple-900">บันทึกการตั้งค่า Theme และสี</p>
+                    <p className="text-purple-700">อัพเดตทันทีโดยไม่ต้อง Publish ใหม่</p>
+                  </div>
+                  <button
+                    onClick={() => setShowApplyThemeModal(true)}
+                    className="flex items-center gap-2 px-5 py-2.5 bg-purple-600 text-white rounded-xl font-medium hover:bg-purple-700 transition-colors"
+                  >
+                    <Palette className="w-4 h-4" />
+                    Apply Theme
+                  </button>
                 </div>
               </div>
 
@@ -1047,6 +1120,26 @@ export default function EditFormPage() {
         message={successMessage.message}
         buttonText="ตกลง"
         onClose={() => setShowSuccessModal(false)}
+      />
+
+      {/* Apply Theme Modal */}
+      <ApplyThemeModal
+        isOpen={showApplyThemeModal}
+        onClose={() => {
+          setShowApplyThemeModal(false);
+          setApplyThemeSuccess(false);
+        }}
+        onConfirm={handleApplyTheme}
+        isLoading={isApplyingTheme}
+        isSuccess={applyThemeSuccess}
+        themeData={{
+          theme,
+          bannerColor,
+          bannerCustomColor,
+          bannerMode,
+          accentColor,
+          accentCustomColor,
+        }}
       />
 
       {/* Toast -->
