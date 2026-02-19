@@ -8,20 +8,13 @@ import { FormRenderer } from '@/components/FormRenderer';
 import { VersionHistory } from '@/components/VersionHistory';
 import { DuplicateFormDialog } from '@/components/DuplicateFormDialog';
 import { QRCodeTab } from '@/components/form-tabs/QRCodeTab';
+import { DraftAlert, FormHeaderV4, FormTabs, ActionBar, type TabType } from '@/components/form-editor';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import { useFormDraft } from '@/hooks/useFormDraft';
 import { useFormVersions } from '@/hooks/useFormVersions';
 import { Form, FormField } from '@/types';
-import { 
-  ArrowLeft, Save, Eye, Hash, X, Shield, CheckCircle, AlertCircle, 
-  Rocket, History, Settings, FileEdit, Copy, RotateCcw, MoreVertical,
-  Edit3, GitBranch, QrCode
-} from 'lucide-react';
-// Eye is already imported
-import { getVersionBadgeStyle } from '@/lib/versionColors';
+import { Eye, X, Shield, CheckCircle, AlertCircle, Rocket } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-type TabType = 'content' | 'settings' | 'history' | 'qr-codes';
 
 export default function EditFormPage() {
   const params = useParams();
@@ -525,170 +518,43 @@ export default function EditFormPage() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Draft Alert */}
-      {isEditingDraft && (
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-          <div className="flex items-start gap-3">
-            <Edit3 className="w-5 h-5 text-amber-600 mt-0.5 shrink-0" />
-            <div className="flex-1 min-w-0">
-              <p className="font-medium text-amber-900">
-                คุณกำลังแก้ไข Draft Version
-              </p>
-              <p className="text-sm text-amber-700 mt-1">
-                ฟอร์มที่ Publish อยู่ (v{currentVersion?.version || form?.current_version || 0}) ยังไม่มีการเปลี่ยนแปลง 
-                ผู้ใช้ยังเห็นเวอร์ชันเดิมอยู่
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <button 
-                onClick={handleDeleteDraft}
-                className="shrink-0 px-4 py-2 bg-amber-100 hover:bg-amber-200 text-amber-800 text-sm font-medium rounded-lg transition-colors"
-              >
-                ลบ Draft
-              </button>
-              <button 
-                onClick={() => setShowPublishModal(true)}
-                className="shrink-0 px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors"
-              >
-                Publish Draft
-              </button>
-            </div>
-          </div>
-        </div>
+    <div className="max-w-7xl mx-auto">
+      {/* Draft Alert - V4 */}
+      {isEditingDraft && currentVersion && (
+        <DraftAlert 
+          currentVersion={currentVersion.version}
+          onDelete={handleDeleteDraft}
+          onPublish={() => setShowPublishModal(true)}
+        />
       )}
+      
+      {/* Main Card */}
+      <div className={`bg-white shadow-sm border border-slate-200 ${isEditingDraft ? 'rounded-b-xl border-t-0' : 'rounded-xl'}`}>
+        {/* Header - V4 */}
+        <FormHeaderV4
+          formCode={form.code}
+          formTitle={form.title}
+          onCopy={() => setShowDuplicateDialog(true)}
+          onDeleteDraft={isEditingDraft ? handleDeleteDraft : undefined}
+          hasDraft={isEditingDraft}
+        />
 
-      {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <Link 
-            href="/admin/forms"
-            className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all"
-          >
-            <ArrowLeft className="w-6 h-6" />
-          </Link>
-          <div className="min-w-0">
-            <h1 className="text-lg sm:text-xl font-bold text-slate-900 truncate max-w-[200px] sm:max-w-[300px] md:max-w-[400px] lg:max-w-[500px] xl:max-w-[600px]" title={form.title}>{form.title}</h1>
-            <p className="text-sm text-slate-500">{form.code} · แก้ไขเนื้อหา</p>
+        {/* Tabs + ActionBar - V4 */}
+        <div className="px-4 border-b border-slate-200">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 -mb-px">
+            <FormTabs activeTab={activeTab} onTabChange={setActiveTab} />
+            <div className="sm:ml-auto py-2 sm:py-0">
+              <ActionBar
+                onPreview={handleOpenPreview}
+                onSaveDraft={isEditingDraft ? handleSaveDraft : undefined}
+                onPublish={() => setShowPublishModal(true)}
+                isSaving={isSaving}
+                showSaveDraft={isEditingDraft}
+                nextVersion={(form.current_version || 0) + 1}
+              />
+            </div>
           </div>
         </div>
-        
-        <div className="flex items-center gap-2 lg:gap-3 flex-wrap">
-          {/* Status Badge */}
-          <div className="flex items-center gap-2">
-            {form.status === 'published' && (
-              <span 
-                className="px-3 py-1.5 text-sm font-medium rounded-lg border"
-                style={getVersionBadgeStyle(form.current_version || 0)}
-              >
-                Version {form.current_version || 0}
-              </span>
-            )}
-            {hasNewDraft && (
-              <span className="px-3 py-1.5 bg-amber-100 text-amber-700 text-sm font-medium rounded-lg flex items-center gap-1.5">
-                <Edit3 className="w-4 h-4" />
-                มี Draft
-              </span>
-            )}
-          </div>
-          
-          <div className="w-px h-8 bg-slate-300 hidden sm:block" />
-          
-          <button 
-            onClick={() => setShowDuplicateDialog(true)}
-            className="flex items-center gap-2 px-4 py-2 border-2 border-slate-300 text-slate-700 rounded-xl hover:bg-slate-50"
-          >
-            <Copy className="w-4 h-4" />
-            <span className="hidden sm:inline">คัดลอก</span>
-          </button>
-          
-          <button 
-            onClick={handleOpenPreview} 
-            className="flex items-center gap-2 px-4 py-2 border-2 border-slate-300 text-slate-700 rounded-xl hover:bg-slate-50"
-          >
-            <Eye className="w-4 h-4" />
-            <span className="hidden sm:inline">ดูตัวอย่าง</span>
-          </button>
-          
-          {form.status === 'published' && (
-            <>
-              {isEditingDraft ? (
-                <button
-                  onClick={handleSaveDraft}
-                  disabled={isSaving}
-                  className="flex items-center gap-2 px-4 lg:px-6 py-2 bg-amber-600 text-white rounded-xl font-medium hover:bg-amber-700 disabled:opacity-50"
-                >
-                  <Save className="w-4 h-4" />
-                  {isSaving ? 'กำลังบันทึก...' : 'บันทึก Draft'}
-                </button>
-              ) : hasNewDraft ? (
-                <Link
-                  href={`/admin/forms/${formId}?draft=true`}
-                  className="flex items-center gap-2 px-4 lg:px-6 py-2 bg-amber-600 text-white rounded-xl font-medium hover:bg-amber-700"
-                >
-                  <Edit3 className="w-4 h-4" />
-                  แก้ไข Draft
-                </Link>
-              ) : (
-                <button
-                  onClick={handleCreateDraft}
-                  disabled={isSaving}
-                  className="flex items-center gap-2 px-4 lg:px-6 py-2 bg-amber-600 text-white rounded-xl font-medium hover:bg-amber-700 disabled:opacity-50"
-                >
-                  <GitBranch className="w-4 h-4" />
-                  {isSaving ? 'กำลังสร้าง...' : 'สร้าง Draft'}
-                </button>
-              )}
-            </>
-          )}
-          
-          {form.status === 'draft' && (
-            <button
-              onClick={handleSavePublished}
-              disabled={isSaving}
-              className="flex items-center gap-2 px-4 lg:px-6 py-2 bg-amber-600 text-white rounded-xl font-medium hover:bg-amber-700 disabled:opacity-50"
-            >
-              <Save className="w-4 h-4" />
-              {isSaving ? 'กำลังบันทึก...' : 'บันทึก'}
-            </button>
-          )}
-          
-          <button
-            onClick={handlePublish}
-            disabled={!isValid || isSaving}
-            className="flex items-center gap-2 px-4 lg:px-6 py-2 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Rocket className="w-4 h-4" />
-            {isSaving ? 'กำลังบันทึก...' : (form.status === 'published' ? `Publish v${(form.current_version || 0) + 1}` : 'Publish')}
-          </button>
-        </div>
-      </div>
-
-      {/* Tabs */}
-      <div className="border-b border-slate-200">
-        <div className="flex gap-1">
-          {[
-            { key: 'content' as TabType, label: 'เนื้อหา', icon: <FileEdit className="w-4 h-4" /> },
-            { key: 'settings' as TabType, label: 'ตั้งค่า', icon: <Settings className="w-4 h-4" /> },
-            { key: 'qr-codes' as TabType, label: 'QR Codes', icon: <QrCode className="w-4 h-4" /> },
-            { key: 'history' as TabType, label: 'ประวัติ', icon: <History className="w-4 h-4" /> },
-          ].map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className={cn(
-                "flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors",
-                activeTab === tab.key
-                  ? "border-blue-600 text-blue-600"
-                  : "border-transparent text-slate-600 hover:text-slate-900"
-              )}
-            >
-              {tab.icon}
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      </div>
 
       {/* Tab Content */}
       <div className="min-h-[400px]">
@@ -1090,8 +956,9 @@ export default function EditFormPage() {
           <QRCodeTab formId={formId} formCode={form.code} />
         )}
       </div>
+      </div>{/* End Main Card */}
 
-      {/* Full Preview Modal */}
+      {/* Full Preview Modal -->
       {showPreview && (
         <div className="fixed inset-0 bg-slate-900/60 flex items-start justify-center z-50 p-4 overflow-y-auto">
           <div className="bg-white w-full max-w-7xl my-4 rounded-xl shadow-2xl overflow-hidden max-h-[95vh] flex flex-col">
