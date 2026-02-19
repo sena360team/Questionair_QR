@@ -8,7 +8,7 @@ import { FormRenderer } from '@/components/FormRenderer';
 import { VersionHistory } from '@/components/VersionHistory';
 import { DuplicateFormDialog } from '@/components/DuplicateFormDialog';
 import { QRCodeTab } from '@/components/form-tabs/QRCodeTab';
-import { DraftAlert, FormHeaderV4, FormTabs, ActionBar, type TabType } from '@/components/form-editor';
+import { DraftAlert, FormHeaderV4, FormTabs, ActionBar, ConfirmDialog, type TabType } from '@/components/form-editor';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import { useFormDraft } from '@/hooks/useFormDraft';
 import { useFormVersions } from '@/hooks/useFormVersions';
@@ -22,7 +22,7 @@ export default function EditFormPage() {
   const searchParams = useSearchParams();
   const formId = params.id as string;
   const isDraftMode = searchParams.get('draft') === 'true';
-  
+
   const [form, setForm] = useState<Form | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabType>('content');
@@ -31,15 +31,15 @@ export default function EditFormPage() {
   const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
-  
+
   // Old Draft system (for compatibility)
   const { draft: oldDraft, saveDraft: saveOldDraft, discard: discardOldDraft } = useFormDraft(formId);
-  
+
   // New Version/Draft system
-  const { 
-    versions, 
-    currentVersion, 
-    draftVersion, 
+  const {
+    versions,
+    currentVersion,
+    draftVersion,
     hasDraft: hasNewDraft,
     isLoading: isLoadingVersions,
     createDraft,
@@ -48,11 +48,11 @@ export default function EditFormPage() {
     deleteDraft,
     refresh: refreshVersions
   } = useFormVersions(formId);
-  
+
   // Draft editing state
   const [isEditingDraft, setIsEditingDraft] = useState(false);
   const [draftVersionId, setDraftVersionId] = useState<string | null>(null);
-  
+
   // Form state
   const [title, setTitle] = useState('');
   const [slug, setSlug] = useState('');
@@ -72,14 +72,15 @@ export default function EditFormPage() {
   const [consentText, setConsentText] = useState('');
   const [consentRequireLocation, setConsentRequireLocation] = useState(false);
   const [isActive, setIsActive] = useState(true);
-  
+
   // Change summary for publish
   const [changeSummary, setChangeSummary] = useState('');
   const [showPublishModal, setShowPublishModal] = useState(false);
-  
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
   const [originalFields, setOriginalFields] = useState<FormField[]>([]);
-  const [toast, setToast] = useState<{type: 'success' | 'error', message: string} | null>(null);
-  
+  const [toast, setToast] = useState<{ type: 'success' | 'error', message: string } | null>(null);
+
   const showToast = (type: 'success' | 'error', message: string) => {
     setToast({ type, message });
     setTimeout(() => setToast(null), 3000);
@@ -95,15 +96,15 @@ export default function EditFormPage() {
           .select('*')
           .eq('id', formId)
           .single();
-        
+
         if (error || !data) {
           router.push('/admin/forms');
           return;
         }
-        
+
         const formData = data as Form;
         setForm(formData);
-        
+
         // If has new draft version and user comes with ?draft=true, use draft data
         if (draftVersion && isDraftMode) {
           setIsEditingDraft(true);
@@ -156,7 +157,7 @@ export default function EditFormPage() {
         setLoading(false);
       }
     }
-    
+
     if (formId) {
       loadForm();
     }
@@ -165,17 +166,17 @@ export default function EditFormPage() {
   // Auto-save draft every 30 seconds (pause when preview is open)
   useEffect(() => {
     if (!form || form.status !== 'published' || !isEditingDraft || showPreview) return;
-    
+
     const interval = setInterval(() => {
       handleAutoSave();
     }, 30000);
-    
+
     return () => clearInterval(interval);
   }, [form, title, description, fields, logoUrl, logoPosition, logoSize, theme, bannerColor, bannerCustomColor, bannerMode, accentColor, accentCustomColor, requireConsent, consentHeading, consentText, consentRequireLocation, showPreview, draftVersionId]);
 
   const handleAutoSave = async () => {
     if (!form || form.status !== 'published' || !isEditingDraft || !draftVersionId) return;
-    
+
     try {
       await updateDraft(draftVersionId, {
         title,
@@ -207,7 +208,7 @@ export default function EditFormPage() {
       showToast('error', 'ไม่พบ Draft ที่กำลังแก้ไข');
       return;
     }
-    
+
     setIsSaving(true);
     try {
       await updateDraft(draftVersionId, {
@@ -276,7 +277,7 @@ export default function EditFormPage() {
       showToast('error', 'ไม่พบ Draft ที่จะ Publish');
       return;
     }
-    
+
     setIsSaving(true);
     try {
       await publishDraft(draftVersionId, changeSummary);
@@ -296,21 +297,23 @@ export default function EditFormPage() {
   };
 
   // Delete draft version
-  const handleDeleteDraft = async () => {
+  const handleDeleteDraft = () => {
     if (!draftVersionId) {
       showToast('error', 'ไม่พบ Draft ที่จะลบ');
       return;
     }
-    
-    if (!confirm('ต้องการลบ Draft นี้ใช่หรือไม่? การเปลี่ยนแปลงทั้งหมดจะสูญหาย')) {
-      return;
-    }
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDeleteDraft = async () => {
+    if (!draftVersionId) return;
     
     setIsSaving(true);
     try {
       await deleteDraft(draftVersionId);
       setIsEditingDraft(false);
       setDraftVersionId(null);
+      setShowDeleteConfirm(false);
       showToast('success', 'ลบ Draft สำเร็จ');
       // Reload with published data
       router.push(`/admin/forms/${formId}`);
@@ -342,7 +345,7 @@ export default function EditFormPage() {
           updated_at: new Date().toISOString(),
         })
         .eq('id', formId);
-      
+
       if (error) throw error;
       showToast('success', 'บันทึกสำเร็จ');
     } catch (err) {
@@ -379,7 +382,7 @@ export default function EditFormPage() {
       const supabase = getSupabaseBrowser();
       const currentVersion = form?.current_version || 0;
       const newVersion = currentVersion + 1;
-      
+
       const { error: updateError } = await supabase
         .from('forms')
         .update({
@@ -401,9 +404,9 @@ export default function EditFormPage() {
           updated_at: new Date().toISOString(),
         })
         .eq('id', formId);
-      
+
       if (updateError) throw updateError;
-      
+
       const { error: versionError } = await supabase
         .from('form_versions')
         .insert({
@@ -421,16 +424,16 @@ export default function EditFormPage() {
           change_summary: `Updated to version ${newVersion}`,
           published_at: new Date().toISOString(),
         });
-      
+
       if (versionError) throw versionError;
-      
+
       // Clean up old draft if exists
       if (oldDraft) {
         await discardOldDraft();
       }
-      
+
       showToast('success', `Publish สำเร็จ (Version ${newVersion})`);
-      
+
       setTimeout(() => {
         window.location.href = '/admin/forms';
       }, 800);
@@ -481,10 +484,10 @@ export default function EditFormPage() {
       consent_text: consentText,
       consent_require_location: consentRequireLocation,
     };
-    console.log('Preview snapshot:', { 
-      banner_color: snapshot.banner_color, 
+    console.log('Preview snapshot:', {
+      banner_color: snapshot.banner_color,
       banner_custom_color: snapshot.banner_custom_color,
-      banner_mode: snapshot.banner_mode 
+      banner_mode: snapshot.banner_mode
     });
     setPreviewSnapshot(snapshot);
     setShowPreview(true);
@@ -521,13 +524,9 @@ export default function EditFormPage() {
     <div className="max-w-7xl mx-auto">
       {/* Draft Alert - V4 */}
       {isEditingDraft && currentVersion && (
-        <DraftAlert 
-          currentVersion={currentVersion.version}
-          onDelete={handleDeleteDraft}
-          onPublish={() => setShowPublishModal(true)}
-        />
+        <DraftAlert currentVersion={currentVersion.version} />
       )}
-      
+
       {/* Main Card */}
       <div className={`bg-white shadow-sm border border-slate-200 ${isEditingDraft ? 'rounded-b-xl border-t-0' : 'rounded-xl'}`}>
         {/* Header - V4 */}
@@ -536,7 +535,9 @@ export default function EditFormPage() {
           formTitle={form.title}
           onCopy={() => setShowDuplicateDialog(true)}
           onDeleteDraft={isEditingDraft ? handleDeleteDraft : undefined}
+          onPublish={isEditingDraft ? () => setShowPublishModal(true) : undefined}
           hasDraft={isEditingDraft}
+          nextVersion={isEditingDraft ? (form.current_version || 0) + 1 : undefined}
         />
 
         {/* Tabs + ActionBar - V4 */}
@@ -547,418 +548,405 @@ export default function EditFormPage() {
               <ActionBar
                 onPreview={handleOpenPreview}
                 onSaveDraft={isEditingDraft ? handleSaveDraft : undefined}
-                onPublish={() => setShowPublishModal(true)}
                 isSaving={isSaving}
                 showSaveDraft={isEditingDraft}
-                nextVersion={(form.current_version || 0) + 1}
               />
             </div>
           </div>
         </div>
 
-      {/* Tab Content */}
-      <div className="min-h-[400px]">
-        {activeTab === 'content' && (
-          <div className="w-full space-y-6">
-            {/* Basic Info */}
-            <div className="bg-white p-6 rounded-2xl border-2 border-slate-300">
-              <h2 className="text-lg font-semibold mb-4">ข้อมูลพื้นฐาน</h2>
-              <div className="space-y-4">
-                {/* Title */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">ชื่อแบบสอบถาม</label>
-                  <input 
-                    type="text" 
-                    value={title} 
-                    onChange={(e) => setTitle(e.target.value)} 
-                    className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500" 
-                  />
-                </div>
-                
-                {/* Slug */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">URL (Slug)</label>
-                  <div className="flex items-center gap-2">
-                    <span className="text-slate-400 text-sm whitespace-nowrap">/form/</span>
-                    <input 
-                      type="text" 
-                      value={slug} 
-                      onChange={(e) => setSlug(e.target.value)} 
-                      className="flex-1 px-4 py-3 border-2 border-slate-300 rounded-xl font-mono text-sm" 
+        {/* Tab Content */}
+        <div className="min-h-[400px]">
+          {activeTab === 'content' && (
+            <div className="w-full space-y-6">
+              {/* Basic Info */}
+              <div className="bg-white p-6 rounded-2xl border-2 border-slate-300">
+                <h2 className="text-lg font-semibold mb-4">ข้อมูลพื้นฐาน</h2>
+                <div className="space-y-4">
+                  {/* Title */}
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">ชื่อแบบสอบถาม</label>
+                    <input
+                      type="text"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
-                </div>
-                
-                {/* Logo - แยกบรรทัดให้เห็นชัด */}
-                <div className="border-t border-slate-200 pt-4 mt-4">
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                    🖼️ โลโก้ (Logo URL)
-                  </label>
-                  <div className="flex gap-4 items-start">
-                    <div className="flex-1">
-                      <input 
-                        type="text" 
-                        value={logoUrl} 
-                        onChange={(e) => setLogoUrl(e.target.value)} 
-                        placeholder="https://example.com/logo.png หรือ /logo.png" 
-                        className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl" 
+
+                  {/* Slug */}
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">URL (Slug)</label>
+                    <div className="flex items-center gap-2">
+                      <span className="text-slate-400 text-sm whitespace-nowrap">/form/</span>
+                      <input
+                        type="text"
+                        value={slug}
+                        onChange={(e) => setSlug(e.target.value)}
+                        className="flex-1 px-4 py-3 border-2 border-slate-300 rounded-xl font-mono text-sm"
                       />
-                      <p className="text-xs text-slate-500 mt-1.5">
-                        แนะนำ: ใช้รูป PNG หรือ SVG มีพื้นหลังโปร่งใส ความสูงประมาณ 80-120px
-                      </p>
                     </div>
+                  </div>
+
+                  {/* Logo - แยกบรรทัดให้เห็นชัด */}
+                  <div className="border-t border-slate-200 pt-4 mt-4">
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                      🖼️ โลโก้ (Logo URL)
+                    </label>
+                    <div className="flex gap-4 items-start">
+                      <div className="flex-1">
+                        <input
+                          type="text"
+                          value={logoUrl}
+                          onChange={(e) => setLogoUrl(e.target.value)}
+                          placeholder="https://example.com/logo.png หรือ /logo.png"
+                          className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl"
+                        />
+                        <p className="text-xs text-slate-500 mt-1.5">
+                          แนะนำ: ใช้รูป PNG หรือ SVG มีพื้นหลังโปร่งใส ความสูงประมาณ 80-120px
+                        </p>
+                      </div>
+                      {logoUrl && (
+                        <div className="w-24 h-24 bg-slate-50 rounded-xl border-2 border-slate-200 flex items-center justify-center p-2">
+                          <img src={logoUrl} alt="Logo Preview" className="max-w-full max-h-full object-contain" />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Logo Position & Size */}
                     {logoUrl && (
-                      <div className="w-24 h-24 bg-slate-50 rounded-xl border-2 border-slate-200 flex items-center justify-center p-2">
-                        <img src={logoUrl} alt="Logo Preview" className="max-w-full max-h-full object-contain" />
+                      <div className="grid grid-cols-2 gap-4 mt-4">
+                        {/* Position */}
+                        <div>
+                          <label className="block text-xs font-medium text-slate-600 mb-2">
+                            ตำแหน่ง
+                          </label>
+                          <div className="flex gap-1 bg-slate-100 p-1 rounded-lg">
+                            {[
+                              { value: 'left', label: 'ซ้าย', icon: '←' },
+                              { value: 'center', label: 'กลาง', icon: '◆' },
+                              { value: 'right', label: 'ขวา', icon: '→' },
+                            ].map((pos) => (
+                              <button
+                                key={pos.value}
+                                onClick={() => setLogoPosition(pos.value as any)}
+                                className={`flex-1 py-1.5 px-2 text-xs font-medium rounded-md transition-all ${logoPosition === pos.value
+                                    ? 'bg-white text-slate-900 shadow-sm'
+                                    : 'text-slate-500 hover:text-slate-700'
+                                  }`}
+                              >
+                                {pos.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Size */}
+                        <div>
+                          <label className="block text-xs font-medium text-slate-600 mb-2">
+                            ขนาด
+                          </label>
+                          <div className="flex gap-1 bg-slate-100 p-1 rounded-lg">
+                            {[
+                              { value: 'small', label: 'เล็ก' },
+                              { value: 'medium', label: 'กลาง' },
+                              { value: 'large', label: 'ใหญ่' },
+                            ].map((size) => (
+                              <button
+                                key={size.value}
+                                onClick={() => setLogoSize(size.value as any)}
+                                className={`flex-1 py-1.5 px-2 text-xs font-medium rounded-md transition-all ${logoSize === size.value
+                                    ? 'bg-white text-slate-900 shadow-sm'
+                                    : 'text-slate-500 hover:text-slate-700'
+                                  }`}
+                              >
+                                {size.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
                       </div>
                     )}
                   </div>
-                  
-                  {/* Logo Position & Size */}
-                  {logoUrl && (
-                    <div className="grid grid-cols-2 gap-4 mt-4">
-                      {/* Position */}
-                      <div>
-                        <label className="block text-xs font-medium text-slate-600 mb-2">
-                          ตำแหน่ง
-                        </label>
-                        <div className="flex gap-1 bg-slate-100 p-1 rounded-lg">
-                          {[
-                            { value: 'left', label: 'ซ้าย', icon: '←' },
-                            { value: 'center', label: 'กลาง', icon: '◆' },
-                            { value: 'right', label: 'ขวา', icon: '→' },
-                          ].map((pos) => (
-                            <button
-                              key={pos.value}
-                              onClick={() => setLogoPosition(pos.value as any)}
-                              className={`flex-1 py-1.5 px-2 text-xs font-medium rounded-md transition-all ${
-                                logoPosition === pos.value
-                                  ? 'bg-white text-slate-900 shadow-sm'
-                                  : 'text-slate-500 hover:text-slate-700'
-                              }`}
-                            >
-                              {pos.label}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                      
-                      {/* Size */}
-                      <div>
-                        <label className="block text-xs font-medium text-slate-600 mb-2">
-                          ขนาด
-                        </label>
-                        <div className="flex gap-1 bg-slate-100 p-1 rounded-lg">
-                          {[
-                            { value: 'small', label: 'เล็ก' },
-                            { value: 'medium', label: 'กลาง' },
-                            { value: 'large', label: 'ใหญ่' },
-                          ].map((size) => (
-                            <button
-                              key={size.value}
-                              onClick={() => setLogoSize(size.value as any)}
-                              className={`flex-1 py-1.5 px-2 text-xs font-medium rounded-md transition-all ${
-                                logoSize === size.value
-                                  ? 'bg-white text-slate-900 shadow-sm'
-                                  : 'text-slate-500 hover:text-slate-700'
-                              }`}
-                            >
-                              {size.label}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
+
+                  {/* Description */}
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">คำอธิบาย</label>
+                    <textarea
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      rows={3}
+                      className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl resize-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Form Builder */}
+              <div className="bg-white p-6 rounded-2xl border-2 border-slate-300">
+                <h2 className="text-lg font-semibold mb-4">คำถาม</h2>
+                <FormBuilder fields={fields} onChange={setFields} currentVersion={form.current_version || 0} />
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'settings' && (
+            <div className="space-y-6">
+              {/* Theme Selector */}
+              <div className="bg-white p-6 rounded-2xl border-2 border-slate-300">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <span className="text-lg">🎨</span>
+                  </div>
+                  <h2 className="text-lg font-semibold">ธีมฟอร์ม</h2>
+                </div>
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                  {[
+                    { value: 'default', label: 'ดั้งเดิม', desc: 'คลาสสิก เรียบง่าย' },
+                    { value: 'card-groups', label: 'การ์ดแยกกลุ่ม', desc: 'แบ่งเป็นหมวดหมู่' },
+                    { value: 'step-wizard', label: 'ขั้นตอน Step', desc: 'กรอกทีละขั้น' },
+                    { value: 'minimal', label: 'มินิมอล', desc: 'เรียบง่ายที่สุด' },
+                  ].map((t) => (
+                    <label
+                      key={t.value}
+                      className={`p-4 border-2 rounded-xl cursor-pointer transition-all ${theme === t.value
+                          ? 'border-purple-500 bg-purple-50'
+                          : 'border-slate-200 hover:border-slate-300'
+                        }`}
+                    >
+                      <input
+                        type="radio"
+                        name="theme"
+                        value={t.value}
+                        checked={theme === t.value}
+                        onChange={(e) => setTheme(e.target.value as any)}
+                        className="sr-only"
+                      />
+                      <div className="font-medium text-slate-900">{t.label}</div>
+                      <div className="text-xs text-slate-500 mt-1">{t.desc}</div>
+                    </label>
+                  ))}
+                </div>
+
+                {/* Theme Help Text - Show for all themes */}
+                <div className="mt-4 p-4 bg-blue-50 rounded-xl border border-blue-200">
+                  <p className="text-sm text-blue-800">
+                    <span className="font-medium">โครงสร้างฟอร์ม:</span>
+                  </p>
+                  <ul className="mt-2 space-y-1 text-sm text-blue-700">
+                    <li className="flex items-start gap-2">
+                      <span className="font-medium">Section</span> -
+                      {theme === 'card-groups' ? 'เริ่มการ์ดใหม่' :
+                        theme === 'step-wizard' ? 'เริ่มขั้นตอนใหม่' :
+                          'หัวข้อหลัก (ใหญ่)'}
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="font-medium">Heading</span> -
+                      หัวข้อย่อยภายใน Section
+                      {theme === 'default' || theme === 'minimal' ? '(เล็กกว่า Section)' : ''}
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="font-medium">คำถามปกติ</span> - มีเลขลำดับ 1, 2, 3...
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              {/* Color Theme Settings */}
+              <div className="bg-white p-6 rounded-2xl border-2 border-slate-300">
+                <h2 className="text-lg font-semibold text-slate-900 mb-4">🎨 ตั้งค่าสี</h2>
+
+                {/* Banner Color */}
+                <div className="mb-6">
+                  <h3 className="text-sm font-medium text-slate-700 mb-3">สี Banner (พื้นหลังหัวเว็บ)</h3>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      onClick={() => setBannerColor('blue')}
+                      className={`w-8 h-8 rounded-lg bg-[#2563EB] hover:scale-110 transition-all ${bannerColor === 'blue' ? 'ring-2 ring-offset-2 ring-slate-400' : ''
+                        }`}
+                      title="Blue"
+                    />
+                    <button
+                      onClick={() => setBannerColor('black')}
+                      className={`w-8 h-8 rounded-lg bg-[#0F172A] hover:scale-110 transition-all ${bannerColor === 'black' ? 'ring-2 ring-offset-2 ring-slate-400' : ''
+                        }`}
+                      title="Black"
+                    />
+                    <button
+                      onClick={() => setBannerColor('white')}
+                      className={`w-8 h-8 rounded-lg bg-white border-2 border-slate-300 hover:scale-110 transition-all ${bannerColor === 'white' ? 'ring-2 ring-offset-2 ring-slate-400' : ''
+                        }`}
+                      title="White"
+                    />
+                    <button
+                      onClick={() => document.getElementById('editBannerColorInput')?.click()}
+                      className={`w-8 h-8 rounded-lg bg-gradient-to-br from-slate-100 to-slate-300 border-2 border-slate-300 hover:scale-110 transition-all flex items-center justify-center ${bannerColor === 'custom' ? 'ring-2 ring-offset-2 ring-slate-400' : ''
+                        }`}
+                      title="Custom"
+                    >
+                      <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                      </svg>
+                    </button>
+                    <input
+                      type="color"
+                      id="editBannerColorInput"
+                      className="absolute opacity-0 pointer-events-none"
+                      value={bannerCustomColor}
+                      onChange={(e) => {
+                        setBannerCustomColor(e.target.value);
+                        setBannerColor('custom');
+                      }}
+                    />
+                  </div>
+                  {bannerColor === 'custom' && (
+                    <p className="text-xs text-slate-500 mt-2">สีที่เลือก: {bannerCustomColor}</p>
                   )}
                 </div>
-                
-                {/* Description */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">คำอธิบาย</label>
-                  <textarea 
-                    value={description} 
-                    onChange={(e) => setDescription(e.target.value)} 
-                    rows={3} 
-                    className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl resize-none" 
-                  />
-                </div>
-              </div>
-            </div>
 
-            {/* Form Builder */}
-            <div className="bg-white p-6 rounded-2xl border-2 border-slate-300">
-              <h2 className="text-lg font-semibold mb-4">คำถาม</h2>
-              <FormBuilder fields={fields} onChange={setFields} currentVersion={form.current_version || 0} />
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'settings' && (
-          <div className="space-y-6">
-            {/* Theme Selector */}
-            <div className="bg-white p-6 rounded-2xl border-2 border-slate-300">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                  <span className="text-lg">🎨</span>
-                </div>
-                <h2 className="text-lg font-semibold">ธีมฟอร์ม</h2>
-              </div>
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                {[
-                  { value: 'default', label: 'ดั้งเดิม', desc: 'คลาสสิก เรียบง่าย' },
-                  { value: 'card-groups', label: 'การ์ดแยกกลุ่ม', desc: 'แบ่งเป็นหมวดหมู่' },
-                  { value: 'step-wizard', label: 'ขั้นตอน Step', desc: 'กรอกทีละขั้น' },
-                  { value: 'minimal', label: 'มินิมอล', desc: 'เรียบง่ายที่สุด' },
-                ].map((t) => (
-                  <label
-                    key={t.value}
-                    className={`p-4 border-2 rounded-xl cursor-pointer transition-all ${
-                      theme === t.value
-                        ? 'border-purple-500 bg-purple-50'
-                        : 'border-slate-200 hover:border-slate-300'
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="theme"
-                      value={t.value}
-                      checked={theme === t.value}
-                      onChange={(e) => setTheme(e.target.value as any)}
-                      className="sr-only"
-                    />
-                    <div className="font-medium text-slate-900">{t.label}</div>
-                    <div className="text-xs text-slate-500 mt-1">{t.desc}</div>
-                  </label>
-                ))}
-              </div>
-              
-              {/* Theme Help Text - Show for all themes */}
-              <div className="mt-4 p-4 bg-blue-50 rounded-xl border border-blue-200">
-                <p className="text-sm text-blue-800">
-                  <span className="font-medium">โครงสร้างฟอร์ม:</span>
-                </p>
-                <ul className="mt-2 space-y-1 text-sm text-blue-700">
-                  <li className="flex items-start gap-2">
-                    <span className="font-medium">Section</span> - 
-                    {theme === 'card-groups' ? 'เริ่มการ์ดใหม่' : 
-                     theme === 'step-wizard' ? 'เริ่มขั้นตอนใหม่' : 
-                     'หัวข้อหลัก (ใหญ่)'}
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="font-medium">Heading</span> - 
-                    หัวข้อย่อยภายใน Section 
-                    {theme === 'default' || theme === 'minimal' ? '(เล็กกว่า Section)' : ''}
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="font-medium">คำถามปกติ</span> - มีเลขลำดับ 1, 2, 3...
-                  </li>
-                </ul>
-              </div>
-            </div>
-
-            {/* Color Theme Settings */}
-            <div className="bg-white p-6 rounded-2xl border-2 border-slate-300">
-              <h2 className="text-lg font-semibold text-slate-900 mb-4">🎨 ตั้งค่าสี</h2>
-              
-              {/* Banner Color */}
-              <div className="mb-6">
-                <h3 className="text-sm font-medium text-slate-700 mb-3">สี Banner (พื้นหลังหัวเว็บ)</h3>
-                <div className="flex flex-wrap items-center gap-2">
-                  <button
-                    onClick={() => setBannerColor('blue')}
-                    className={`w-8 h-8 rounded-lg bg-[#2563EB] hover:scale-110 transition-all ${
-                      bannerColor === 'blue' ? 'ring-2 ring-offset-2 ring-slate-400' : ''
-                    }`}
-                    title="Blue"
-                  />
-                  <button
-                    onClick={() => setBannerColor('black')}
-                    className={`w-8 h-8 rounded-lg bg-[#0F172A] hover:scale-110 transition-all ${
-                      bannerColor === 'black' ? 'ring-2 ring-offset-2 ring-slate-400' : ''
-                    }`}
-                    title="Black"
-                  />
-                  <button
-                    onClick={() => setBannerColor('white')}
-                    className={`w-8 h-8 rounded-lg bg-white border-2 border-slate-300 hover:scale-110 transition-all ${
-                      bannerColor === 'white' ? 'ring-2 ring-offset-2 ring-slate-400' : ''
-                    }`}
-                    title="White"
-                  />
-                  <button
-                    onClick={() => document.getElementById('editBannerColorInput')?.click()}
-                    className={`w-8 h-8 rounded-lg bg-gradient-to-br from-slate-100 to-slate-300 border-2 border-slate-300 hover:scale-110 transition-all flex items-center justify-center ${
-                      bannerColor === 'custom' ? 'ring-2 ring-offset-2 ring-slate-400' : ''
-                    }`}
-                    title="Custom"
-                  >
-                    <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                    </svg>
-                  </button>
-                  <input
-                    type="color"
-                    id="editBannerColorInput"
-                    className="absolute opacity-0 pointer-events-none"
-                    value={bannerCustomColor}
-                    onChange={(e) => {
-                      setBannerCustomColor(e.target.value);
-                      setBannerColor('custom');
-                    }}
-                  />
-                </div>
-                {bannerColor === 'custom' && (
-                  <p className="text-xs text-slate-500 mt-2">สีที่เลือก: {bannerCustomColor}</p>
-                )}
-              </div>
-
-              {/* Banner Mode */}
-              <div className="mb-6">
-                <h3 className="text-sm font-medium text-slate-700 mb-3">รูปแบบ Banner</h3>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setBannerMode('gradient')}
-                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                      bannerMode === 'gradient'
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                    }`}
-                  >
-                    Gradient
-                  </button>
-                  <button
-                    onClick={() => setBannerMode('solid')}
-                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                      bannerMode === 'solid'
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                    }`}
-                  >
-                    Solid
-                  </button>
-                </div>
-              </div>
-
-              {/* Accent Color */}
-              <div>
-                <h3 className="text-sm font-medium text-slate-700 mb-3">สีรอง (Button, Heading, Section ขีด)</h3>
-                <div className="flex flex-wrap items-center gap-2">
-                  {[
-                    { key: 'blue', color: '#2563EB' },
-                    { key: 'sky', color: '#0EA5E9' },
-                    { key: 'teal', color: '#0D9488' },
-                    { key: 'emerald', color: '#059669' },
-                    { key: 'violet', color: '#7C3AED' },
-                    { key: 'rose', color: '#E11D48' },
-                    { key: 'orange', color: '#EA580C' },
-                    { key: 'slate', color: '#475569' },
-                    { key: 'black', color: '#0F172A' },
-                  ].map(({ key, color }) => (
+                {/* Banner Mode */}
+                <div className="mb-6">
+                  <h3 className="text-sm font-medium text-slate-700 mb-3">รูปแบบ Banner</h3>
+                  <div className="flex gap-2">
                     <button
-                      key={key}
-                      onClick={() => setAccentColor(key as any)}
-                      className={`w-8 h-8 rounded-lg hover:scale-110 transition-all ${
-                        accentColor === key ? 'ring-2 ring-offset-2 ring-slate-400' : ''
-                      }`}
-                      style={{ backgroundColor: color }}
-                      title={key}
-                    />
-                  ))}
-                  <button
-                    onClick={() => document.getElementById('editAccentColorInput')?.click()}
-                    className={`w-8 h-8 rounded-lg bg-gradient-to-br from-slate-100 to-slate-300 border-2 border-slate-300 hover:scale-110 transition-all flex items-center justify-center ${
-                      accentColor === 'custom' ? 'ring-2 ring-offset-2 ring-slate-400' : ''
-                    }`}
-                    title="Custom"
-                  >
-                    <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                    </svg>
-                  </button>
-                  <input
-                    type="color"
-                    id="editAccentColorInput"
-                    className="absolute opacity-0 pointer-events-none"
-                    value={accentCustomColor}
-                    onChange={(e) => {
-                      setAccentCustomColor(e.target.value);
-                      setAccentColor('custom');
-                    }}
-                  />
+                      onClick={() => setBannerMode('gradient')}
+                      className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${bannerMode === 'gradient'
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                        }`}
+                    >
+                      Gradient
+                    </button>
+                    <button
+                      onClick={() => setBannerMode('solid')}
+                      className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${bannerMode === 'solid'
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                        }`}
+                    >
+                      Solid
+                    </button>
+                  </div>
                 </div>
-                {accentColor === 'custom' && (
-                  <p className="text-xs text-slate-500 mt-2">สีที่เลือก: {accentCustomColor}</p>
+
+                {/* Accent Color */}
+                <div>
+                  <h3 className="text-sm font-medium text-slate-700 mb-3">สีรอง (Button, Heading, Section ขีด)</h3>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {[
+                      { key: 'blue', color: '#2563EB' },
+                      { key: 'sky', color: '#0EA5E9' },
+                      { key: 'teal', color: '#0D9488' },
+                      { key: 'emerald', color: '#059669' },
+                      { key: 'violet', color: '#7C3AED' },
+                      { key: 'rose', color: '#E11D48' },
+                      { key: 'orange', color: '#EA580C' },
+                      { key: 'slate', color: '#475569' },
+                      { key: 'black', color: '#0F172A' },
+                    ].map(({ key, color }) => (
+                      <button
+                        key={key}
+                        onClick={() => setAccentColor(key as any)}
+                        className={`w-8 h-8 rounded-lg hover:scale-110 transition-all ${accentColor === key ? 'ring-2 ring-offset-2 ring-slate-400' : ''
+                          }`}
+                        style={{ backgroundColor: color }}
+                        title={key}
+                      />
+                    ))}
+                    <button
+                      onClick={() => document.getElementById('editAccentColorInput')?.click()}
+                      className={`w-8 h-8 rounded-lg bg-gradient-to-br from-slate-100 to-slate-300 border-2 border-slate-300 hover:scale-110 transition-all flex items-center justify-center ${accentColor === 'custom' ? 'ring-2 ring-offset-2 ring-slate-400' : ''
+                        }`}
+                      title="Custom"
+                    >
+                      <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                      </svg>
+                    </button>
+                    <input
+                      type="color"
+                      id="editAccentColorInput"
+                      className="absolute opacity-0 pointer-events-none"
+                      value={accentCustomColor}
+                      onChange={(e) => {
+                        setAccentCustomColor(e.target.value);
+                        setAccentColor('custom');
+                      }}
+                    />
+                  </div>
+                  {accentColor === 'custom' && (
+                    <p className="text-xs text-slate-500 mt-2">สีที่เลือก: {accentCustomColor}</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Consent Settings */}
+              <div className="bg-white p-6 rounded-2xl border-2 border-slate-300">
+                <div className="flex items-center gap-3 mb-4">
+                  <Shield className="w-5 h-5 text-green-600" />
+                  <h2 className="text-lg font-semibold">การตั้งค่าความยินยอม</h2>
+                </div>
+                <label className="flex items-start gap-3 p-4 border-2 border-slate-300 rounded-xl cursor-pointer hover:bg-slate-50">
+                  <input
+                    type="checkbox"
+                    checked={requireConsent}
+                    onChange={(e) => setRequireConsent(e.target.checked)}
+                    className="w-5 h-5 mt-0.5"
+                  />
+                  <div>
+                    <div className="font-medium">ต้องการให้ผู้ตอบกดยินยอมก่อนส่ง</div>
+                    <div className="text-sm text-slate-500">บันทึก IP และ timestamp</div>
+                  </div>
+                </label>
+                {requireConsent && (
+                  <div className="ml-0 sm:ml-8 mt-4 space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">หัวข้อ Consent</label>
+                      <input
+                        type="text"
+                        value={consentHeading}
+                        onChange={(e) => setConsentHeading(e.target.value)}
+                        className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">ข้อความยินยอม</label>
+                      <textarea
+                        value={consentText}
+                        onChange={(e) => setConsentText(e.target.value)}
+                        rows={3}
+                        className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl resize-none"
+                      />
+                    </div>
+                    <label className="flex items-start gap-3 p-3 border-2 border-slate-300 rounded-xl cursor-pointer hover:bg-slate-50">
+                      <input
+                        type="checkbox"
+                        checked={consentRequireLocation}
+                        onChange={(e) => setConsentRequireLocation(e.target.checked)}
+                        className="w-4 h-4 mt-0.5"
+                      />
+                      <div>
+                        <div className="font-medium">ขอตำแหน่ง GPS</div>
+                        <div className="text-sm text-slate-500">ขอพิกัดตำแหน่งจากเบราว์เซอร์</div>
+                      </div>
+                    </label>
+                  </div>
                 )}
               </div>
             </div>
+          )}
 
-            {/* Consent Settings */}
-            <div className="bg-white p-6 rounded-2xl border-2 border-slate-300">
-              <div className="flex items-center gap-3 mb-4">
-                <Shield className="w-5 h-5 text-green-600" />
-                <h2 className="text-lg font-semibold">การตั้งค่าความยินยอม</h2>
-              </div>
-              <label className="flex items-start gap-3 p-4 border-2 border-slate-300 rounded-xl cursor-pointer hover:bg-slate-50">
-                <input 
-                  type="checkbox" 
-                  checked={requireConsent} 
-                  onChange={(e) => setRequireConsent(e.target.checked)} 
-                  className="w-5 h-5 mt-0.5" 
-                />
-                <div>
-                  <div className="font-medium">ต้องการให้ผู้ตอบกดยินยอมก่อนส่ง</div>
-                  <div className="text-sm text-slate-500">บันทึก IP และ timestamp</div>
-                </div>
-              </label>
-              {requireConsent && (
-                <div className="ml-0 sm:ml-8 mt-4 space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">หัวข้อ Consent</label>
-                    <input 
-                      type="text" 
-                      value={consentHeading} 
-                      onChange={(e) => setConsentHeading(e.target.value)} 
-                      className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl" 
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">ข้อความยินยอม</label>
-                    <textarea 
-                      value={consentText} 
-                      onChange={(e) => setConsentText(e.target.value)} 
-                      rows={3} 
-                      className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl resize-none" 
-                    />
-                  </div>
-                  <label className="flex items-start gap-3 p-3 border-2 border-slate-300 rounded-xl cursor-pointer hover:bg-slate-50">
-                    <input 
-                      type="checkbox" 
-                      checked={consentRequireLocation} 
-                      onChange={(e) => setConsentRequireLocation(e.target.checked)} 
-                      className="w-4 h-4 mt-0.5" 
-                    />
-                    <div>
-                      <div className="font-medium">ขอตำแหน่ง GPS</div>
-                      <div className="text-sm text-slate-500">ขอพิกัดตำแหน่งจากเบราว์เซอร์</div>
-                    </div>
-                  </label>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+          {activeTab === 'history' && (
+            <VersionHistory formId={formId} currentVersion={form.current_version || 0} />
+          )}
 
-        {activeTab === 'history' && (
-          <VersionHistory formId={formId} currentVersion={form.current_version || 0} />
-        )}
-
-        {activeTab === 'qr-codes' && form && (
-          <QRCodeTab formId={formId} formCode={form.code} />
-        )}
-      </div>
+          {activeTab === 'qr-codes' && form && (
+            <QRCodeTab formId={formId} formCode={form.code} />
+          )}
+        </div>
       </div>{/* End Main Card */}
 
-      {/* Full Preview Modal -->
+      {/* Full Preview Modal */}
       {showPreview && (
         <div className="fixed inset-0 bg-slate-900/60 flex items-start justify-center z-50 p-4 overflow-y-auto">
           <div className="bg-white w-full max-w-7xl my-4 rounded-xl shadow-2xl overflow-hidden max-h-[95vh] flex flex-col">
@@ -977,19 +965,19 @@ export default function EditFormPage() {
                   </div>
                 </div>
               </div>
-              
+
               {/* Actual Form Preview */}
               <div className="w-full max-w-4xl mx-auto">
-                <FormRenderer 
-                  form={previewForm} 
+                <FormRenderer
+                  form={previewForm}
                   onSubmit={(data) => {
                     alert('นี่คือตัวอย่างฟอร์มเท่านั้น\n\nข้อมูลที่กรอก:\n' + JSON.stringify(data, null, 2));
-                  }} 
+                  }}
                   submitting={false}
                   submitLabel="ส่งคำตอบ (ตัวอย่าง)"
                 />
               </div>
-              
+
               {/* Bottom spacing */}
               <div className="h-8"></div>
             </div>
@@ -998,18 +986,29 @@ export default function EditFormPage() {
       )}
 
       {/* Duplicate Dialog */}
-      <DuplicateFormDialog 
-        form={form} 
-        isOpen={showDuplicateDialog} 
-        onClose={() => setShowDuplicateDialog(false)} 
+      <DuplicateFormDialog
+        form={form}
+        isOpen={showDuplicateDialog}
+        onClose={() => setShowDuplicateDialog(false)}
       />
 
-      {/* Toast */}
+      {/* Delete Draft Confirm Dialog */}
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        title="ลบ Draft"
+        message="ต้องการลบ Draft นี้ใช่หรือไม่? การเปลี่ยนแปลงทั้งหมดจะสูญหาย"
+        confirmText="ลบ Draft"
+        cancelText="ยกเลิก"
+        confirmVariant="danger"
+        onConfirm={confirmDeleteDraft}
+        onCancel={() => setShowDeleteConfirm(false)}
+      />
+
+      {/* Toast -->
       {toast && (
         <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-2 fade-in duration-300">
-          <div className={`flex items-center gap-3 px-6 py-4 rounded-xl shadow-2xl ${
-            toast.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
-          }`}>
+          <div className={`flex items-center gap-3 px-6 py-4 rounded-xl shadow-2xl ${toast.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
+            }`}>
             {toast.type === 'success' ? <CheckCircle className="w-6 h-6" /> : <AlertCircle className="w-6 h-6" />}
             <span className="font-medium">{toast.message}</span>
           </div>
@@ -1026,11 +1025,11 @@ export default function EditFormPage() {
               </div>
               <h3 className="text-lg font-semibold">ยืนยันการละทิ้ง Draft</h3>
             </div>
-            
+
             <p className="text-slate-600 mb-4">
               คุณแน่ใจหรือไม่ว่าต้องการละทิ้ง Draft นี้?
             </p>
-            
+
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
               <div className="flex items-start gap-3">
                 <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5 shrink-0" />
@@ -1044,7 +1043,7 @@ export default function EditFormPage() {
                 </div>
               </div>
             </div>
-            
+
             <div className="flex gap-3">
               <button
                 onClick={() => setShowDiscardConfirm(false)}
@@ -1073,11 +1072,11 @@ export default function EditFormPage() {
               </div>
               <h3 className="text-lg font-semibold">Publish Draft</h3>
             </div>
-            
+
             <p className="text-slate-600 mb-4">
               Draft นี้จะกลายเป็น Version ใหม่ที่ใช้งานจริง ผู้ใช้จะเห็นการเปลี่ยนแปลงทันที
             </p>
-            
+
             <div className="space-y-4 mb-6">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">
@@ -1092,7 +1091,7 @@ export default function EditFormPage() {
                 />
               </div>
             </div>
-            
+
             <div className="flex gap-3">
               <button
                 onClick={() => {

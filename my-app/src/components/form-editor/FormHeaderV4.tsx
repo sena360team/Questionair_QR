@@ -1,14 +1,16 @@
 'use client';
 
 import Link from 'next/link';
-import { Copy, Trash2 } from 'lucide-react';
+import { Copy, Trash2, Rocket } from 'lucide-react';
 
 interface FormHeaderV4Props {
   formCode: string;
   formTitle: string;
   onCopy: () => void;
   onDeleteDraft?: () => void;
+  onPublish?: () => void;
   hasDraft?: boolean;
+  nextVersion?: number;
 }
 
 export function FormHeaderV4({ 
@@ -16,7 +18,9 @@ export function FormHeaderV4({
   formTitle, 
   onCopy, 
   onDeleteDraft,
-  hasDraft 
+  onPublish,
+  hasDraft,
+  nextVersion
 }: FormHeaderV4Props) {
   return (
     <div className="px-4 py-4 border-b border-slate-100">
@@ -36,12 +40,13 @@ export function FormHeaderV4({
       
       {/* Form Name & Actions */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-        <h1 className="text-xl font-semibold text-slate-900 leading-tight">
+        <h1 className="text-xl font-semibold text-slate-900 leading-tight flex-1">
           {formTitle}
         </h1>
         
-        {/* Quick Actions */}
+        {/* Actions */}
         <div className="flex items-center gap-2 flex-shrink-0">
+          {/* คัดลอก */}
           <button
             onClick={onCopy}
             className="inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-md transition-colors"
@@ -49,6 +54,8 @@ export function FormHeaderV4({
             <Copy className="w-3.5 h-3.5" />
             คัดลอก
           </button>
+          
+          {/* ลบ Draft */}
           {hasDraft && onDeleteDraft && (
             <button
               onClick={onDeleteDraft}
@@ -56,6 +63,20 @@ export function FormHeaderV4({
             >
               <Trash2 className="w-3.5 h-3.5" />
               ลบ Draft
+            </button>
+          )}
+          
+          {/* Publish */}
+          {hasDraft && onPublish && (
+            <button
+              onClick={onPublish}
+              className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded-md transition-colors"
+            >
+              <Rocket className="w-3.5 h-3.5" />
+              <span>Publish</span>
+              {nextVersion && (
+                <span className="text-green-100">v{nextVersion}</span>
+              )}
             </button>
           )}
         </div>
