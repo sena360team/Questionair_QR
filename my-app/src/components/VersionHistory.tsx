@@ -87,10 +87,10 @@ export function VersionHistory({ formId, currentVersion }: VersionHistoryProps) 
   }
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div className="space-y-6 pt-6 px-4 sm:px-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left: Version List */}
-        <div className="space-y-4">
+        <div className="space-y-4 lg:col-span-1">
           {/* Draft Version Alert */}
           {draftVersion && (
             <div className="bg-amber-50 border-2 border-amber-200 rounded-xl p-4">
@@ -215,7 +215,7 @@ export function VersionHistory({ formId, currentVersion }: VersionHistoryProps) 
         </div>
 
         {/* Right: Preview Panel */}
-        <div className="border-2 border-slate-300 rounded-xl p-4 bg-slate-50 min-h-[300px] max-h-[1400px] overflow-y-auto">
+        <div className="lg:col-span-2 border-2 border-slate-300 rounded-xl p-4 bg-slate-50 min-h-[300px] max-h-[1400px] overflow-y-auto">
           {selectedVersion ? (
             <div className="space-y-4">
               <div className="flex items-center justify-between">

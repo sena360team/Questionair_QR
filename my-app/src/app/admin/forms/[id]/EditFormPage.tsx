@@ -8,7 +8,7 @@ import { FormRenderer } from '@/components/FormRenderer';
 import { VersionHistory } from '@/components/VersionHistory';
 import { DuplicateFormDialog } from '@/components/DuplicateFormDialog';
 import { QRCodeTab } from '@/components/form-tabs/QRCodeTab';
-import { DraftAlert, FormHeaderV4, FormTabs, ActionBar, ConfirmDialog, type TabType } from '@/components/form-editor';
+import { DraftAlert, FormHeaderV4, FormTabs, ActionBar, ConfirmDialog, SuccessModal, type TabType } from '@/components/form-editor';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import { useFormDraft } from '@/hooks/useFormDraft';
 import { useFormVersions } from '@/hooks/useFormVersions';
@@ -77,6 +77,8 @@ export default function EditFormPage() {
   const [changeSummary, setChangeSummary] = useState('');
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState({ title: '', message: '' });
 
   const [originalFields, setOriginalFields] = useState<FormField[]>([]);
   const [toast, setToast] = useState<{ type: 'success' | 'error', message: string } | null>(null);
@@ -254,7 +256,13 @@ export default function EditFormPage() {
         console.log('[handleSaveDraft] New draft created:', newDraft.id);
       }
       console.log('[handleSaveDraft] Success');
-      showToast('success', 'บันทึก Draft สำเร็จ');
+      setSuccessMessage({
+        title: 'บันทึก Draft สำเร็จ',
+        message: draftVersionId 
+          ? 'Draft ของคุณได้รับการอัพเดตเรียบร้อยแล้ว' 
+          : 'สร้าง Draft ใหม่สำเร็จ คุณสามารถแก้ไขต่อและ Publish ได้ภายหลัง'
+      });
+      setShowSuccessModal(true);
     } catch (err) {
       console.error('[handleSaveDraft] Error:', err);
       showToast('error', 'เกิดข้อผิดพลาดในการบันทึก: ' + (err instanceof Error ? err.message : 'Unknown error'));
@@ -548,7 +556,7 @@ export default function EditFormPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="space-y-6">
       {/* Draft Alert - V4 */}
       {isEditingDraft && currentVersion && (
         <DraftAlert currentVersion={currentVersion.version} />
@@ -572,11 +580,9 @@ export default function EditFormPage() {
             <div className="sm:ml-auto py-2 sm:py-0">
               <ActionBar
                 onPreview={handleOpenPreview}
-                onSave={form.status === 'draft' ? handleSavePublished : undefined}
-                onSaveDraft={form.status === 'published' ? handleSaveDraft : undefined}
+                onSaveDraft={handleSaveDraft}
                 onPublish={() => setShowPublishModal(true)}
                 isSaving={isSaving}
-                formStatus={form.status}
                 nextVersion={(form.current_version || 0) + 1}
               />
             </div>
@@ -584,7 +590,7 @@ export default function EditFormPage() {
         </div>
 
         {/* Tab Content */}
-        <div className="min-h-[400px]">
+        <div className="min-h-[400px] px-4 sm:px-6 py-6">
           {activeTab === 'content' && (
             <div className="w-full space-y-6">
               {/* Basic Info */}
@@ -784,127 +790,129 @@ export default function EditFormPage() {
               <div className="bg-white p-6 rounded-2xl border-2 border-slate-300">
                 <h2 className="text-lg font-semibold text-slate-900 mb-4">🎨 ตั้งค่าสี</h2>
 
-                {/* Banner Color */}
-                <div className="mb-6">
-                  <h3 className="text-sm font-medium text-slate-700 mb-3">สี Banner (พื้นหลังหัวเว็บ)</h3>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <button
-                      onClick={() => setBannerColor('blue')}
-                      className={`w-8 h-8 rounded-lg bg-[#2563EB] hover:scale-110 transition-all ${bannerColor === 'blue' ? 'ring-2 ring-offset-2 ring-slate-400' : ''
-                        }`}
-                      title="Blue"
-                    />
-                    <button
-                      onClick={() => setBannerColor('black')}
-                      className={`w-8 h-8 rounded-lg bg-[#0F172A] hover:scale-110 transition-all ${bannerColor === 'black' ? 'ring-2 ring-offset-2 ring-slate-400' : ''
-                        }`}
-                      title="Black"
-                    />
-                    <button
-                      onClick={() => setBannerColor('white')}
-                      className={`w-8 h-8 rounded-lg bg-white border-2 border-slate-300 hover:scale-110 transition-all ${bannerColor === 'white' ? 'ring-2 ring-offset-2 ring-slate-400' : ''
-                        }`}
-                      title="White"
-                    />
-                    <button
-                      onClick={() => document.getElementById('editBannerColorInput')?.click()}
-                      className={`w-8 h-8 rounded-lg bg-gradient-to-br from-slate-100 to-slate-300 border-2 border-slate-300 hover:scale-110 transition-all flex items-center justify-center ${bannerColor === 'custom' ? 'ring-2 ring-offset-2 ring-slate-400' : ''
-                        }`}
-                      title="Custom"
-                    >
-                      <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                      </svg>
-                    </button>
-                    <input
-                      type="color"
-                      id="editBannerColorInput"
-                      className="absolute opacity-0 pointer-events-none"
-                      value={bannerCustomColor}
-                      onChange={(e) => {
-                        setBannerCustomColor(e.target.value);
-                        setBannerColor('custom');
-                      }}
-                    />
-                  </div>
-                  {bannerColor === 'custom' && (
-                    <p className="text-xs text-slate-500 mt-2">สีที่เลือก: {bannerCustomColor}</p>
-                  )}
-                </div>
-
-                {/* Banner Mode */}
-                <div className="mb-6">
-                  <h3 className="text-sm font-medium text-slate-700 mb-3">รูปแบบ Banner</h3>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setBannerMode('gradient')}
-                      className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${bannerMode === 'gradient'
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                        }`}
-                    >
-                      Gradient
-                    </button>
-                    <button
-                      onClick={() => setBannerMode('solid')}
-                      className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${bannerMode === 'solid'
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                        }`}
-                    >
-                      Solid
-                    </button>
-                  </div>
-                </div>
-
-                {/* Accent Color */}
-                <div>
-                  <h3 className="text-sm font-medium text-slate-700 mb-3">สีรอง (Button, Heading, Section ขีด)</h3>
-                  <div className="flex flex-wrap items-center gap-2">
-                    {[
-                      { key: 'blue', color: '#2563EB' },
-                      { key: 'sky', color: '#0EA5E9' },
-                      { key: 'teal', color: '#0D9488' },
-                      { key: 'emerald', color: '#059669' },
-                      { key: 'violet', color: '#7C3AED' },
-                      { key: 'rose', color: '#E11D48' },
-                      { key: 'orange', color: '#EA580C' },
-                      { key: 'slate', color: '#475569' },
-                      { key: 'black', color: '#0F172A' },
-                    ].map(({ key, color }) => (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {/* Banner Color */}
+                  <div>
+                    <h3 className="text-sm font-medium text-slate-700 mb-3">สี Banner (พื้นหลังหัวเว็บ)</h3>
+                    <div className="flex flex-wrap items-center gap-2">
                       <button
-                        key={key}
-                        onClick={() => setAccentColor(key as any)}
-                        className={`w-8 h-8 rounded-lg hover:scale-110 transition-all ${accentColor === key ? 'ring-2 ring-offset-2 ring-slate-400' : ''
+                        onClick={() => setBannerColor('blue')}
+                        className={`w-8 h-8 rounded-lg bg-[#2563EB] hover:scale-110 transition-all ${bannerColor === 'blue' ? 'ring-2 ring-offset-2 ring-slate-400' : ''
                           }`}
-                        style={{ backgroundColor: color }}
-                        title={key}
+                        title="Blue"
                       />
-                    ))}
-                    <button
-                      onClick={() => document.getElementById('editAccentColorInput')?.click()}
-                      className={`w-8 h-8 rounded-lg bg-gradient-to-br from-slate-100 to-slate-300 border-2 border-slate-300 hover:scale-110 transition-all flex items-center justify-center ${accentColor === 'custom' ? 'ring-2 ring-offset-2 ring-slate-400' : ''
-                        }`}
-                      title="Custom"
-                    >
-                      <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                      </svg>
-                    </button>
-                    <input
-                      type="color"
-                      id="editAccentColorInput"
-                      className="absolute opacity-0 pointer-events-none"
-                      value={accentCustomColor}
-                      onChange={(e) => {
-                        setAccentCustomColor(e.target.value);
-                        setAccentColor('custom');
-                      }}
-                    />
+                      <button
+                        onClick={() => setBannerColor('black')}
+                        className={`w-8 h-8 rounded-lg bg-[#0F172A] hover:scale-110 transition-all ${bannerColor === 'black' ? 'ring-2 ring-offset-2 ring-slate-400' : ''
+                          }`}
+                        title="Black"
+                      />
+                      <button
+                        onClick={() => setBannerColor('white')}
+                        className={`w-8 h-8 rounded-lg bg-white border-2 border-slate-300 hover:scale-110 transition-all ${bannerColor === 'white' ? 'ring-2 ring-offset-2 ring-slate-400' : ''
+                          }`}
+                        title="White"
+                      />
+                      <button
+                        onClick={() => document.getElementById('editBannerColorInput')?.click()}
+                        className={`w-8 h-8 rounded-lg bg-gradient-to-br from-slate-100 to-slate-300 border-2 border-slate-300 hover:scale-110 transition-all flex items-center justify-center ${bannerColor === 'custom' ? 'ring-2 ring-offset-2 ring-slate-400' : ''
+                          }`}
+                        title="Custom"
+                      >
+                        <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                      </button>
+                      <input
+                        type="color"
+                        id="editBannerColorInput"
+                        className="absolute opacity-0 pointer-events-none"
+                        value={bannerCustomColor}
+                        onChange={(e) => {
+                          setBannerCustomColor(e.target.value);
+                          setBannerColor('custom');
+                        }}
+                      />
+                    </div>
+                    {bannerColor === 'custom' && (
+                      <p className="text-xs text-slate-500 mt-2">สีที่เลือก: {bannerCustomColor}</p>
+                    )}
                   </div>
-                  {accentColor === 'custom' && (
-                    <p className="text-xs text-slate-500 mt-2">สีที่เลือก: {accentCustomColor}</p>
-                  )}
+
+                  {/* Banner Mode */}
+                  <div>
+                    <h3 className="text-sm font-medium text-slate-700 mb-3">รูปแบบ Banner</h3>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setBannerMode('gradient')}
+                        className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${bannerMode === 'gradient'
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                          }`}
+                      >
+                        Gradient
+                      </button>
+                      <button
+                        onClick={() => setBannerMode('solid')}
+                        className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${bannerMode === 'solid'
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                          }`}
+                      >
+                        Solid
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Accent Color */}
+                  <div>
+                    <h3 className="text-sm font-medium text-slate-700 mb-3">สีรอง (Button, Heading)</h3>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {[
+                        { key: 'blue', color: '#2563EB' },
+                        { key: 'sky', color: '#0EA5E9' },
+                        { key: 'teal', color: '#0D9488' },
+                        { key: 'emerald', color: '#059669' },
+                        { key: 'violet', color: '#7C3AED' },
+                        { key: 'rose', color: '#E11D48' },
+                        { key: 'orange', color: '#EA580C' },
+                        { key: 'slate', color: '#475569' },
+                        { key: 'black', color: '#0F172A' },
+                      ].map(({ key, color }) => (
+                        <button
+                          key={key}
+                          onClick={() => setAccentColor(key as any)}
+                          className={`w-8 h-8 rounded-lg hover:scale-110 transition-all ${accentColor === key ? 'ring-2 ring-offset-2 ring-slate-400' : ''
+                            }`}
+                          style={{ backgroundColor: color }}
+                          title={key}
+                        />
+                      ))}
+                      <button
+                        onClick={() => document.getElementById('editAccentColorInput')?.click()}
+                        className={`w-8 h-8 rounded-lg bg-gradient-to-br from-slate-100 to-slate-300 border-2 border-slate-300 hover:scale-110 transition-all flex items-center justify-center ${accentColor === 'custom' ? 'ring-2 ring-offset-2 ring-slate-400' : ''
+                          }`}
+                        title="Custom"
+                      >
+                        <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                      </button>
+                      <input
+                        type="color"
+                        id="editAccentColorInput"
+                        className="absolute opacity-0 pointer-events-none"
+                        value={accentCustomColor}
+                        onChange={(e) => {
+                          setAccentCustomColor(e.target.value);
+                          setAccentColor('custom');
+                        }}
+                      />
+                    </div>
+                    {accentColor === 'custom' && (
+                      <p className="text-xs text-slate-500 mt-2">สีที่เลือก: {accentCustomColor}</p>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -1030,6 +1038,15 @@ export default function EditFormPage() {
         confirmVariant="danger"
         onConfirm={confirmDeleteDraft}
         onCancel={() => setShowDeleteConfirm(false)}
+      />
+
+      {/* Success Modal */}
+      <SuccessModal
+        isOpen={showSuccessModal}
+        title={successMessage.title}
+        message={successMessage.message}
+        buttonText="ตกลง"
+        onClose={() => setShowSuccessModal(false)}
       />
 
       {/* Toast -->
