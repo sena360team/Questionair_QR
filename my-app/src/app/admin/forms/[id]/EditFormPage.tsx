@@ -202,33 +202,53 @@ export default function EditFormPage() {
     }
   };
 
-  // Save changes to existing draft version
+  // Save changes to draft version (create new if not exists)
   const handleSaveDraft = async () => {
-    if (!draftVersionId) {
-      showToast('error', 'ไม่พบ Draft ที่กำลังแก้ไข');
-      return;
-    }
-
     setIsSaving(true);
     try {
-      await updateDraft(draftVersionId, {
-        title,
-        description,
-        logo_url: logoUrl,
-        theme,
-        banner_color: bannerColor,
-        banner_custom_color: bannerCustomColor,
-        banner_mode: bannerMode,
-        accent_color: accentColor,
-        accent_custom_color: accentCustomColor,
-        logo_position: logoPosition,
-        logo_size: logoSize,
-        fields,
-        require_consent: requireConsent,
-        consent_heading: consentHeading,
-        consent_text: consentText,
-        consent_require_location: consentRequireLocation,
-      });
+      if (draftVersionId) {
+        // Update existing draft
+        await updateDraft(draftVersionId, {
+          title,
+          description,
+          logo_url: logoUrl,
+          theme,
+          banner_color: bannerColor,
+          banner_custom_color: bannerCustomColor,
+          banner_mode: bannerMode,
+          accent_color: accentColor,
+          accent_custom_color: accentCustomColor,
+          logo_position: logoPosition,
+          logo_size: logoSize,
+          fields,
+          require_consent: requireConsent,
+          consent_heading: consentHeading,
+          consent_text: consentText,
+          consent_require_location: consentRequireLocation,
+        });
+      } else {
+        // Create new draft
+        const newDraft = await createDraft({
+          title,
+          description,
+          logo_url: logoUrl,
+          theme,
+          banner_color: bannerColor,
+          banner_custom_color: bannerCustomColor,
+          banner_mode: bannerMode,
+          accent_color: accentColor,
+          accent_custom_color: accentCustomColor,
+          logo_position: logoPosition,
+          logo_size: logoSize,
+          fields,
+          require_consent: requireConsent,
+          consent_heading: consentHeading,
+          consent_text: consentText,
+          consent_require_location: consentRequireLocation,
+        });
+        setDraftVersionId(newDraft.id);
+        setIsEditingDraft(true);
+      }
       showToast('success', 'บันทึก Draft สำเร็จ');
     } catch (err) {
       console.error('Save draft error:', err);
