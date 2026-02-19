@@ -4,18 +4,14 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FormVersion, FormField } from '@/types';
 import { useFormVersions } from '@/hooks/useFormVersions';
-import { useDuplicateForm } from '@/hooks/useDuplicateForm';
+import { Edit3 } from 'lucide-react';
 import { FormRenderer } from './FormRenderer';
 import { cn } from '@/lib/utils';
-import { 
-  History, 
-  RotateCcw, 
-  Copy, 
-  Eye, 
-  ChevronDown, 
+import {
+  History,
+  Eye,
+  ChevronDown,
   ChevronUp,
-  User,
-  Calendar,
   FileText,
   AlertCircle,
   CheckCircle,
@@ -30,16 +26,13 @@ interface VersionHistoryProps {
 }
 
 export function VersionHistory({ formId, currentVersion }: VersionHistoryProps) {
-  const { versions, isLoading, error, revertToVersion } = useFormVersions(formId);
-  const { duplicate, isDuplicating } = useDuplicateForm();
+  const { versions, draftVersion, isLoading, error } = useFormVersions(formId);
   const router = useRouter();
-  
+
   const [selectedVersion, setSelectedVersion] = useState<FormVersion | null>(null);
   const [expandedVersions, setExpandedVersions] = useState<Set<number>>(new Set());
-  const [showRevertConfirm, setShowRevertConfirm] = useState<FormVersion | null>(null);
-  const [revertNotes, setRevertNotes] = useState('');
-  const [isReverting, setIsReverting] = useState(false);
-  const [toast, setToast] = useState<{type: 'success' | 'error', message: string} | null>(null);
+
+  const [toast, setToast] = useState<{ type: 'success' | 'error', message: string } | null>(null);
 
   const showToast = (type: 'success' | 'error', message: string) => {
     setToast({ type, message });
@@ -56,38 +49,11 @@ export function VersionHistory({ formId, currentVersion }: VersionHistoryProps) 
     setExpandedVersions(newExpanded);
   };
 
-  const handleRevert = async () => {
-    if (!showRevertConfirm) return;
-    
-    setIsReverting(true);
-    
-    try {
-      const result = await revertToVersion(showRevertConfirm.version, revertNotes);
-      // Close modal first, then redirect
-      setShowRevertConfirm(null);
-      setRevertNotes('');
-      // Redirect to draft mode
-      router.push(`/admin/forms/${formId}?draft=true`);
-    } catch (err) {
-      console.error('Revert failed:', err);
-      showToast('error', 'Revert ไม่สำเร็จ: ' + (err instanceof Error ? err.message : 'Unknown error'));
-      setIsReverting(false);
-    }
-  };
 
-  const handleDuplicate = async (version: FormVersion) => {
-    try {
-      const title = `${version.title || 'Form'} (v${version.version} Copy)`;
-      const result = await duplicate(formId, title, {
-        copy_questions: true,
-        copy_settings: true,
-        copy_logo: !!version.logo_url,
-      });
-      showToast('success', 'คัดลอกฟอร์มสำเร็จ');
-      router.push(`/admin/forms/${result.new_form_id}`);
-    } catch (err) {
-      console.error('Duplicate failed:', err);
-      showToast('error', 'คัดลอกไม่สำเร็จ: ' + (err instanceof Error ? err.message : 'Unknown error'));
+
+  const handleEditDraft = () => {
+    if (draftVersion) {
+      router.push(`/admin/forms/${formId}?draft=true`);
     }
   };
 
@@ -108,6 +74,9 @@ export function VersionHistory({ formId, currentVersion }: VersionHistoryProps) 
     );
   }
 
+  // Filter published versions only
+  const publishedVersions = versions?.filter(v => v.status === 'published') || [];
+
   if (!versions || versions.length === 0) {
     return (
       <div className="text-center py-12 text-slate-500">
@@ -122,18 +91,47 @@ export function VersionHistory({ formId, currentVersion }: VersionHistoryProps) 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left: Version List */}
         <div className="space-y-4">
+          {/* Draft Version Alert */}
+          {draftVersion && (
+            <div className="bg-amber-50 border-2 border-amber-200 rounded-xl p-4">
+              <div className="flex items-start gap-3">
+                <Edit3 className="w-5 h-5 text-amber-600 mt-0.5 shrink-0" />
+                <div className="flex-1">
+                  <p className="font-medium text-amber-900">
+                    มี Draft Version ที่กำลังแก้ไข
+                  </p>
+                  <p className="text-sm text-amber-700 mt-1">
+                    สร้างเมื่อ {formatDate(draftVersion.created_at, {
+                      day: 'numeric',
+                      month: 'short',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </p>
+                </div>
+                <button
+                  onClick={handleEditDraft}
+                  className="shrink-0 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium rounded-lg transition-colors"
+                >
+                  แก้ไข Draft
+                </button>
+              </div>
+            </div>
+          )}
+
           <h3 className="font-semibold text-slate-900 flex items-center gap-2">
             <History className="w-5 h-5" />
-            Version History ({versions.length})
+            Published Versions ({publishedVersions.length})
           </h3>
-          
+
           <div className="space-y-3">
-            {versions.map((version) => {
+            {publishedVersions.map((version) => {
               const isExpanded = expandedVersions.has(version.version);
               const isCurrent = version.version === currentVersion;
-              
+
               return (
-                <div 
+                <div
                   key={version.version}
                   className={cn(
                     "border rounded-xl overflow-hidden transition-all",
@@ -141,13 +139,13 @@ export function VersionHistory({ formId, currentVersion }: VersionHistoryProps) 
                   )}
                 >
                   {/* Version Header */}
-                  <div 
+                  <div
                     className="p-4 cursor-pointer hover:bg-slate-50/50"
                     onClick={() => toggleExpand(version.version)}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <span 
+                        <span
                           className="px-2.5 py-1 rounded-lg text-sm font-medium border"
                           style={getVersionBadgeStyle(version.version)}
                         >
@@ -156,20 +154,16 @@ export function VersionHistory({ formId, currentVersion }: VersionHistoryProps) 
                             <span className="ml-1 text-xs opacity-75">(current)</span>
                           )}
                         </span>
-                        
-                        {version.is_reverted && (
-                          <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-xs rounded-full">
-                            Reverted
-                          </span>
-                        )}
+
+
                       </div>
-                      
+
                       <div className="flex items-center gap-2">
                         <span className="text-sm text-slate-500">
-                          {formatDate(version.published_at, { 
-                            day: 'numeric', 
-                            month: 'short', 
-                            year: 'numeric' 
+                          {formatDate(version.published_at, {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric'
                           })}
                         </span>
                         {isExpanded ? (
@@ -179,27 +173,22 @@ export function VersionHistory({ formId, currentVersion }: VersionHistoryProps) 
                         )}
                       </div>
                     </div>
-                    
+
                     {/* Summary */}
                     <p className="text-sm text-slate-600 mt-2 line-clamp-2">
                       {version.change_summary || 'ไม่มีคำอธิบาย'}
                     </p>
-                    
+
                     {/* Meta */}
                     <div className="flex items-center gap-4 mt-3 text-xs text-slate-400">
                       <span className="flex items-center gap-1">
                         <FileText className="w-3.5 h-3.5" />
                         {(version.fields as FormField[]).length} คำถาม
                       </span>
-                      {version.published_by_user && (
-                        <span className="flex items-center gap-1">
-                          <User className="w-3.5 h-3.5" />
-                          {version.published_by_user.email}
-                        </span>
-                      )}
+
                     </div>
                   </div>
-                  
+
                   {/* Expanded Actions */}
                   {isExpanded && (
                     <div className="px-4 pb-4 border-t border-slate-200 pt-3">
@@ -214,31 +203,8 @@ export function VersionHistory({ formId, currentVersion }: VersionHistoryProps) 
                           <Eye className="w-4 h-4" />
                           ดูตัวอย่าง
                         </button>
-                        
-                        {!isCurrent && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setShowRevertConfirm(version);
-                            }}
-                            className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
-                          >
-                            <RotateCcw className="w-4 h-4" />
-                            Revert กลับเวอร์ชันนี้
-                          </button>
-                        )}
-                        
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDuplicate(version);
-                          }}
-                          disabled={isDuplicating}
-                          className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-green-700 bg-green-50 hover:bg-green-100 rounded-lg transition-colors disabled:opacity-50"
-                        >
-                          <Copy className="w-4 h-4" />
-                          {isDuplicating ? 'กำลังคัดลอก...' : 'คัดลอกเป็นฟอร์มใหม่'}
-                        </button>
+
+
                       </div>
                     </div>
                   )}
@@ -247,9 +213,9 @@ export function VersionHistory({ formId, currentVersion }: VersionHistoryProps) 
             })}
           </div>
         </div>
-        
+
         {/* Right: Preview Panel */}
-        <div className="border-2 border-slate-300 rounded-xl p-4 bg-slate-50 overflow-y-auto max-h-[calc(100vh-200px)]">
+        <div className="border-2 border-slate-300 rounded-xl p-4 bg-slate-50 min-h-[300px] max-h-[1400px] overflow-y-auto">
           {selectedVersion ? (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
@@ -263,7 +229,7 @@ export function VersionHistory({ formId, currentVersion }: VersionHistoryProps) 
                   ปิด
                 </button>
               </div>
-              
+
               {/* Preview Mode Banner */}
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-center gap-3">
                 <Eye className="w-5 h-5 text-amber-600" />
@@ -272,57 +238,35 @@ export function VersionHistory({ formId, currentVersion }: VersionHistoryProps) 
                   <p className="text-xs text-amber-600">ฟอร์มนี้แสดงตัวอย่างการใช้งานจริง แต่ไม่บันทึกข้อมูล</p>
                 </div>
               </div>
-              
-              {/* Actual Form Preview with FormRenderer */}
-              <div className="bg-white rounded-xl border-2 border-slate-300 overflow-hidden shadow-lg">
-                {/* Form Header */}
-                <div className="bg-gradient-to-b from-blue-600 to-blue-500 p-6 text-center text-white">
-                  {selectedVersion.logo_url && (
-                    <img 
-                      src={selectedVersion.logo_url} 
-                      alt="Logo" 
-                      className="h-12 mx-auto object-contain mb-3"
-                    />
-                  )}
-                  <h4 className="text-lg font-bold">
-                    {selectedVersion.title || 'Untitled Form'}
-                  </h4>
-                  {selectedVersion.description && (
-                    <p className="text-blue-100 text-sm mt-1">
-                      {selectedVersion.description}
-                    </p>
-                  )}
-                </div>
-                
-                {/* Interactive Form */}
-                <div className="p-6">
-                  <FormRenderer 
-                    form={{
-                      id: 'preview',
-                      code: `v${selectedVersion.version}`,
-                      slug: 'preview',
-                      title: selectedVersion.title || '',
-                      description: selectedVersion.description || '',
-                      logo_url: selectedVersion.logo_url,
-                      fields: selectedVersion.fields as FormField[],
-                      require_consent: selectedVersion.require_consent,
-                      consent_heading: selectedVersion.consent_heading,
-                      consent_text: selectedVersion.consent_text,
-                      consent_require_location: selectedVersion.consent_require_location,
-                      is_active: true,
-                      allow_multiple_responses: false,
-                      status: 'published',
-                      current_version: selectedVersion.version,
-                      created_at: selectedVersion.published_at || '',
-                      updated_at: selectedVersion.published_at || '',
-                    }}
-                    onSubmit={(data) => {
-                      alert('นี่คือตัวอย่างฟอร์มเท่านั้น (Version History)\n\nข้อมูลที่กรอก:\n' + JSON.stringify(data, null, 2));
-                    }}
-                    submitting={false}
-                    submitLabel="ส่งคำตอบ (ตัวอย่าง)"
-                  />
-                </div>
+
+              {/* Actual Form Preview with FormRenderer - No border, let FormRenderer handle header */}
+              <div className="bg-white rounded-xl overflow-hidden">
+                <FormRenderer
+                  form={{
+                    id: 'preview',
+                    code: `v${selectedVersion.version}`,
+                    slug: 'preview',
+                    title: selectedVersion.title || '',
+                    description: selectedVersion.description || '',
+                    logo_url: selectedVersion.logo_url,
+                    fields: selectedVersion.fields as FormField[],
+                    require_consent: selectedVersion.require_consent,
+                    consent_heading: selectedVersion.consent_heading,
+                    consent_text: selectedVersion.consent_text,
+                    consent_require_location: selectedVersion.consent_require_location,
+                    is_active: true,
+                    allow_multiple_responses: false,
+                    status: 'published',
+                    current_version: selectedVersion.version,
+                    created_at: selectedVersion.published_at || '',
+                    updated_at: selectedVersion.published_at || '',
+                  }}
+                  onSubmit={(data) => {
+                    alert('นี่คือตัวอย่างฟอร์มเท่านั้น (Version History)\n\nข้อมูลที่กรอก:\n' + JSON.stringify(data, null, 2));
+                  }}
+                  submitting={false}
+                  submitLabel="ส่งคำตอบ (ตัวอย่าง)"
+                />
               </div>
             </div>
           ) : (
@@ -334,67 +278,13 @@ export function VersionHistory({ formId, currentVersion }: VersionHistoryProps) 
           )}
         </div>
       </div>
-      
-      {/* Revert Confirmation Modal */}
-      {showRevertConfirm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl p-6 max-w-md w-full">
-            <div className="flex items-center gap-3 text-amber-600 mb-4">
-              <RotateCcw className="w-6 h-6" />
-              <h3 className="text-lg font-semibold">ยืนยันการ Revert</h3>
-            </div>
-            
-            <p className="text-slate-600 mb-4">
-              คุณต้องการ revert กลับไป <strong>Version {showRevertConfirm.version}</strong> ใช่หรือไม่?
-            </p>
-            
-            <div className="bg-slate-50 p-4 rounded-lg mb-4 text-sm text-slate-600">
-              <p className="font-medium mb-2">สิ่งที่จะเกิดขึ้น:</p>
-              <ul className="space-y-1 list-disc list-inside">
-                <li>ระบบจะสร้าง Draft จาก Version {showRevertConfirm.version}</li>
-                <li>คุณสามารถแก้ไขเพิ่มเติมก่อน Publish</li>
-                <li>ฟอร์มปัจจุบันยังใช้งานได้จนกว่าจะ Publish</li>
-              </ul>
-            </div>
-            
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                เหตุผล (optional)
-              </label>
-              <textarea
-                value={revertNotes}
-                onChange={(e) => setRevertNotes(e.target.value)}
-                placeholder="เช่น: ต้องการกลับไปใช้คำถามเวอร์ชันเก่า..."
-                className="w-full px-3 py-2 border-2 border-slate-300 rounded-lg text-sm"
-                rows={3}
-              />
-            </div>
-            
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowRevertConfirm(null)}
-                className="flex-1 py-2 border-2 border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50"
-              >
-                ยกเลิก
-              </button>
-              <button
-                onClick={handleRevert}
-                disabled={isReverting}
-                className="flex-1 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-              >
-                {isReverting ? 'กำลังดำเนินการ...' : 'ยืนยัน Revert'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-      
+
+
       {/* Toast Notification */}
       {toast && (
         <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-2 fade-in duration-300">
-          <div className={`flex items-center gap-3 px-6 py-4 rounded-xl shadow-2xl ${
-            toast.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
-          }`}>
+          <div className={`flex items-center gap-3 px-6 py-4 rounded-xl shadow-2xl ${toast.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
+            }`}>
             {toast.type === 'success' ? <CheckCircle className="w-6 h-6" /> : <AlertCircle className="w-6 h-6" />}
             <span className="font-medium">{toast.message}</span>
           </div>

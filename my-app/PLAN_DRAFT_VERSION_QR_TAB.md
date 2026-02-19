@@ -50,40 +50,46 @@ Version 7 (Published) - Current
 }
 ```
 
-### API Endpoints ที่ต้องสร้าง
+### API Endpoints ที่สร้างแล้ว
 
 ```typescript
-// 1. สร้าง Draft ใหม่
-POST /api/forms/:id/draft
-- Clone ข้อมูลจาก current_version
-- สร้าง version ใหม่ (current_version + 1)
-- บันทึกลง form_versions
-- อัปเดต forms.draft_version = new_version
-- อัปเดต forms.has_draft = true
-
-// 2. บันทึก Draft (Auto-save หรือ Manual)
-PUT /api/forms/:id/draft
-- อัปเดตเฉพาะ form_versions ที่เป็น draft
-- ไม่แตะ forms หลัก
-
-// 3. Publish Draft
-POST /api/forms/:id/publish-draft
-- อัปเดต forms.current_version = draft_version
-- อัปเดต forms.title, fields, description = draft data
-- อัปเดต form_versions ให้ draft เป็น is_current = true
-- อัปเดต form_versions เก่าให้ is_current = false
-- อัปเดต forms.has_draft = false
-- อัปเดต forms.draft_version = null
-
-// 4. ดึง Version History
-GET /api/forms/:id/versions
+// 1. ดึง Version History (รวม Draft)
+GET /api/form-versions?formId={id}
 - ดึงทุกเวอร์ชันจาก form_versions
 - เรียงตาม version desc
 - แสดงทั้ง Published และ Draft
+- ตอบกลับพร้อม current_version, draft_version, has_draft
 
-// 5. ดึง Draft ปัจจุบัน
-GET /api/forms/:id/draft
-- ดึงเฉพาะ version ที่เป็น draft และล่าสุด
+// 2. สร้าง Draft ใหม่
+POST /api/form-versions
+Body: { formId, title, description, fields, theme, colors, consent, change_summary }
+- Clone ข้อมูลจาก current_version
+- สร้าง version ใหม่ (current_version + 1)
+- บันทึกลง form_versions ด้วย status='draft'
+- อัปเดต forms.draft_version = new_version
+- อัปเดต forms.has_draft = true
+
+// 3. บันทึก Draft (อัปเดต)
+PUT /api/form-versions/{versionId}
+Body: { title, description, fields, theme, colors, consent, change_summary }
+- อัปเดตเฉพาะ form_versions ที่เป็น draft
+- ไม่แตะ forms หลัก
+- ตรวจสอบว่าเป็น draft จริงๆ ก่อนอัปเดต
+
+// 4. Publish Draft
+POST /api/form-versions/publish
+Body: { versionId, changeSummary? }
+- อัปเดต forms.current_version = draft.version
+- อัปเดต forms fields ตาม draft data
+- อัปเดต form_versions status='published'
+- อัปเดต forms.has_draft = false
+- อัปเดต forms.draft_version = null
+
+// 5. ลบ Draft
+DELETE /api/form-versions/{versionId}
+- ลบ draft จาก form_versions
+- อัปเดต forms.has_draft = false
+- อัปเดต forms.draft_version = null
 ```
 
 ### UI Changes

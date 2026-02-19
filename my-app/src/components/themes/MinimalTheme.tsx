@@ -26,6 +26,20 @@ const getLogoSizeClasses = (size?: string) => {
   }
 };
 
+// Get banner color
+const getBannerColor = (form: Form) => {
+  const colorMap: Record<string, string> = {
+    blue: '#2563EB',
+    black: '#0F172A',
+    white: '#FFFFFF',
+  };
+  
+  if (form.banner_color === 'custom' && form.banner_custom_color) {
+    return form.banner_custom_color;
+  }
+  return colorMap[form.banner_color || 'blue'] || '#2563EB';
+};
+
 // Get accent color
 const getAccentColor = (form: Form) => {
   const colorMap: Record<string, string> = {
@@ -46,6 +60,21 @@ const getAccentColor = (form: Form) => {
   return colorMap[form.accent_color || 'blue'] || '#2563EB';
 };
 
+// Adjust brightness for gradient
+const adjustBrightness = (hex: string, percent: number) => {
+  hex = hex.replace('#', '');
+  let r = parseInt(hex.substring(0, 2), 16);
+  let g = parseInt(hex.substring(2, 4), 16);
+  let b = parseInt(hex.substring(4, 6), 16);
+  
+  r = Math.min(255, Math.max(0, r + (r * percent / 100)));
+  g = Math.min(255, Math.max(0, g + (g * percent / 100)));
+  b = Math.min(255, Math.max(0, b + (b * percent / 100)));
+  
+  const toHex = (n: number) => Math.round(n).toString(16).padStart(2, '0');
+  return '#' + toHex(r) + toHex(g) + toHex(b);
+};
+
 export function MinimalTheme({
   form,
   errors,
@@ -56,12 +85,30 @@ export function MinimalTheme({
   renderSubmitButton,
 }: MinimalThemeProps) {
   const logoSizeClass = getLogoSizeClasses(form.logo_size);
+  const bannerColor = getBannerColor(form);
   const accentColor = getAccentColor(form);
+  const bannerMode = form.banner_mode || 'gradient';
+  const isWhiteBanner = bannerColor.toLowerCase() === '#ffffff';
+  
+  // Generate banner style
+  const getBannerStyle = () => {
+    if (bannerMode === 'solid') {
+      return { backgroundColor: bannerColor };
+    }
+    // Gradient mode
+    const lighterColor = adjustBrightness(bannerColor, 20);
+    return {
+      background: `linear-gradient(135deg, ${bannerColor} 0%, ${lighterColor} 100%)`,
+    };
+  };
 
   return (
-    <div className="max-w-5xl mx-auto bg-white rounded-xl p-8 shadow-sm">
-      {/* Simple Header - Title always left-aligned (minimal style), logo position independent */}
-      <div className="mb-8 pb-6 border-b border-slate-200">
+    <div className="bg-white rounded-xl overflow-hidden shadow-sm">
+      {/* Header - with custom banner color */}
+      <div 
+        className={`p-8 ${isWhiteBanner ? 'text-slate-800 border-b border-slate-200' : 'text-white'}`}
+        style={getBannerStyle()}
+      >
         {form.logo_url && (
           <img 
             src={form.logo_url} 
@@ -73,16 +120,18 @@ export function MinimalTheme({
             }`}
           />
         )}
-        <h1 className="text-xl font-medium mb-1" style={{ color: accentColor }}>
+        <h1 className={`text-xl font-medium mb-1 ${isWhiteBanner ? 'text-slate-900' : ''}`}>
           {form.title || 'แบบสอบถาม'}
         </h1>
         {form.description && (
-          <p className="text-sm text-slate-500">{form.description}</p>
+          <p className={`text-sm ${isWhiteBanner ? 'text-slate-600' : 'text-white/80'}`}>
+            {form.description}
+          </p>
         )}
       </div>
 
       {/* Fields */}
-      <div className="space-y-6">
+      <div className="p-8 space-y-6">
         {form.fields.map((field) => {
           // Section field - render as major section header
           if (field.type === 'section') {

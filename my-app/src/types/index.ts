@@ -86,6 +86,7 @@ export interface Form {
   created_by: string | null;
   // Computed fields
   has_draft?: boolean;
+  draft_version?: number | null;
   draft_status?: 'editing' | 'pending_review' | 'approved' | 'rejected' | null;
 }
 
@@ -123,24 +124,39 @@ export interface FormVersion {
   id: string;
   form_id: string;
   version: number;
+  status: 'published' | 'draft' | 'archived';
   fields: FormField[];
   fields_hash: string;
   // Enhanced metadata
   title?: string;
   description?: string | null;
   logo_url?: string | null;
+  theme?: string;
+  banner_color?: string;
+  banner_custom_color?: string | null;
+  banner_mode?: string;
+  accent_color?: string;
+  accent_custom_color?: string | null;
+  logo_position?: string;
+  logo_size?: string;
   require_consent?: boolean;
   consent_heading?: string;
   consent_text?: string | null;
   consent_require_location?: boolean;
   change_summary?: string;
-  published_at: string;
+  created_at: string;
+  created_by?: string | null;
+  published_at?: string | null;
   published_by?: string | null;
   // Revert tracking
   is_reverted?: boolean;
   reverted_to_version?: number | null;
   created_from_clone?: string | null;
   // Join data
+  created_by_user?: {
+    id: string;
+    email?: string;
+  } | null;
   published_by_user?: {
     id: string;
     email?: string;

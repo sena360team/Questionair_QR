@@ -1,41 +1,63 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { FormVersion, RevertFormResponse } from '@/types';
-import { getSupabaseBrowser } from '@/lib/supabase';
+import { FormVersion } from '@/types';
 
 interface UseFormVersionsReturn {
-  versions: FormVersion[] | undefined;
+  versions: FormVersion[];
+  currentVersion: FormVersion | null;
+  draftVersion: FormVersion | null;
+  hasDraft: boolean;
   isLoading: boolean;
-  error: Error | undefined;
+  error: Error | null;
   refresh: () => void;
-  revertToVersion: (version: number, notes?: string) => Promise<RevertFormResponse>;
+  createDraft: (data: any) => Promise<FormVersion>;
+  updateDraft: (versionId: string, data: any) => Promise<void>;
+  publishDraft: (versionId: string, changeSummary?: string) => Promise<void>;
+  deleteDraft: (versionId: string) => Promise<void>;
 }
 
 export function useFormVersions(formId: string): UseFormVersionsReturn {
-  const [versions, setVersions] = useState<FormVersion[] | undefined>(undefined);
+  const [versions, setVersions] = useState<FormVersion[]>([]);
+  const [currentVersion, setCurrentVersion] = useState<FormVersion | null>(null);
+  const [draftVersion, setDraftVersion] = useState<FormVersion | null>(null);
+  const [hasDraft, setHasDraft] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | undefined>(undefined);
+  const [error, setError] = useState<Error | null>(null);
 
   const fetchVersions = useCallback(async () => {
     if (!formId) return;
     
     setIsLoading(true);
-    setError(undefined);
+    setError(null);
     
     try {
-      const supabase = getSupabaseBrowser();
+      const response = await fetch(`/api/form-versions?formId=${formId}`);
+      const result = await response.json();
       
-      const { data: versionsData, error: fetchError } = await supabase
-        .from('form_versions')
-        .select('*')
-        .eq('form_id', formId)
-        .order('version', { ascending: false });
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch versions');
+      }
       
-      if (fetchError) throw fetchError;
+      // Versions now have computed status field from API
+      const versionsWithStatus = (result.data.versions || []).map((v: any) => ({
+        ...v,
+        status: v.is_draft ? 'draft' : 'published',
+      }));
+      setVersions(versionsWithStatus);
       
-      setVersions(versionsData || []);
+      // Find current version
+      const current = versionsWithStatus.find((v: FormVersion) => 
+        v.version === result.data.current_version
+      ) || null;
+      setCurrentVersion(current);
+      
+      // Find draft version
+      const draft = versionsWithStatus.find((v: FormVersion) => v.status === 'draft') || null;
+      setDraftVersion(draft);
+      setHasDraft(!!draft);
     } catch (err) {
+      console.error('Form versions error:', err);
       setError(err instanceof Error ? err : new Error('Failed to fetch versions'));
     } finally {
       setIsLoading(false);
@@ -46,38 +68,81 @@ export function useFormVersions(formId: string): UseFormVersionsReturn {
     fetchVersions();
   }, [fetchVersions]);
 
-  const revertToVersion = useCallback(async (
-    version: number, 
-    notes?: string
-  ): Promise<RevertFormResponse> => {
-    const supabase = getSupabaseBrowser();
-    
-    // Call the database function (auth.uid() will be used in SQL for public access)
-    const { data, error: rpcError } = await supabase.rpc('create_draft_from_version', {
-      p_form_id: formId,
-      p_version: version,
-      p_notes: notes || null,
+  const createDraft = useCallback(async (data: any): Promise<FormVersion> => {
+    const response = await fetch('/api/form-versions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ formId, ...data }),
     });
     
-    if (rpcError) {
-      console.error('Revert error:', rpcError);
-      throw new Error(rpcError.message || 'Failed to revert to version');
+    const result = await response.json();
+    
+    if (!result.success) {
+      console.error('Create draft API error:', result);
+      throw new Error(result.error || 'Failed to create draft');
     }
     
-    // Refresh data
     await fetchVersions();
-    
-    return {
-      draft_id: data,
-      message: `Draft created from version ${version}`,
-    };
+    return result.data;
   }, [formId, fetchVersions]);
+
+  const updateDraft = useCallback(async (versionId: string, data: any) => {
+    const response = await fetch(`/api/form-versions/${versionId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    
+    const result = await response.json();
+    
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to update draft');
+    }
+    
+    await fetchVersions();
+  }, [fetchVersions]);
+
+  const publishDraft = useCallback(async (versionId: string, changeSummary?: string) => {
+    const response = await fetch('/api/form-versions/publish', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ versionId, changeSummary }),
+    });
+    
+    const result = await response.json();
+    
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to publish draft');
+    }
+    
+    await fetchVersions();
+  }, [fetchVersions]);
+
+  const deleteDraft = useCallback(async (versionId: string) => {
+    const response = await fetch(`/api/form-versions/${versionId}`, {
+      method: 'DELETE',
+    });
+    
+    const result = await response.json();
+    
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to delete draft');
+    }
+    
+    await fetchVersions();
+  }, [fetchVersions]);
 
   return {
     versions,
+    currentVersion,
+    draftVersion,
+    hasDraft,
     isLoading,
     error,
     refresh: fetchVersions,
-    revertToVersion,
+    createDraft,
+    updateDraft,
+    publishDraft,
+    deleteDraft,
   };
 }

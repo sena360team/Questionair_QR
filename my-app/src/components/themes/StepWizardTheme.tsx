@@ -88,6 +88,20 @@ const getLogoSizeClasses = (size?: string) => {
   }
 };
 
+// Get banner color
+const getBannerColor = (form: Form) => {
+  const colorMap: Record<string, string> = {
+    blue: "#2563EB",
+    black: "#0F172A",
+    white: "#FFFFFF",
+  };
+  
+  if (form.banner_color === "custom" && form.banner_custom_color) {
+    return form.banner_custom_color;
+  }
+  return colorMap[form.banner_color || "blue"] || "#2563EB";
+};
+
 // Get accent color
 const getAccentColor = (form: Form) => {
   const colorMap: Record<string, string> = {
@@ -139,6 +153,20 @@ export function StepWizardTheme({
   const isLastStep = currentStep === steps.length - 1 && !form.require_consent;
   const isConsentStep = form.require_consent && currentStep === steps.length;
   const logoSizeClass = getLogoSizeClasses(form.logo_size);
+  const bannerColor = getBannerColor(form);
+  const bannerMode = form.banner_mode || "gradient";
+  const isWhiteBanner = bannerColor.toLowerCase() === "#ffffff";
+  
+  // Generate banner style
+  const getBannerStyle = () => {
+    if (bannerMode === "solid") {
+      return { backgroundColor: bannerColor };
+    }
+    const lighterColor = adjustBrightness(bannerColor, 20);
+    return {
+      background: `linear-gradient(135deg, ${bannerColor} 0%, ${lighterColor} 100%)`,
+    };
+  };
   const accentColor = getAccentColor(form);
   const lighterAccent = adjustBrightness(accentColor, 20);
 
@@ -159,8 +187,11 @@ export function StepWizardTheme({
 
   return (
     <div className="max-w-5xl mx-auto bg-white rounded-xl p-8 shadow-sm">
-      {/* Header - Title always centered, logo position independent */}
-      <div className="mb-8 text-center">
+      {/* Header - with custom banner color */}
+      <div 
+        className="mb-8 text-center p-8 rounded-xl"
+        style={getBannerStyle()}
+      >
         {form.logo_url && (
           <img 
             src={form.logo_url} 
@@ -172,11 +203,11 @@ export function StepWizardTheme({
             }`}
           />
         )}
-        <h1 className="text-2xl font-bold mb-2" style={{ color: accentColor }}>
+        <h1 className={`text-2xl font-bold mb-2 ${isWhiteBanner ? 'text-slate-800' : 'text-white'}`}>
           {form.title || 'แบบสอบถาม'}
         </h1>
         {form.description && (
-          <p className="text-slate-500">{form.description}</p>
+          <p className={isWhiteBanner ? 'text-slate-600' : 'text-white/80'}>{form.description}</p>
         )}
       </div>
 

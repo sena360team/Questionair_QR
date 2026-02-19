@@ -13,7 +13,9 @@ import {
   ChevronRight,
   RefreshCw,
   Calendar,
-  ShieldCheck
+  ShieldCheck,
+  Eye,
+  X
 } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import { getVersionBadgeStyle, getVersionColor } from '@/lib/versionColors';
@@ -40,6 +42,7 @@ export default function FormSubmissionsPage() {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
 
   // Compute unified fields from form.fields
   const unifiedFields = useMemo(() => {
@@ -316,6 +319,7 @@ export default function FormSubmissionsPage() {
                     <th className="px-4 py-3 text-left font-semibold text-slate-700 whitespace-nowrap">UTM Source</th>
                     <th className="px-4 py-3 text-left font-semibold text-slate-700 whitespace-nowrap">UTM Medium</th>
                     <th className="px-4 py-3 text-center font-semibold text-slate-700 whitespace-nowrap">Consent</th>
+                    <th className="px-4 py-3 text-center font-semibold text-slate-700 whitespace-nowrap">ดู</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200">
@@ -391,6 +395,15 @@ export default function FormSubmissionsPage() {
                           <span className="text-slate-400">-</span>
                         )}
                       </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-center">
+                        <button
+                          onClick={() => setSelectedSubmission(sub)}
+                          className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          title="ดูคำตอบแบบฟอร์ม"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -424,6 +437,165 @@ export default function FormSubmissionsPage() {
             </div>
           </>
         )}
+      </div>
+      
+      {/* View Submission Modal */}
+      {selectedSubmission && form && (
+        <ViewSubmissionModal
+          submission={selectedSubmission}
+          form={form}
+          onClose={() => setSelectedSubmission(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+// View Submission Modal Component - แสดงคำตอบในรูปแบบฟอร์ม
+function ViewSubmissionModal({ 
+  submission, 
+  form, 
+  onClose 
+}: { 
+  submission: Submission; 
+  form: Form; 
+  onClose: () => void;
+}) {
+  const responses = submission.responses as Record<string, unknown>;
+  
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+        {/* Header */}
+        <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+          <div>
+            <h3 className="text-lg font-semibold text-slate-900">คำตอบ #{submission.id?.slice(-6)}</h3>
+            <p className="text-sm text-slate-500">
+              ส่งเมื่อ {formatDate(submission.submitted_at, { 
+                day: 'numeric', 
+                month: 'long', 
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              })}
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-slate-200 rounded-lg transition-colors"
+          >
+            <X className="w-5 h-5 text-slate-500" />
+          </button>
+        </div>
+        
+        {/* Content - Form View */}
+        <div className="flex-1 overflow-auto p-6 bg-slate-50">
+          <div className="bg-white rounded-xl p-6 space-y-6">
+            {/* Version Badge */}
+            <div className="flex items-center gap-2 pb-4 border-b border-slate-100">
+              <span className="text-sm text-slate-500">ฟอร์มเวอร์ชัน:</span>
+              <span 
+                className="inline-flex px-2 py-0.5 text-xs font-medium rounded border"
+                style={getVersionBadgeStyle(submission.form_version || 1)}
+              >
+                v{submission.form_version || 1}
+              </span>
+            </div>
+            
+            {/* Form Fields with Answers */}
+            {form.fields?.map((field: FormField, index: number) => {
+              const answer = responses?.[field.id] ?? responses?.[field.label];
+              
+              return (
+                <div key={field.id || index} className="space-y-2">
+                  {/* Question */}
+                  <label className="block text-sm font-medium text-slate-700">
+                    {field.label || field.question || `คำถาม ${index + 1}`}
+                    {field.required && <span className="text-red-500 ml-1">*</span>}
+                  </label>
+                  
+                  {/* Answer Display */}
+                  <div className="bg-slate-50 border-2 border-slate-200 rounded-xl px-4 py-3 min-h-[48px]">
+                    {answer === undefined || answer === null || answer === '' ? (
+                      <span className="text-slate-400 italic">ไม่ได้ตอบ</span>
+                    ) : field.type === 'checkbox' || Array.isArray(answer) ? (
+                      <div className="flex flex-wrap gap-2">
+                        {(Array.isArray(answer) ? answer : [answer]).map((item: string, i: number) => (
+                          <span 
+                            key={i} 
+                            className="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-700 text-sm rounded-full"
+                          >
+                            {item}
+                          </span>
+                        ))}
+                      </div>
+                    ) : field.type === 'radio' || field.type === 'select' ? (
+                      <span className="inline-flex items-center px-3 py-1 bg-green-100 text-green-700 text-sm rounded-full">
+                        {String(answer)}
+                      </span>
+                    ) : (
+                      <span className="text-slate-900">{String(answer)}</span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+            
+            {/* Consent Section */}
+            {submission.consent_given && (
+              <div className="mt-6 pt-6 border-t border-slate-200">
+                <h4 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-green-600" />
+                  ข้อมูลการยินยอม
+                </h4>
+                <div className="bg-green-50 border border-green-200 rounded-xl p-4 space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-slate-600">สถานะ:</span>
+                    <span className="text-green-700 font-medium">ยินยอม</span>
+                  </div>
+                  {submission.consented_at && (
+                    <div className="flex justify-between">
+                      <span className="text-slate-600">เวลายินยอม:</span>
+                      <span className="text-slate-900">
+                        {formatDate(submission.consented_at, { 
+                          day: '2-digit', 
+                          month: 'short', 
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </span>
+                    </div>
+                  )}
+                  {submission.consent_ip && (
+                    <div className="flex justify-between">
+                      <span className="text-slate-600">IP Address:</span>
+                      <span className="text-slate-900 font-mono">{submission.consent_ip}</span>
+                    </div>
+                  )}
+                  {submission.consent_location && (
+                    <div className="flex justify-between">
+                      <span className="text-slate-600">ตำแหน่ง:</span>
+                      <span className="text-slate-900 font-mono text-xs">
+                        {submission.consent_location.latitude}, {submission.consent_location.longitude}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+        
+        {/* Footer */}
+        <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 flex justify-end">
+          <button
+            onClick={onClose}
+            className="px-6 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl font-medium transition-colors"
+          >
+            ปิด
+          </button>
+        </div>
       </div>
     </div>
   );

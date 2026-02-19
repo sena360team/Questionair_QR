@@ -88,6 +88,13 @@ export function DefaultTheme({
   const bannerMode = form.banner_mode || 'gradient';
   const isWhiteBanner = bannerColor.toLowerCase() === '#ffffff';
   
+  console.log('DefaultTheme banner:', { 
+    banner_color: form.banner_color, 
+    banner_custom_color: form.banner_custom_color,
+    banner_mode: form.banner_mode,
+    computedColor: bannerColor 
+  });
+  
   // Generate banner style
   const getBannerStyle = () => {
     if (bannerMode === 'solid') {

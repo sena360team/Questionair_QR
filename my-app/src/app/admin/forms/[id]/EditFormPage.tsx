@@ -10,6 +10,7 @@ import { DuplicateFormDialog } from '@/components/DuplicateFormDialog';
 import { QRCodeTab } from '@/components/form-tabs/QRCodeTab';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import { useFormDraft } from '@/hooks/useFormDraft';
+import { useFormVersions } from '@/hooks/useFormVersions';
 import { Form, FormField } from '@/types';
 import { 
   ArrowLeft, Save, Eye, Hash, X, Shield, CheckCircle, AlertCircle, 
@@ -38,10 +39,26 @@ export default function EditFormPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   
-  // Draft system
-  const { draft, saveDraft, discard: discardDraft } = useFormDraft(formId);
-  const hasDraft = !!draft;
-  const isEditingDraft = hasDraft && draft.status === 'editing';
+  // Old Draft system (for compatibility)
+  const { draft: oldDraft, saveDraft: saveOldDraft, discard: discardOldDraft } = useFormDraft(formId);
+  
+  // New Version/Draft system
+  const { 
+    versions, 
+    currentVersion, 
+    draftVersion, 
+    hasDraft: hasNewDraft,
+    isLoading: isLoadingVersions,
+    createDraft,
+    updateDraft,
+    publishDraft,
+    deleteDraft,
+    refresh: refreshVersions
+  } = useFormVersions(formId);
+  
+  // Draft editing state
+  const [isEditingDraft, setIsEditingDraft] = useState(false);
+  const [draftVersionId, setDraftVersionId] = useState<string | null>(null);
   
   // Form state
   const [title, setTitle] = useState('');
@@ -62,6 +79,10 @@ export default function EditFormPage() {
   const [consentText, setConsentText] = useState('');
   const [consentRequireLocation, setConsentRequireLocation] = useState(false);
   const [isActive, setIsActive] = useState(true);
+  
+  // Change summary for publish
+  const [changeSummary, setChangeSummary] = useState('');
+  const [showPublishModal, setShowPublishModal] = useState(false);
   
   const [originalFields, setOriginalFields] = useState<FormField[]>([]);
   const [toast, setToast] = useState<{type: 'success' | 'error', message: string} | null>(null);
@@ -90,26 +111,28 @@ export default function EditFormPage() {
         const formData = data as Form;
         setForm(formData);
         
-        // If has draft and user comes with ?draft=true, use draft data
-        if (draft && isDraftMode) {
-          setTitle(draft.title);
+        // If has new draft version and user comes with ?draft=true, use draft data
+        if (draftVersion && isDraftMode) {
+          setIsEditingDraft(true);
+          setDraftVersionId(draftVersion.id);
+          setTitle(draftVersion.title);
           setSlug(formData.slug);
-          setDescription(draft.description || '');
-          setFields(draft.fields);
-          setOriginalFields(JSON.parse(JSON.stringify(draft.fields)));
-          setLogoUrl(draft.logo_url || '');
-          setLogoPosition(draft.logo_position || 'center');
-          setLogoSize(draft.logo_size || 'medium');
-          setTheme(draft.theme || 'default');
-          setBannerColor(draft.banner_color || 'blue');
-          setBannerCustomColor(draft.banner_custom_color || '#2563EB');
-          setBannerMode(draft.banner_mode || 'gradient');
-          setAccentColor(draft.accent_color || 'blue');
-          setAccentCustomColor(draft.accent_custom_color || '#2563EB');
-          setRequireConsent(draft.require_consent);
-          setConsentHeading(draft.consent_heading);
-          setConsentText(draft.consent_text || '');
-          setConsentRequireLocation(draft.consent_require_location);
+          setDescription(draftVersion.description || '');
+          setFields(draftVersion.fields);
+          setOriginalFields(JSON.parse(JSON.stringify(draftVersion.fields)));
+          setLogoUrl(draftVersion.logo_url || '');
+          setLogoPosition(draftVersion.logo_position || 'center');
+          setLogoSize(draftVersion.logo_size || 'medium');
+          setTheme(draftVersion.theme || 'default');
+          setBannerColor(draftVersion.banner_color || 'blue');
+          setBannerCustomColor(draftVersion.banner_custom_color || '#2563EB');
+          setBannerMode(draftVersion.banner_mode || 'gradient');
+          setAccentColor(draftVersion.accent_color || 'blue');
+          setAccentCustomColor(draftVersion.accent_custom_color || '#2563EB');
+          setRequireConsent(draftVersion.require_consent);
+          setConsentHeading(draftVersion.consent_heading);
+          setConsentText(draftVersion.consent_text || '');
+          setConsentRequireLocation(draftVersion.consent_require_location);
           setIsActive(formData.is_active);
         } else {
           // Use published form data
@@ -144,7 +167,7 @@ export default function EditFormPage() {
     if (formId) {
       loadForm();
     }
-  }, [formId, draft, isDraftMode]);
+  }, [formId, draftVersion, isDraftMode]);
 
   // Auto-save draft every 30 seconds (pause when preview is open)
   useEffect(() => {
@@ -155,14 +178,13 @@ export default function EditFormPage() {
     }, 30000);
     
     return () => clearInterval(interval);
-  }, [form, title, description, fields, logoUrl, logoPosition, logoSize, theme, bannerColor, bannerCustomColor, bannerMode, accentColor, accentCustomColor, requireConsent, consentHeading, consentText, consentRequireLocation, showPreview]);
+  }, [form, title, description, fields, logoUrl, logoPosition, logoSize, theme, bannerColor, bannerCustomColor, bannerMode, accentColor, accentCustomColor, requireConsent, consentHeading, consentText, consentRequireLocation, showPreview, draftVersionId]);
 
   const handleAutoSave = async () => {
-    if (!form || form.status !== 'published') return;
+    if (!form || form.status !== 'published' || !isEditingDraft || !draftVersionId) return;
     
     try {
-      await saveDraft({
-        form_id: formId,
+      await updateDraft(draftVersionId, {
         title,
         description,
         logo_url: logoUrl,
@@ -186,11 +208,16 @@ export default function EditFormPage() {
     }
   };
 
+  // Save changes to existing draft version
   const handleSaveDraft = async () => {
+    if (!draftVersionId) {
+      showToast('error', 'ไม่พบ Draft ที่กำลังแก้ไข');
+      return;
+    }
+    
     setIsSaving(true);
     try {
-      await saveDraft({
-        form_id: formId,
+      await updateDraft(draftVersionId, {
         title,
         description,
         logo_url: logoUrl,
@@ -210,14 +237,100 @@ export default function EditFormPage() {
       });
       showToast('success', 'บันทึก Draft สำเร็จ');
     } catch (err) {
-      console.error('Save as draft error:', err);
+      console.error('Save draft error:', err);
       showToast('error', 'เกิดข้อผิดพลาดในการบันทึก: ' + (err instanceof Error ? err.message : 'Unknown error'));
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleSaveAsDraft = async () => {
+  // Create new draft version from current form
+  const handleCreateDraft = async () => {
+    setIsSaving(true);
+    try {
+      const newDraft = await createDraft({
+        title,
+        description,
+        logo_url: logoUrl,
+        theme,
+        banner_color: bannerColor,
+        banner_custom_color: bannerCustomColor,
+        banner_mode: bannerMode,
+        accent_color: accentColor,
+        accent_custom_color: accentCustomColor,
+        logo_position: logoPosition,
+        logo_size: logoSize,
+        fields,
+        require_consent: requireConsent,
+        consent_heading: consentHeading,
+        consent_text: consentText,
+        consent_require_location: consentRequireLocation,
+      });
+      setIsEditingDraft(true);
+      setDraftVersionId(newDraft.id);
+      showToast('success', 'สร้าง Draft ใหม่สำเร็จ');
+    } catch (err) {
+      console.error('Create draft error:', err);
+      showToast('error', 'เกิดข้อผิดพลาดในการสร้าง Draft: ' + (err instanceof Error ? err.message : 'Unknown error'));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Publish draft version
+  const handlePublishDraft = async () => {
+    if (!draftVersionId) {
+      showToast('error', 'ไม่พบ Draft ที่จะ Publish');
+      return;
+    }
+    
+    setIsSaving(true);
+    try {
+      await publishDraft(draftVersionId, changeSummary);
+      setIsEditingDraft(false);
+      setDraftVersionId(null);
+      setShowPublishModal(false);
+      setChangeSummary('');
+      showToast('success', 'Publish Draft สำเร็จ');
+      // Refresh page to load published data
+      router.refresh();
+    } catch (err) {
+      console.error('Publish error:', err);
+      showToast('error', 'เกิดข้อผิดพลาดในการ Publish: ' + (err instanceof Error ? err.message : 'Unknown error'));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Delete draft version
+  const handleDeleteDraft = async () => {
+    if (!draftVersionId) {
+      showToast('error', 'ไม่พบ Draft ที่จะลบ');
+      return;
+    }
+    
+    if (!confirm('ต้องการลบ Draft นี้ใช่หรือไม่? การเปลี่ยนแปลงทั้งหมดจะสูญหาย')) {
+      return;
+    }
+    
+    setIsSaving(true);
+    try {
+      await deleteDraft(draftVersionId);
+      setIsEditingDraft(false);
+      setDraftVersionId(null);
+      showToast('success', 'ลบ Draft สำเร็จ');
+      // Reload with published data
+      router.push(`/admin/forms/${formId}`);
+    } catch (err) {
+      console.error('Delete draft error:', err);
+      showToast('error', 'เกิดข้อผิดพลาดในการลบ Draft: ' + (err instanceof Error ? err.message : 'Unknown error'));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Save published form directly (for non-published forms)
+  const handleSavePublished = async () => {
     setIsSaving(true);
     try {
       const supabase = getSupabaseBrowser();
@@ -240,7 +353,7 @@ export default function EditFormPage() {
       if (error) throw error;
       showToast('success', 'บันทึกสำเร็จ');
     } catch (err) {
-      console.error('Save draft error:', err);
+      console.error('Save error:', err);
       showToast('error', 'เกิดข้อผิดพลาดในการบันทึก: ' + (err instanceof Error ? err.message : 'Unknown error'));
     } finally {
       setIsSaving(false);
@@ -253,7 +366,7 @@ export default function EditFormPage() {
 
   const confirmDiscardDraft = async () => {
     try {
-      await discardDraft();
+      await discardOldDraft();
       setShowDiscardConfirm(false);
       router.refresh();
       window.location.href = `/admin/forms/${formId}`;
@@ -312,16 +425,15 @@ export default function EditFormPage() {
           consent_heading: consentHeading,
           consent_text: consentText,
           consent_require_location: consentRequireLocation,
-          change_summary: draft?.is_revert 
-            ? `Reverted to v${draft.revert_to_version} + edits` 
-            : `Updated to version ${newVersion}`,
+          change_summary: `Updated to version ${newVersion}`,
           published_at: new Date().toISOString(),
         });
       
       if (versionError) throw versionError;
       
-      if (hasDraft) {
-        await discardDraft();
+      // Clean up old draft if exists
+      if (oldDraft) {
+        await discardOldDraft();
       }
       
       showToast('success', `Publish สำเร็จ (Version ${newVersion})`);
@@ -357,7 +469,7 @@ export default function EditFormPage() {
 
   // Create snapshot when opening preview
   const handleOpenPreview = () => {
-    setPreviewSnapshot({
+    const snapshot = {
       ...form,
       title,
       description,
@@ -375,7 +487,13 @@ export default function EditFormPage() {
       consent_heading: consentHeading,
       consent_text: consentText,
       consent_require_location: consentRequireLocation,
+    };
+    console.log('Preview snapshot:', { 
+      banner_color: snapshot.banner_color, 
+      banner_custom_color: snapshot.banner_custom_color,
+      banner_mode: snapshot.banner_mode 
     });
+    setPreviewSnapshot(snapshot);
     setShowPreview(true);
   };
 
@@ -415,24 +533,27 @@ export default function EditFormPage() {
             <Edit3 className="w-5 h-5 text-amber-600 mt-0.5 shrink-0" />
             <div className="flex-1 min-w-0">
               <p className="font-medium text-amber-900">
-                คุณกำลังแก้ไข Draft
-                {draft.is_revert && (
-                  <span className="ml-2 text-sm font-normal">
-                    (Revert จาก v{draft.revert_to_version})
-                  </span>
-                )}
+                คุณกำลังแก้ไข Draft Version
               </p>
               <p className="text-sm text-amber-700 mt-1">
-                ฟอร์มที่ Publish อยู่ (v{form.current_version}) ยังไม่มีการเปลี่ยนแปลง 
+                ฟอร์มที่ Publish อยู่ (v{currentVersion?.version || form?.current_version || 0}) ยังไม่มีการเปลี่ยนแปลง 
                 ผู้ใช้ยังเห็นเวอร์ชันเดิมอยู่
               </p>
             </div>
-            <button 
-              onClick={handleDiscardDraft}
-              className="shrink-0 px-4 py-2 bg-amber-100 hover:bg-amber-200 text-amber-800 text-sm font-medium rounded-lg transition-colors"
-            >
-              ละทิ้ง Draft
-            </button>
+            <div className="flex gap-2">
+              <button 
+                onClick={handleDeleteDraft}
+                className="shrink-0 px-4 py-2 bg-amber-100 hover:bg-amber-200 text-amber-800 text-sm font-medium rounded-lg transition-colors"
+              >
+                ลบ Draft
+              </button>
+              <button 
+                onClick={() => setShowPublishModal(true)}
+                className="shrink-0 px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors"
+              >
+                Publish Draft
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -463,7 +584,7 @@ export default function EditFormPage() {
                 Version {form.current_version || 0}
               </span>
             )}
-            {hasDraft && (
+            {hasNewDraft && (
               <span className="px-3 py-1.5 bg-amber-100 text-amber-700 text-sm font-medium rounded-lg flex items-center gap-1.5">
                 <Edit3 className="w-4 h-4" />
                 มี Draft
@@ -490,19 +611,40 @@ export default function EditFormPage() {
           </button>
           
           {form.status === 'published' && (
-            <button
-              onClick={handleSaveDraft}
-              disabled={isSaving}
-              className="flex items-center gap-2 px-4 lg:px-6 py-2 bg-amber-600 text-white rounded-xl font-medium hover:bg-amber-700 disabled:opacity-50"
-            >
-              <Save className="w-4 h-4" />
-              {isSaving ? 'กำลังบันทึก...' : (hasDraft ? 'บันทึก Draft' : 'สร้าง Draft')}
-            </button>
+            <>
+              {isEditingDraft ? (
+                <button
+                  onClick={handleSaveDraft}
+                  disabled={isSaving}
+                  className="flex items-center gap-2 px-4 lg:px-6 py-2 bg-amber-600 text-white rounded-xl font-medium hover:bg-amber-700 disabled:opacity-50"
+                >
+                  <Save className="w-4 h-4" />
+                  {isSaving ? 'กำลังบันทึก...' : 'บันทึก Draft'}
+                </button>
+              ) : hasNewDraft ? (
+                <Link
+                  href={`/admin/forms/${formId}?draft=true`}
+                  className="flex items-center gap-2 px-4 lg:px-6 py-2 bg-amber-600 text-white rounded-xl font-medium hover:bg-amber-700"
+                >
+                  <Edit3 className="w-4 h-4" />
+                  แก้ไข Draft
+                </Link>
+              ) : (
+                <button
+                  onClick={handleCreateDraft}
+                  disabled={isSaving}
+                  className="flex items-center gap-2 px-4 lg:px-6 py-2 bg-amber-600 text-white rounded-xl font-medium hover:bg-amber-700 disabled:opacity-50"
+                >
+                  <GitBranch className="w-4 h-4" />
+                  {isSaving ? 'กำลังสร้าง...' : 'สร้าง Draft'}
+                </button>
+              )}
+            </>
           )}
           
           {form.status === 'draft' && (
             <button
-              onClick={handleSaveAsDraft}
+              onClick={handleSavePublished}
               disabled={isSaving}
               className="flex items-center gap-2 px-4 lg:px-6 py-2 bg-amber-600 text-white rounded-xl font-medium hover:bg-amber-700 disabled:opacity-50"
             >
@@ -1048,6 +1190,58 @@ export default function EditFormPage() {
                 className="flex-1 py-2.5 px-4 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium transition-colors"
               >
                 ละทิ้ง Draft
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Publish Draft Modal */}
+      {showPublishModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-lg w-full shadow-2xl">
+            <div className="flex items-center gap-3 text-green-600 mb-4">
+              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                <Rocket className="w-6 h-6" />
+              </div>
+              <h3 className="text-lg font-semibold">Publish Draft</h3>
+            </div>
+            
+            <p className="text-slate-600 mb-4">
+              Draft นี้จะกลายเป็น Version ใหม่ที่ใช้งานจริง ผู้ใช้จะเห็นการเปลี่ยนแปลงทันที
+            </p>
+            
+            <div className="space-y-4 mb-6">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  บันทึกการเปลี่ยนแปลง (Change Summary)
+                </label>
+                <textarea
+                  value={changeSummary}
+                  onChange={(e) => setChangeSummary(e.target.value)}
+                  placeholder="เช่น: แก้ไขคำถามข้อ 3, เพิ่มตัวเลือกใหม่..."
+                  className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  rows={3}
+                />
+              </div>
+            </div>
+            
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowPublishModal(false);
+                  setChangeSummary('');
+                }}
+                className="flex-1 py-2.5 px-4 border-2 border-slate-300 text-slate-700 rounded-xl hover:bg-slate-50 font-medium transition-colors"
+              >
+                ยกเลิก
+              </button>
+              <button
+                onClick={handlePublishDraft}
+                disabled={isSaving}
+                className="flex-1 py-2.5 px-4 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white rounded-xl font-medium transition-colors"
+              >
+                {isSaving ? 'กำลัง Publish...' : 'Publish Draft'}
               </button>
             </div>
           </div>
