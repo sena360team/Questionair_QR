@@ -545,12 +545,13 @@ export default function EditFormPage() {
             <div className="sm:ml-auto py-2 sm:py-0">
               <ActionBar
                 onPreview={handleOpenPreview}
-                onSaveDraft={isEditingDraft ? handleSaveDraft : undefined}
-                onPublish={isEditingDraft ? () => setShowPublishModal(true) : undefined}
+                onSaveDraft={isEditingDraft ? handleSaveDraft : form.status === 'draft' ? handleSavePublished : undefined}
+                onPublish={() => setShowPublishModal(true)}
                 isSaving={isSaving}
-                showSaveDraft={isEditingDraft}
-                showPublish={isEditingDraft}
+                showSaveDraft={true}
+                showPublish={true}
                 nextVersion={(form.current_version || 0) + 1}
+                saveDraftLabel={isEditingDraft ? 'บันทึก draft' : form.status === 'draft' ? 'บันทึก' : undefined}
               />
             </div>
           </div>
