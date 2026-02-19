@@ -535,9 +535,7 @@ export default function EditFormPage() {
           formTitle={form.title}
           onCopy={() => setShowDuplicateDialog(true)}
           onDeleteDraft={isEditingDraft ? handleDeleteDraft : undefined}
-          onPublish={isEditingDraft ? () => setShowPublishModal(true) : undefined}
           hasDraft={isEditingDraft}
-          nextVersion={isEditingDraft ? (form.current_version || 0) + 1 : undefined}
         />
 
         {/* Tabs + ActionBar - V4 */}
@@ -548,8 +546,11 @@ export default function EditFormPage() {
               <ActionBar
                 onPreview={handleOpenPreview}
                 onSaveDraft={isEditingDraft ? handleSaveDraft : undefined}
+                onPublish={isEditingDraft ? () => setShowPublishModal(true) : undefined}
                 isSaving={isSaving}
                 showSaveDraft={isEditingDraft}
+                showPublish={isEditingDraft}
+                nextVersion={(form.current_version || 0) + 1}
               />
             </div>
           </div>

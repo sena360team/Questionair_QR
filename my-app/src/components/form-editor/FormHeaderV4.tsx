@@ -1,16 +1,14 @@
 'use client';
 
 import Link from 'next/link';
-import { Copy, Trash2, Rocket } from 'lucide-react';
+import { Copy, Trash2 } from 'lucide-react';
 
 interface FormHeaderV4Props {
   formCode: string;
   formTitle: string;
   onCopy: () => void;
   onDeleteDraft?: () => void;
-  onPublish?: () => void;
   hasDraft?: boolean;
-  nextVersion?: number;
 }
 
 export function FormHeaderV4({ 
@@ -18,9 +16,7 @@ export function FormHeaderV4({
   formTitle, 
   onCopy, 
   onDeleteDraft,
-  onPublish,
-  hasDraft,
-  nextVersion
+  hasDraft
 }: FormHeaderV4Props) {
   return (
     <div className="px-4 py-4 border-b border-slate-100">
@@ -63,20 +59,6 @@ export function FormHeaderV4({
             >
               <Trash2 className="w-3.5 h-3.5" />
               ลบ Draft
-            </button>
-          )}
-          
-          {/* Publish */}
-          {hasDraft && onPublish && (
-            <button
-              onClick={onPublish}
-              className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded-md transition-colors"
-            >
-              <Rocket className="w-3.5 h-3.5" />
-              <span>Publish</span>
-              {nextVersion && (
-                <span className="text-green-100">v{nextVersion}</span>
-              )}
             </button>
           )}
         </div>
