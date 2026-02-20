@@ -97,9 +97,17 @@ export function VersionHistory({ formId, currentVersion }: VersionHistoryProps) 
               <div className="flex items-start gap-3">
                 <Edit3 className="w-5 h-5 text-amber-600 mt-0.5 shrink-0" />
                 <div className="flex-1">
-                  <p className="font-medium text-amber-900">
-                    มี Draft Version ที่กำลังแก้ไข
-                  </p>
+                  <div className="flex items-center gap-2 mb-1">
+                    <p className="font-medium text-amber-900">
+                      มี Draft Version {draftVersion.version} ที่กำลังแก้ไข
+                    </p>
+                    <span
+                      className="px-2 py-0.5 text-xs font-medium rounded-full border"
+                      style={getVersionBadgeStyle(draftVersion.version)}
+                    >
+                      v{draftVersion.version}
+                    </span>
+                  </div>
                   <p className="text-sm text-amber-700 mt-1">
                     สร้างเมื่อ {formatDate(draftVersion.created_at, {
                       day: 'numeric',
@@ -132,7 +140,7 @@ export function VersionHistory({ formId, currentVersion }: VersionHistoryProps) 
 
               return (
                 <div
-                  key={version.version}
+                  key={version.id}
                   className={cn(
                     "border rounded-xl overflow-hidden transition-all",
                     isCurrent ? "border-blue-500 bg-blue-50/50" : "border-slate-300 bg-white"
@@ -159,12 +167,15 @@ export function VersionHistory({ formId, currentVersion }: VersionHistoryProps) 
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <span className="text-sm text-slate-500">
-                          {formatDate(version.published_at, {
-                            day: 'numeric',
-                            month: 'short',
-                            year: 'numeric'
-                          })}
+                        <span className={`text-sm ${version.status === 'draft' ? 'text-amber-600 font-medium' : 'text-slate-500'}`}>
+                          {version.status === 'draft'
+                            ? '(Draft)'
+                            : formatDate(version.published_at, {
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric'
+                              })
+                          }
                         </span>
                         {isExpanded ? (
                           <ChevronUp className="w-4 h-4 text-slate-400" />

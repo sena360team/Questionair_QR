@@ -16,11 +16,13 @@ export function cn(...inputs: ClassValue[]) {
  * Format date to Thai locale
  */
 export function formatDate(
-  date: string | Date,
+  date: string | Date | null | undefined,
   options?: Intl.DateTimeFormatOptions
 ): string {
+  if (!date) return '';
+
   const d = typeof date === 'string' ? new Date(date) : date;
-  
+
   const defaultOptions: Intl.DateTimeFormatOptions = {
     year: 'numeric',
     month: 'long',
@@ -29,7 +31,7 @@ export function formatDate(
     minute: '2-digit',
     ...options
   };
-  
+
   return d.toLocaleDateString('th-TH', defaultOptions);
 }
 

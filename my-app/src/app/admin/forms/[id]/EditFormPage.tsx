@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { FormBuilder } from '@/components/FormBuilder';
 import { FormRenderer } from '@/components/FormRenderer';
@@ -19,9 +19,7 @@ import { cn } from '@/lib/utils';
 export default function EditFormPage() {
   const params = useParams();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const formId = params.id as string;
-  const isDraftMode = searchParams.get('draft') === 'true';
 
   const [form, setForm] = useState<Form | null>(null);
   const [loading, setLoading] = useState(true);
@@ -53,6 +51,17 @@ export default function EditFormPage() {
   const [isEditingDraft, setIsEditingDraft] = useState(false);
   const [draftVersionId, setDraftVersionId] = useState<string | null>(null);
 
+  // Sync draftVersionId from hook's draftVersion (important after refresh)
+  useEffect(() => {
+    if (draftVersion && draftVersion.id) {
+      if (draftVersionId !== draftVersion.id) {
+        console.log('[EditFormPage] Syncing draftVersionId from hook:', draftVersion.id);
+        setDraftVersionId(draftVersion.id);
+        setIsEditingDraft(true);
+      }
+    }
+  }, [draftVersion]);
+
   // Form state
   const [title, setTitle] = useState('');
   const [slug, setSlug] = useState('');
@@ -77,6 +86,7 @@ export default function EditFormPage() {
   const [changeSummary, setChangeSummary] = useState('');
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showDeactivateConfirm, setShowDeactivateConfirm] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successMessage, setSuccessMessage] = useState({ title: '', message: '' });
 
@@ -112,8 +122,8 @@ export default function EditFormPage() {
         const formData = data as Form;
         setForm(formData);
 
-        // If has new draft version and user comes with ?draft=true, use draft data
-        if (draftVersion && isDraftMode) {
+        // If has existing draft version, automatically load it
+        if (draftVersion) {
           setIsEditingDraft(true);
           setDraftVersionId(draftVersion.id);
           setTitle(draftVersion.title);
@@ -134,7 +144,7 @@ export default function EditFormPage() {
           setConsentHeading(draftVersion.consent_heading);
           setConsentText(draftVersion.consent_text || '');
           setConsentRequireLocation(draftVersion.consent_require_location);
-          setIsActive(formData.is_active);
+          setIsActive(formData.is_active ?? true);
         } else {
           // Use published form data
           setTitle(formData.title);
@@ -155,7 +165,7 @@ export default function EditFormPage() {
           setConsentHeading(formData.consent_heading || 'การยินยอม (Consent)');
           setConsentText(formData.consent_text || '');
           setConsentRequireLocation(formData.consent_require_location || false);
-          setIsActive(formData.is_active);
+          setIsActive(formData.is_active ?? true);
         }
       } catch (err) {
         console.error('Error loading form:', err);
@@ -168,7 +178,7 @@ export default function EditFormPage() {
     if (formId) {
       loadForm();
     }
-  }, [formId, draftVersion, isDraftMode]);
+  }, [formId, draftVersion]);
 
   // Auto-save draft every 30 seconds (pause when preview is open)
   useEffect(() => {
@@ -211,13 +221,16 @@ export default function EditFormPage() {
 
   // Save changes to draft version (create new if not exists)
   const handleSaveDraft = async () => {
-    console.log('[handleSaveDraft] Called, draftVersionId:', draftVersionId);
+    console.log('[handleSaveDraft] Called, draftVersionId:', draftVersionId, 'draftVersion:', draftVersion?.id);
     setIsSaving(true);
     try {
-      if (draftVersionId) {
-        console.log('[handleSaveDraft] Updating existing draft:', draftVersionId);
+      // Check if we have an existing draft (either from state or from hook)
+      const existingDraftId = draftVersionId || draftVersion?.id;
+      
+      if (existingDraftId) {
+        console.log('[handleSaveDraft] Updating existing draft:', existingDraftId);
         // Update existing draft
-        await updateDraft(draftVersionId, {
+        await updateDraft(existingDraftId, {
           title,
           description,
           logo_url: logoUrl,
@@ -235,6 +248,11 @@ export default function EditFormPage() {
           consent_text: consentText,
           consent_require_location: consentRequireLocation,
         });
+        // Set state if not already set
+        if (!draftVersionId) {
+          setDraftVersionId(existingDraftId);
+          setIsEditingDraft(true);
+        }
       } else {
         console.log('[handleSaveDraft] Creating new draft');
         // Create new draft
@@ -261,11 +279,28 @@ export default function EditFormPage() {
         console.log('[handleSaveDraft] New draft created:', newDraft.id);
       }
       console.log('[handleSaveDraft] Success');
+      console.log('[handleSaveDraft] Before state update - draftVersionId:', draftVersionId, 'isEditingDraft:', isEditingDraft);
+      
+      // Show immediate toast notification
+      showToast('success', draftVersionId ? 'อัพเดต Draft สำเร็จ' : 'สร้าง Draft ใหม่สำเร็จ');
+      
+      // Set editing draft state
+      setIsEditingDraft(true);
+      console.log('[handleSaveDraft] After setIsEditingDraft(true)');
+      
+      // Refresh to update data
+      await refreshVersions();
+      console.log('[handleSaveDraft] After refreshVersions');
+      
+      // Set flag to refresh forms list when navigating back
+      sessionStorage.setItem('refreshFormsList', 'true');
+      console.log('[handleSaveDraft] Set sessionStorage flag');
+      
       setSuccessMessage({
         title: 'บันทึก Draft สำเร็จ',
         message: draftVersionId 
           ? 'Draft ของคุณได้รับการอัพเดตเรียบร้อยแล้ว' 
-          : 'สร้าง Draft ใหม่สำเร็จ คุณสามารถแก้ไขต่อและ Publish ได้ภายหลัง'
+          : 'สร้าง Draft ใหม่สำเร่จ คุณสามารถแก้ไขต่อและ Publish ได้ภายหลัง'
       });
       setShowSuccessModal(true);
     } catch (err) {
@@ -324,8 +359,11 @@ export default function EditFormPage() {
       setShowPublishModal(false);
       setChangeSummary('');
       showToast('success', 'Publish Draft สำเร็จ');
-      // Refresh page to load published data
-      router.refresh();
+
+      // Navigate back to forms list to refresh (forms list will refresh via sessionStorage flag)
+      setTimeout(() => {
+        router.push('/admin/forms');
+      }, 500);
     } catch (err) {
       console.error('Publish error:', err);
       showToast('error', 'เกิดข้อผิดพลาดในการ Publish: ' + (err instanceof Error ? err.message : 'Unknown error'));
@@ -345,7 +383,7 @@ export default function EditFormPage() {
 
   const confirmDeleteDraft = async () => {
     if (!draftVersionId) return;
-    
+
     setIsSaving(true);
     try {
       await deleteDraft(draftVersionId);
@@ -358,6 +396,32 @@ export default function EditFormPage() {
     } catch (err) {
       console.error('Delete draft error:', err);
       showToast('error', 'เกิดข้อผิดพลาดในการลบ Draft: ' + (err instanceof Error ? err.message : 'Unknown error'));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Toggle form active status
+  const handleToggleActive = async (newActiveState: boolean) => {
+    setIsSaving(true);
+    try {
+      const supabase = getSupabaseBrowser();
+      const { error } = await supabase
+        .from('forms')
+        .update({ is_active: newActiveState })
+        .eq('id', formId);
+
+      if (error) throw error;
+
+      setIsActive(newActiveState);
+      setShowDeactivateConfirm(false);
+      showToast(
+        'success',
+        newActiveState ? 'เปิดใช้งานแบบสอบถามสำเร็จ' : 'ปิดใช้งานแบบสอบถามชั่วคราวสำเร็จ'
+      );
+    } catch (err) {
+      console.error('Toggle active error:', err);
+      showToast('error', 'เกิดข้อผิดพลาดในการเปลี่ยนสถานะ: ' + (err instanceof Error ? err.message : 'Unknown error'));
     } finally {
       setIsSaving(false);
     }
@@ -599,11 +663,15 @@ export default function EditFormPage() {
     consent_require_location: consentRequireLocation,
   };
 
+  // DEBUG: Log render state
+  console.log('[EditFormPage] Render - isEditingDraft:', isEditingDraft, 'currentVersion:', currentVersion?.version, 'draftVersionId:', draftVersionId);
+  
   return (
     <div className="space-y-6">
       {/* Draft Alert - V4 */}
-      {isEditingDraft && currentVersion && (
-        <DraftAlert currentVersion={currentVersion.version} />
+      {console.log('[EditFormPage] DraftAlert condition:', { isEditingDraft, hasCurrentVersion: !!currentVersion, currentVersionNumber: form?.current_version })}
+      {isEditingDraft && (
+        <DraftAlert currentVersion={form?.current_version ?? null} />
       )}
 
       {/* Main Card */}
@@ -627,7 +695,7 @@ export default function EditFormPage() {
                 onSaveDraft={handleSaveDraft}
                 onPublish={() => setShowPublishModal(true)}
                 isSaving={isSaving}
-                nextVersion={(form.current_version || 0) + 1}
+                nextVersion={draftVersion?.version ?? ((form.current_version ?? 0) + 1)}
               />
             </div>
           </div>
@@ -788,7 +856,7 @@ export default function EditFormPage() {
                   <h3 className="text-sm font-medium text-slate-700 mb-3">รูปแบบฟอร์ม</h3>
                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                     {[
-                      { value: 'default', label: 'ดั้งเดิม', desc: 'คลาสสิก เรียบง่าย' },
+                      { value: 'default', label: 'มาตรฐาน', desc: 'คลาสสิก เรียบง่าย' },
                       { value: 'card-groups', label: 'การ์ดแยกกลุ่ม', desc: 'แบ่งเป็นหมวดหมู่' },
                       { value: 'step-wizard', label: 'ขั้นตอน Step', desc: 'กรอกทีละขั้น' },
                       { value: 'minimal', label: 'มินิมอล', desc: 'เรียบง่ายที่สุด' },
@@ -989,6 +1057,47 @@ export default function EditFormPage() {
                 </div>
               </div>
 
+              {/* Form Status Settings */}
+              <div className="bg-white p-6 rounded-2xl border-2 border-slate-300">
+                <h2 className="text-lg font-semibold mb-4">สถานะแบบสอบถาม</h2>
+
+                {/* Active/Inactive Toggle */}
+                <div className="flex items-center justify-between p-4 border-2 border-slate-300 rounded-xl">
+                  <div className="flex-1">
+                    <div className="font-medium text-slate-900 mb-1">
+                      {isActive ? '🟢 เปิดใช้งาน' : '🔴 ปิดใช้งานชั่วคราว'}
+                    </div>
+                    <p className="text-sm text-slate-500">
+                      {isActive
+                        ? 'แบบสอบถามนี้สามารถรับคำตอบได้ตามปกติ'
+                        : 'แบบสอบถามนี้ถูกปิดชั่วคราว ผู้ใช้จะไม่สามารถตอบได้'}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      if (isActive) {
+                        // ถ้ากำลังเปิดอยู่ และต้องการปิด → แสดง confirmation
+                        setShowDeactivateConfirm(true);
+                      } else {
+                        // ถ้ากำลังปิดอยู่ และต้องการเปิด → เปิดเลย
+                        handleToggleActive(true);
+                      }
+                    }}
+                    className={cn(
+                      "relative inline-flex h-8 w-14 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2",
+                      isActive ? "bg-green-600" : "bg-slate-400"
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "pointer-events-none inline-block h-7 w-7 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
+                        isActive ? "translate-x-6" : "translate-x-0"
+                      )}
+                    />
+                  </button>
+                </div>
+              </div>
+
               {/* Consent Settings */}
               <div className="bg-white p-6 rounded-2xl border-2 border-slate-300">
                 <div className="flex items-center gap-3 mb-4">
@@ -1113,6 +1222,18 @@ export default function EditFormPage() {
         onCancel={() => setShowDeleteConfirm(false)}
       />
 
+      {/* Deactivate Confirm Dialog */}
+      <ConfirmDialog
+        isOpen={showDeactivateConfirm}
+        title="ปิดใช้งานแบบสอบถามชั่วคราว"
+        message="คุณต้องการปิดแบบสอบถามนี้ชั่วคราวใช่หรือไม่? ผู้ใช้จะไม่สามารถตอบแบบสอบถามได้จนกว่าคุณจะเปิดใช้งานอีกครั้ง"
+        confirmText="ปิดใช้งาน"
+        cancelText="ยกเลิก"
+        confirmVariant="warning"
+        onConfirm={() => handleToggleActive(false)}
+        onCancel={() => setShowDeactivateConfirm(false)}
+      />
+
       {/* Success Modal */}
       <SuccessModal
         isOpen={showSuccessModal}
@@ -1208,11 +1329,16 @@ export default function EditFormPage() {
               <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
                 <Rocket className="w-6 h-6" />
               </div>
-              <h3 className="text-lg font-semibold">Publish Draft</h3>
+              <h3 className="text-lg font-semibold">
+                {form?.status === 'published' ? 'Publish Draft' : 'Publish ฟอร์ม'}
+              </h3>
             </div>
 
             <p className="text-slate-600 mb-4">
-              Draft นี้จะกลายเป็น Version ใหม่ที่ใช้งานจริง ผู้ใช้จะเห็นการเปลี่ยนแปลงทันที
+              {form?.status === 'published' 
+                ? 'Draft นี้จะกลายเป็น Version ใหม่ที่ใช้งานจริง ผู้ใช้จะเห็นการเปลี่ยนแปลงทันที'
+                : 'ฟอร์มนี้จะถูก Publish และสามารถใช้งานได้ทันที'
+              }
             </p>
 
             <div className="space-y-4 mb-6">
@@ -1241,11 +1367,11 @@ export default function EditFormPage() {
                 ยกเลิก
               </button>
               <button
-                onClick={handlePublishDraft}
+                onClick={form?.status === 'published' ? handlePublishDraft : handlePublish}
                 disabled={isSaving}
                 className="flex-1 py-2.5 px-4 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white rounded-xl font-medium transition-colors"
               >
-                {isSaving ? 'กำลัง Publish...' : 'Publish Draft'}
+                {isSaving ? 'กำลัง Publish...' : (form?.status === 'published' ? 'Publish Draft' : `Publish v${draftVersion?.version ?? ((form?.current_version ?? 0) + 1)}`)}
               </button>
             </div>
           </div>
