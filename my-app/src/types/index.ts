@@ -78,6 +78,14 @@ export interface Form {
   consent_heading?: string;  // หัวข้อ Consent (e.g., "การยินยอม", "ข้อตกลง")
   consent_text?: string;
   consent_require_location?: boolean;
+  // CSS Integration (Config is in global app_settings)
+  css_integration_enabled?: boolean;
+  css_field_mapping?: {
+    jobDetail: string;
+    customerName: string;
+    telephone: string;
+    email: string;
+  };
   // Clone tracking
   cloned_from?: string | null;
   cloned_at?: string | null;

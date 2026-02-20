@@ -115,7 +115,8 @@ export default function CreateFormPage() {
 
     setSaving(true);
     try {
-      await createForm({
+      // 1. สร้างฟอร์มเป็น draft ก่อน (current_version = NULL, draft_version = NULL)
+      const form = await createForm({
         code,
         title,
         slug,
@@ -136,9 +137,44 @@ export default function CreateFormPage() {
         consent_text: consentText,
         consent_require_location: consentRequireLocation,
       });
-      router.push('/admin/forms');
+
+      // 2. สร้าง version 0 (draft) ใน form_versions table
+      const versionResponse = await fetch('/api/form-versions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          formId: form.id,
+          title,
+          description,
+          logo_url: logoUrl,
+          logo_position: logoPosition,
+          logo_size: logoSize,
+          theme,
+          banner_color: bannerColor,
+          banner_custom_color: bannerCustomColor,
+          banner_mode: bannerMode,
+          accent_color: accentColor,
+          accent_custom_color: accentCustomColor,
+          fields,
+          require_consent: requireConsent,
+          consent_heading: consentHeading,
+          consent_text: consentText,
+          consent_require_location: consentRequireLocation,
+          change_summary: 'Initial draft',
+        }),
+      });
+
+      if (!versionResponse.ok) {
+        throw new Error('Failed to create version 0 draft');
+      }
+
+      showToast('success', 'บันทึก Draft สำเร็จ (v0 draft)');
+      setTimeout(() => {
+        router.push('/admin/forms');
+      }, 500);
     } catch (error) {
-      showToast('error', 'เกิดข้อผิดพลาด กรุณาลองใหม่');
+      console.error('Save draft error:', error);
+      showToast('error', 'เกิดข้อผิดพลาด: ' + (error instanceof Error ? error.message : 'Unknown'));
     } finally {
       setSaving(false);
     }
@@ -152,7 +188,7 @@ export default function CreateFormPage() {
 
     setSaving(true);
     try {
-      // 1. สร้างฟอร์ม
+      // 1. สร้างฟอร์มเป็น draft ก่อน (current_version = NULL)
       const form = await createForm({
         code,
         title,
@@ -168,18 +204,67 @@ export default function CreateFormPage() {
         accent_color: accentColor,
         accent_custom_color: accentCustomColor,
         fields,
-        status: 'published',
+        status: 'draft',  // สร้างเป็น draft ก่อน
         require_consent: requireConsent,
         consent_heading: consentHeading,
         consent_text: consentText,
         consent_require_location: consentRequireLocation,
       });
-      
-      // 2. Publish (สร้าง version 1)
-      // Note: ต้องรอ implement publishForm function
-      router.push('/admin/forms');
+
+      // 2. สร้าง version 0 (draft) ใน form_versions table
+      const versionResponse = await fetch('/api/form-versions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          formId: form.id,
+          title,
+          description,
+          logo_url: logoUrl,
+          logo_position: logoPosition,
+          logo_size: logoSize,
+          theme,
+          banner_color: bannerColor,
+          banner_custom_color: bannerCustomColor,
+          banner_mode: bannerMode,
+          accent_color: accentColor,
+          accent_custom_color: accentCustomColor,
+          fields,
+          require_consent: requireConsent,
+          consent_heading: consentHeading,
+          consent_text: consentText,
+          consent_require_location: consentRequireLocation,
+          change_summary: 'Initial version',
+        }),
+      });
+
+      if (!versionResponse.ok) {
+        throw new Error('Failed to create version 0');
+      }
+
+      const versionResult = await versionResponse.json();
+      const versionId = versionResult.data.id;
+
+      // 3. Publish version 0 ทันที → status: 'published', current_version: 0
+      const publishResponse = await fetch('/api/form-versions/publish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          versionId,
+          changeSummary: 'Initial version',
+        }),
+      });
+
+      if (!publishResponse.ok) {
+        throw new Error('Failed to publish version 0');
+      }
+
+      showToast('success', 'สร้างและ Publish แบบสอบถามสำเร็จ (v0)');
+      setTimeout(() => {
+        router.push('/admin/forms');
+      }, 500);
     } catch (error) {
-      showToast('error', 'เกิดข้อผิดพลาด กรุณาลองใหม่');
+      console.error('Publish error:', error);
+      showToast('error', 'เกิดข้อผิดพลาด: ' + (error instanceof Error ? error.message : 'Unknown'));
     } finally {
       setSaving(false);
     }
@@ -246,7 +331,7 @@ export default function CreateFormPage() {
             className="flex items-center justify-center gap-2 px-4 lg:px-6 py-2 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <Rocket className="w-5 h-5" />
-            {saving ? 'กำลังบันทึก...' : 'Publish v1'}
+            {saving ? 'กำลังบันทึก...' : 'Publish v0'}
           </button>
         </div>
       </div>
@@ -412,273 +497,286 @@ export default function CreateFormPage() {
             </div>
           </div>
 
-          {/* Theme Selector */}
+          {/* Theme & Color Settings Combined */}
           <div className="bg-white p-6 rounded-2xl border-2 border-slate-300">
-            <h2 className="text-lg font-semibold text-slate-900 mb-4">🎨 Theme (รูปแบบการแสดงผล)</h2>
-            
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-              {[
-                { value: 'default', label: 'ค่าเริ่มต้น', desc: 'เรียบง่าย สะอาดตา' },
-                { value: 'card-groups', label: 'การ์ดแยกกลุ่ม', desc: 'แบ่งกลุ่มคำถามเป็นการ์ด' },
-                { value: 'step-wizard', label: 'ขั้นตอน Step', desc: 'แบ่งเป็นขั้นตอน' },
-                { value: 'minimal', label: 'มินิมอล', desc: 'เรียบง่ายที่สุด' },
-              ].map((t) => (
-                <label
-                  key={t.value}
-                  className={`p-4 border-2 rounded-xl cursor-pointer transition-all ${
-                    theme === t.value
-                      ? 'border-purple-500 bg-purple-50'
-                      : 'border-slate-200 hover:border-slate-300'
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="theme"
-                    value={t.value}
-                    checked={theme === t.value}
-                    onChange={(e) => setTheme(e.target.value as any)}
-                    className="sr-only"
-                  />
-                  <div className="font-medium text-slate-900">{t.label}</div>
-                  <div className="text-xs text-slate-500 mt-1">{t.desc}</div>
-                </label>
-              ))}
-            </div>
-            
-            {/* Theme Help Text - Show for all themes */}
-            <div className="mt-4 p-4 bg-blue-50 rounded-xl border border-blue-200">
-              <p className="text-sm text-blue-800">
-                <span className="font-medium">โครงสร้างฟอร์ม:</span>
-              </p>
-              <ul className="mt-2 space-y-1 text-sm text-blue-700">
-                <li className="flex items-start gap-2">
-                  <span className="font-medium">Section</span> - 
-                  {theme === 'card-groups' ? 'เริ่มการ์ดใหม่' : 
-                   theme === 'step-wizard' ? 'เริ่มขั้นตอนใหม่' : 
-                   'หัวข้อหลัก (ใหญ่)'}
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="font-medium">Heading</span> - 
-                  หัวข้อย่อยภายใน Section 
-                  {theme === 'default' || theme === 'minimal' ? '(เล็กกว่า Section)' : ''}
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="font-medium">คำถามปกติ</span> - มีเลขลำดับ 1, 2, 3...
-                </li>
-              </ul>
-            </div>
-          </div>
-
-        {/* Two Column Grid: Color Settings & Consent Settings */}
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-          {/* Color Theme Settings */}
-          <div className="bg-white p-6 rounded-2xl border-2 border-slate-300">
-            <h2 className="text-lg font-semibold text-slate-900 mb-4">🎨 ตั้งค่าสี</h2>
-            
-            {/* Banner Color */}
-            <div className="mb-6">
-              <h3 className="text-sm font-medium text-slate-700 mb-3">สี Banner (พื้นหลังหัวเว็บ)</h3>
-              <div className="flex flex-wrap items-center gap-2">
-                <button
-                  onClick={() => setBannerColor('blue')}
-                  className={`w-8 h-8 rounded-lg bg-[#2563EB] hover:scale-110 transition-all ${
-                    bannerColor === 'blue' ? 'ring-2 ring-offset-2 ring-slate-400' : ''
-                  }`}
-                  title="Blue"
-                />
-                <button
-                  onClick={() => setBannerColor('black')}
-                  className={`w-8 h-8 rounded-lg bg-[#0F172A] hover:scale-110 transition-all ${
-                    bannerColor === 'black' ? 'ring-2 ring-offset-2 ring-slate-400' : ''
-                  }`}
-                  title="Black"
-                />
-                <button
-                  onClick={() => setBannerColor('white')}
-                  className={`w-8 h-8 rounded-lg bg-white border-2 border-slate-300 hover:scale-110 transition-all ${
-                    bannerColor === 'white' ? 'ring-2 ring-offset-2 ring-slate-400' : ''
-                  }`}
-                  title="White"
-                />
-                <button
-                  onClick={() => document.getElementById('bannerColorInput')?.click()}
-                  className={`w-8 h-8 rounded-lg bg-gradient-to-br from-slate-100 to-slate-300 border-2 border-slate-300 hover:scale-110 transition-all flex items-center justify-center ${
-                    bannerColor === 'custom' ? 'ring-2 ring-offset-2 ring-slate-400' : ''
-                  }`}
-                  title="Custom"
-                >
-                  <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                </button>
-                <input
-                  type="color"
-                  id="bannerColorInput"
-                  className="absolute opacity-0 pointer-events-none"
-                  value={bannerCustomColor}
-                  onChange={(e) => {
-                    setBannerCustomColor(e.target.value);
-                    setBannerColor('custom');
-                  }}
-                />
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+                <span className="text-2xl">🎨</span>
               </div>
-              {bannerColor === 'custom' && (
-                <p className="text-xs text-slate-500 mt-2">สีที่เลือก: {bannerCustomColor}</p>
-              )}
-            </div>
-
-            {/* Banner Mode */}
-            <div className="mb-6">
-              <h3 className="text-sm font-medium text-slate-700 mb-3">รูปแบบ Banner</h3>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setBannerMode('gradient')}
-                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                    bannerMode === 'gradient'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                  }`}
-                >
-                  Gradient
-                </button>
-                <button
-                  onClick={() => setBannerMode('solid')}
-                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                    bannerMode === 'solid'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                  }`}
-                >
-                  Solid
-                </button>
+              <div>
+                <h2 className="text-lg font-semibold text-slate-900">ธีมและสี</h2>
+                <p className="text-sm text-slate-500">ปรับแต่ง Theme และสีของฟอร์ม</p>
               </div>
             </div>
 
-            {/* Accent Color */}
-            <div>
-              <h3 className="text-sm font-medium text-slate-700 mb-3">สีรอง (Button, Heading, Section ขีด)</h3>
-              <div className="flex flex-wrap items-center gap-2">
+            {/* Theme Selector */}
+            <div className="mb-6">
+              <h3 className="text-sm font-medium text-slate-700 mb-3">รูปแบบฟอร์ม (Theme)</h3>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 {[
-                  { key: 'blue', color: '#2563EB' },
-                  { key: 'sky', color: '#0EA5E9' },
-                  { key: 'teal', color: '#0D9488' },
-                  { key: 'emerald', color: '#059669' },
-                  { key: 'violet', color: '#7C3AED' },
-                  { key: 'rose', color: '#E11D48' },
-                  { key: 'orange', color: '#EA580C' },
-                  { key: 'slate', color: '#475569' },
-                  { key: 'black', color: '#0F172A' },
-                ].map(({ key, color }) => (
-                  <button
-                    key={key}
-                    onClick={() => setAccentColor(key as any)}
-                    className={`w-8 h-8 rounded-lg hover:scale-110 transition-all ${
-                      accentColor === key ? 'ring-2 ring-offset-2 ring-slate-400' : ''
+                  { value: 'default', label: 'มาตรฐาน', desc: 'เรียบง่าย สะอาดตา' },
+                  { value: 'card-groups', label: 'การ์ดแยกกลุ่ม', desc: 'แบ่งกลุ่มคำถามเป็นการ์ด' },
+                  { value: 'step-wizard', label: 'ขั้นตอน Step', desc: 'แบ่งเป็นขั้นตอน' },
+                  { value: 'minimal', label: 'มินิมอล', desc: 'เรียบง่ายที่สุด' },
+                ].map((t) => (
+                  <label
+                    key={t.value}
+                    className={`p-4 border-2 rounded-xl cursor-pointer transition-all ${
+                      theme === t.value
+                        ? 'border-purple-500 bg-purple-50'
+                        : 'border-slate-200 hover:border-slate-300'
                     }`}
-                    style={{ backgroundColor: color }}
-                    title={key}
-                  />
+                  >
+                    <input
+                      type="radio"
+                      name="theme"
+                      value={t.value}
+                      checked={theme === t.value}
+                      onChange={(e) => setTheme(e.target.value as any)}
+                      className="sr-only"
+                    />
+                    <div className="font-medium text-slate-900">{t.label}</div>
+                    <div className="text-xs text-slate-500 mt-1">{t.desc}</div>
+                  </label>
                 ))}
-                <button
-                  onClick={() => document.getElementById('accentColorInput')?.click()}
-                  className={`w-8 h-8 rounded-lg bg-gradient-to-br from-slate-100 to-slate-300 border-2 border-slate-300 hover:scale-110 transition-all flex items-center justify-center ${
-                    accentColor === 'custom' ? 'ring-2 ring-offset-2 ring-slate-400' : ''
-                  }`}
-                  title="Custom"
-                >
-                  <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                </button>
-                <input
-                  type="color"
-                  id="accentColorInput"
-                  className="absolute opacity-0 pointer-events-none"
-                  value={accentCustomColor}
-                  onChange={(e) => {
-                    setAccentCustomColor(e.target.value);
-                    setAccentColor('custom');
-                  }}
-                />
               </div>
-              {accentColor === 'custom' && (
-                <p className="text-xs text-slate-500 mt-2">สีที่เลือก: {accentCustomColor}</p>
-              )}
+              
+              {/* Theme Help Text */}
+              <div className="mt-4 p-4 bg-blue-50 rounded-xl border border-blue-200">
+                <p className="text-sm text-blue-800">
+                  <span className="font-medium">โครงสร้างฟอร์ม:</span>
+                </p>
+                <ul className="mt-2 space-y-1 text-sm text-blue-700">
+                  <li className="flex items-start gap-2">
+                    <span className="font-medium">Section</span> - 
+                    {theme === 'card-groups' ? 'เริ่มการ์ดใหม่' : 
+                     theme === 'step-wizard' ? 'เริ่มขั้นตอนใหม่' : 
+                     'หัวข้อหลัก (ใหญ่)'}
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="font-medium">Heading</span> - 
+                    หัวข้อย่อยภายใน Section 
+                    {theme === 'default' || theme === 'minimal' ? '(เล็กกว่า Section)' : ''}
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="font-medium">คำถามปกติ</span> - มีเลขลำดับ 1, 2, 3...
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Divider */}
+            <div className="border-t border-slate-200 my-6"></div>
+
+            {/* Color Settings */}
+            <div>
+              <h3 className="text-sm font-medium text-slate-700 mb-4">ตั้งค่าสี</h3>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Banner Color */}
+                <div>
+                  <h4 className="text-sm font-medium text-slate-600 mb-3">สี Banner</h4>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      onClick={() => setBannerColor('blue')}
+                      className={`w-8 h-8 rounded-lg bg-[#2563EB] hover:scale-110 transition-all ${
+                        bannerColor === 'blue' ? 'ring-2 ring-offset-2 ring-slate-400' : ''
+                      }`}
+                      title="Blue"
+                    />
+                    <button
+                      onClick={() => setBannerColor('black')}
+                      className={`w-8 h-8 rounded-lg bg-[#0F172A] hover:scale-110 transition-all ${
+                        bannerColor === 'black' ? 'ring-2 ring-offset-2 ring-slate-400' : ''
+                      }`}
+                      title="Black"
+                    />
+                    <button
+                      onClick={() => setBannerColor('white')}
+                      className={`w-8 h-8 rounded-lg bg-white border-2 border-slate-300 hover:scale-110 transition-all ${
+                        bannerColor === 'white' ? 'ring-2 ring-offset-2 ring-slate-400' : ''
+                      }`}
+                      title="White"
+                    />
+                    <button
+                      onClick={() => document.getElementById('bannerColorInput')?.click()}
+                      className={`w-8 h-8 rounded-lg bg-gradient-to-br from-slate-100 to-slate-300 border-2 border-slate-300 hover:scale-110 transition-all flex items-center justify-center ${
+                        bannerColor === 'custom' ? 'ring-2 ring-offset-2 ring-slate-400' : ''
+                      }`}
+                      title="Custom"
+                    >
+                      <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                      </svg>
+                    </button>
+                    <input
+                      type="color"
+                      id="bannerColorInput"
+                      className="absolute opacity-0 pointer-events-none"
+                      value={bannerCustomColor}
+                      onChange={(e) => {
+                        setBannerCustomColor(e.target.value);
+                        setBannerColor('custom');
+                      }}
+                    />
+                  </div>
+                  {bannerColor === 'custom' && (
+                    <p className="text-xs text-slate-500 mt-2">สีที่เลือก: {bannerCustomColor}</p>
+                  )}
+                </div>
+
+                {/* Banner Mode */}
+                <div>
+                  <h4 className="text-sm font-medium text-slate-600 mb-3">รูปแบบ Banner</h4>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setBannerMode('gradient')}
+                      className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                        bannerMode === 'gradient'
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                      }`}
+                    >
+                      Gradient
+                    </button>
+                    <button
+                      onClick={() => setBannerMode('solid')}
+                      className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                        bannerMode === 'solid'
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                      }`}
+                    >
+                      Solid
+                    </button>
+                  </div>
+                </div>
+
+                {/* Accent Color */}
+                <div>
+                  <h4 className="text-sm font-medium text-slate-600 mb-3">สีรอง (Accent)</h4>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {[
+                      { key: 'blue', color: '#2563EB' },
+                      { key: 'sky', color: '#0EA5E9' },
+                      { key: 'teal', color: '#0D9488' },
+                      { key: 'emerald', color: '#059669' },
+                      { key: 'violet', color: '#7C3AED' },
+                      { key: 'rose', color: '#E11D48' },
+                      { key: 'orange', color: '#EA580C' },
+                      { key: 'slate', color: '#475569' },
+                      { key: 'black', color: '#0F172A' },
+                    ].map(({ key, color }) => (
+                      <button
+                        key={key}
+                        onClick={() => setAccentColor(key as any)}
+                        className={`w-8 h-8 rounded-lg hover:scale-110 transition-all ${
+                          accentColor === key ? 'ring-2 ring-offset-2 ring-slate-400' : ''
+                        }`}
+                        style={{ backgroundColor: color }}
+                        title={key}
+                      />
+                    ))}
+                    <button
+                      onClick={() => document.getElementById('accentColorInput')?.click()}
+                      className={`w-8 h-8 rounded-lg bg-gradient-to-br from-slate-100 to-slate-300 border-2 border-slate-300 hover:scale-110 transition-all flex items-center justify-center ${
+                        accentColor === 'custom' ? 'ring-2 ring-offset-2 ring-slate-400' : ''
+                      }`}
+                      title="Custom"
+                    >
+                      <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                      </svg>
+                    </button>
+                    <input
+                      type="color"
+                      id="accentColorInput"
+                      className="absolute opacity-0 pointer-events-none"
+                      value={accentCustomColor}
+                      onChange={(e) => {
+                        setAccentCustomColor(e.target.value);
+                        setAccentColor('custom');
+                      }}
+                    />
+                  </div>
+                  {accentColor === 'custom' && (
+                    <p className="text-xs text-slate-500 mt-2">สีที่เลือก: {accentCustomColor}</p>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Consent Settings */}
-          <div className="bg-white p-6 rounded-2xl border-2 border-slate-300">
-            <div className="flex items-center gap-3 mb-4">
-              <Shield className="w-5 h-5 text-green-600" />
-              <h2 className="text-lg font-semibold text-slate-900">การตั้งค่าความยินยอม (Consent)</h2>
-            </div>
-            
-            <div className="space-y-4">
-              <label className="flex items-start gap-3 cursor-pointer p-4 border-2 border-slate-300 rounded-xl hover:bg-slate-50 transition-colors">
-                <input
-                  type="checkbox"
-                  checked={requireConsent}
-                  onChange={(e) => setRequireConsent(e.target.checked)}
-                  className="w-5 h-5 text-green-600 border-slate-300 rounded focus:ring-green-500 mt-0.5"
-                />
-                <div>
-                  <span className="font-medium text-slate-900">ต้องการให้ผู้ตอบกดยินยอมก่อนส่ง</span>
-                  <p className="text-sm text-slate-500">ผู้ตอบต้องกดยินยอมและระบบจะบันทึก IP, เวลา และตำแหน่ง (ถ้าได้รับอนุญาต)</p>
-                </div>
-              </label>
+        {/* Consent Settings - Full Width */}
+        <div className="bg-white p-6 rounded-2xl border-2 border-slate-300">
+          <div className="flex items-center gap-3 mb-4">
+            <Shield className="w-5 h-5 text-green-600" />
+            <h2 className="text-lg font-semibold text-slate-900">การตั้งค่าความยินยอม (Consent)</h2>
+          </div>
+          
+          <div className="space-y-4">
+            <label className="flex items-start gap-3 cursor-pointer p-4 border-2 border-slate-300 rounded-xl hover:bg-slate-50 transition-colors">
+              <input
+                type="checkbox"
+                checked={requireConsent}
+                onChange={(e) => setRequireConsent(e.target.checked)}
+                className="w-5 h-5 text-green-600 border-slate-300 rounded focus:ring-green-500 mt-0.5"
+              />
+              <div>
+                <span className="font-medium text-slate-900">ต้องการให้ผู้ตอบกดยินยอมก่อนส่ง</span>
+                <p className="text-sm text-slate-500">ผู้ตอบต้องกดยินยอมและระบบจะบันทึก IP, เวลา และตำแหน่ง (ถ้าได้รับอนุญาต)</p>
+              </div>
+            </label>
 
-              {requireConsent && (
-                <div className="ml-0 sm:ml-8 space-y-4">
-                  {/* Consent Heading */}
-                  <div className="p-4 bg-green-50 border border-green-100 rounded-xl">
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                      หัวข้อ Consent
-                    </label>
-                    <input
-                      type="text"
-                      value={consentHeading}
-                      onChange={(e) => setConsentHeading(e.target.value)}
-                      placeholder="เช่น การยินยอม (Consent)"
-                      className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-green-500"
-                    />
-                  </div>
-                  
-                  {/* Consent Text */}
-                  <div className="p-4 bg-green-50 border border-green-100 rounded-xl">
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                      ข้อความแสดงความยินยอม
-                    </label>
-                    <textarea
-                      value={consentText}
-                      onChange={(e) => setConsentText(e.target.value)}
-                      placeholder="เช่น ข้าพเจ้ายินยอมให้เก็บข้อมูลส่วนบุคคล..."
-                      rows={3}
-                      className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-green-500 resize-none"
-                    />
-                  </div>
-                  
-                  {/* Require Location Option */}
-                  <label className="flex items-start gap-3 cursor-pointer p-4 bg-white border-2 border-slate-300 rounded-xl hover:bg-slate-50 transition-colors">
-                    <input
-                      type="checkbox"
-                      checked={consentRequireLocation}
-                      onChange={(e) => setConsentRequireLocation(e.target.checked)}
-                      className="w-5 h-5 text-green-600 border-slate-300 rounded focus:ring-green-500 mt-0.5"
-                    />
-                    <div>
-                      <span className="font-medium text-slate-900">ขอตำแหน่งที่ตั้ง (GPS) จากผู้ตอบ</span>
-                      <p className="text-sm text-slate-500">ระบบจะขออนุญาตเข้าถึบตำแหน่ง GPS เมื่อผู้ตอบกดยินยอม</p>
-                    </div>
+            {requireConsent && (
+              <div className="ml-0 sm:ml-8 space-y-4">
+                {/* Consent Heading */}
+                <div className="p-4 bg-green-50 border border-green-100 rounded-xl">
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    หัวข้อ Consent
                   </label>
-                  
-                  <p className="text-xs text-slate-500">
-                    💡 ระบบจะบันทึกเสมอ: เวลาที่กดยินยอม, IP Address
-                    {consentRequireLocation && ' และตำแหน่ง GPS (ถ้าผู้ใช้อนุญาต)'}
-                  </p>
+                  <input
+                    type="text"
+                    value={consentHeading}
+                    onChange={(e) => setConsentHeading(e.target.value)}
+                    placeholder="เช่น การยินยอม (Consent)"
+                    className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-green-500"
+                  />
                 </div>
-              )}
-            </div>
+                
+                {/* Consent Text */}
+                <div className="p-4 bg-green-50 border border-green-100 rounded-xl">
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    ข้อความแสดงความยินยอม
+                  </label>
+                  <textarea
+                    value={consentText}
+                    onChange={(e) => setConsentText(e.target.value)}
+                    placeholder="เช่น ข้าพเจ้ายินยอมให้เก็บข้อมูลส่วนบุคคล..."
+                    rows={3}
+                    className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-green-500 resize-none"
+                  />
+                </div>
+                
+                {/* Require Location Option */}
+                <label className="flex items-start gap-3 cursor-pointer p-4 bg-white border-2 border-slate-300 rounded-xl hover:bg-slate-50 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={consentRequireLocation}
+                    onChange={(e) => setConsentRequireLocation(e.target.checked)}
+                    className="w-5 h-5 text-green-600 border-slate-300 rounded focus:ring-green-500 mt-0.5"
+                  />
+                  <div>
+                    <span className="font-medium text-slate-900">ขอตำแหน่งที่ตั้ง (GPS) จากผู้ตอบ</span>
+                    <p className="text-sm text-slate-500">ระบบจะขออนุญาตเข้าถึบตำแหน่ง GPS เมื่อผู้ตอบกดยินยอม</p>
+                  </div>
+                </label>
+                
+                <p className="text-xs text-slate-500">
+                  💡 ระบบจะบันทึกเสมอ: เวลาที่กดยินยอม, IP Address
+                  {consentRequireLocation && ' และตำแหน่ง GPS (ถ้าผู้ใช้อนุญาต)'}
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -768,7 +866,7 @@ export default function CreateFormPage() {
                   disabled={!isValid}
                   className="px-6 py-2.5 bg-green-600 text-white rounded-xl hover:bg-green-700 disabled:opacity-50"
                 >
-                  Publish v1
+                  Publish v0
                 </button>
               </div>
             </div>

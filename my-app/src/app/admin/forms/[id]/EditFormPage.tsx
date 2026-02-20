@@ -82,6 +82,16 @@ export default function EditFormPage() {
   const [consentRequireLocation, setConsentRequireLocation] = useState(false);
   const [isActive, setIsActive] = useState(true);
 
+  // CSS Integration Settings (Global config from Settings menu)
+  const [cssIntegrationEnabled, setCssIntegrationEnabled] = useState(false);
+
+  const [cssFieldMapping, setCssFieldMapping] = useState({
+    jobDetail: '',
+    customerName: '',
+    telephone: '',
+    email: ''
+  });
+
   // Change summary for publish
   const [changeSummary, setChangeSummary] = useState('');
   const [showPublishModal, setShowPublishModal] = useState(false);
@@ -145,6 +155,21 @@ export default function EditFormPage() {
           setConsentText(draftVersion.consent_text || '');
           setConsentRequireLocation(draftVersion.consent_require_location);
           setIsActive(formData.is_active ?? true);
+          // CSS Integration from published form (draft inherits)
+          // CSS Config (contactChannelId, userCreated) now in global Settings
+          setCssIntegrationEnabled(formData.css_integration_enabled || false);
+          setCssFieldMapping({
+            jobDetail: formData.css_field_mapping?.jobDetail || '',
+            customerName: formData.css_field_mapping?.customerName || '',
+            telephone: formData.css_field_mapping?.telephone || '',
+            email: formData.css_field_mapping?.email || ''
+          });
+          setCssFieldMapping({
+            jobDetail: formData.css_field_mapping?.jobDetail || '',
+            customerName: formData.css_field_mapping?.customerName || '',
+            telephone: formData.css_field_mapping?.telephone || '',
+            email: formData.css_field_mapping?.email || ''
+          });
         } else {
           // Use published form data
           setTitle(formData.title);
@@ -166,6 +191,15 @@ export default function EditFormPage() {
           setConsentText(formData.consent_text || '');
           setConsentRequireLocation(formData.consent_require_location || false);
           setIsActive(formData.is_active ?? true);
+          // CSS Integration Settings
+          // CSS Config (contactChannelId, userCreated) now in global Settings
+          setCssIntegrationEnabled(formData.css_integration_enabled || false);
+          setCssFieldMapping({
+            jobDetail: formData.css_field_mapping?.jobDetail || '',
+            customerName: formData.css_field_mapping?.customerName || '',
+            telephone: formData.css_field_mapping?.telephone || '',
+            email: formData.css_field_mapping?.email || ''
+          });
         }
       } catch (err) {
         console.error('Error loading form:', err);
@@ -212,6 +246,8 @@ export default function EditFormPage() {
         consent_heading: consentHeading,
         consent_text: consentText,
         consent_require_location: consentRequireLocation,
+        css_integration_enabled: cssIntegrationEnabled,
+        css_field_mapping: cssFieldMapping,
       });
       console.log('Draft auto-saved');
     } catch (err) {
@@ -247,6 +283,8 @@ export default function EditFormPage() {
           consent_heading: consentHeading,
           consent_text: consentText,
           consent_require_location: consentRequireLocation,
+          css_integration_enabled: cssIntegrationEnabled,
+          css_field_mapping: cssFieldMapping,
         });
         // Set state if not already set
         if (!draftVersionId) {
@@ -332,6 +370,8 @@ export default function EditFormPage() {
         consent_heading: consentHeading,
         consent_text: consentText,
         consent_require_location: consentRequireLocation,
+        css_integration_enabled: cssIntegrationEnabled,
+        css_field_mapping: cssFieldMapping,
       });
       setIsEditingDraft(true);
       setDraftVersionId(newDraft.id);
@@ -445,6 +485,8 @@ export default function EditFormPage() {
           consent_heading: consentHeading,
           consent_text: consentText,
           consent_require_location: consentRequireLocation,
+          css_integration_enabled: cssIntegrationEnabled,
+          css_field_mapping: cssFieldMapping,
           updated_at: new Date().toISOString(),
         })
         .eq('id', formId);
@@ -502,6 +544,8 @@ export default function EditFormPage() {
           consent_heading: consentHeading,
           consent_text: consentText,
           consent_require_location: consentRequireLocation,
+          css_integration_enabled: cssIntegrationEnabled,
+          css_field_mapping: cssFieldMapping,
           is_active: true,
           status: 'published',
           current_version: newVersion,
@@ -525,6 +569,8 @@ export default function EditFormPage() {
           consent_heading: consentHeading,
           consent_text: consentText,
           consent_require_location: consentRequireLocation,
+          css_integration_enabled: cssIntegrationEnabled,
+          css_field_mapping: cssFieldMapping,
           change_summary: `Updated to version ${newVersion}`,
           published_at: new Date().toISOString(),
         });
@@ -587,6 +633,8 @@ export default function EditFormPage() {
       consent_heading: consentHeading,
       consent_text: consentText,
       consent_require_location: consentRequireLocation,
+      css_integration_enabled: cssIntegrationEnabled,
+      css_field_mapping: cssFieldMapping,
     };
     console.log('Preview snapshot:', {
       banner_color: snapshot.banner_color,
@@ -661,6 +709,8 @@ export default function EditFormPage() {
     consent_heading: consentHeading,
     consent_text: consentText,
     consent_require_location: consentRequireLocation,
+    css_integration_enabled: cssIntegrationEnabled,
+    css_field_mapping: cssFieldMapping,
   };
 
   // DEBUG: Log render state
@@ -1057,47 +1107,6 @@ export default function EditFormPage() {
                 </div>
               </div>
 
-              {/* Form Status Settings */}
-              <div className="bg-white p-6 rounded-2xl border-2 border-slate-300">
-                <h2 className="text-lg font-semibold mb-4">สถานะแบบสอบถาม</h2>
-
-                {/* Active/Inactive Toggle */}
-                <div className="flex items-center justify-between p-4 border-2 border-slate-300 rounded-xl">
-                  <div className="flex-1">
-                    <div className="font-medium text-slate-900 mb-1">
-                      {isActive ? '🟢 เปิดใช้งาน' : '🔴 ปิดใช้งานชั่วคราว'}
-                    </div>
-                    <p className="text-sm text-slate-500">
-                      {isActive
-                        ? 'แบบสอบถามนี้สามารถรับคำตอบได้ตามปกติ'
-                        : 'แบบสอบถามนี้ถูกปิดชั่วคราว ผู้ใช้จะไม่สามารถตอบได้'}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => {
-                      if (isActive) {
-                        // ถ้ากำลังเปิดอยู่ และต้องการปิด → แสดง confirmation
-                        setShowDeactivateConfirm(true);
-                      } else {
-                        // ถ้ากำลังปิดอยู่ และต้องการเปิด → เปิดเลย
-                        handleToggleActive(true);
-                      }
-                    }}
-                    className={cn(
-                      "relative inline-flex h-8 w-14 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2",
-                      isActive ? "bg-green-600" : "bg-slate-400"
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        "pointer-events-none inline-block h-7 w-7 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
-                        isActive ? "translate-x-6" : "translate-x-0"
-                      )}
-                    />
-                  </button>
-                </div>
-              </div>
-
               {/* Consent Settings */}
               <div className="bg-white p-6 rounded-2xl border-2 border-slate-300">
                 <div className="flex items-center gap-3 mb-4">
@@ -1148,6 +1157,220 @@ export default function EditFormPage() {
                         <div className="text-sm text-slate-500">ขอพิกัดตำแหน่งจากเบราว์เซอร์</div>
                       </div>
                     </label>
+                  </div>
+                )}
+              </div>
+
+              {/* Form Status Settings */}
+              <div className="bg-white p-6 rounded-2xl border-2 border-slate-300">
+                <h2 className="text-lg font-semibold mb-4">สถานะแบบสอบถาม</h2>
+
+                {/* Active/Inactive Toggle */}
+                <div className="flex items-center justify-between p-4 border-2 border-slate-300 rounded-xl">
+                  <div className="flex-1">
+                    <div className="font-medium text-slate-900 mb-1">
+                      {isActive ? '🟢 เปิดใช้งาน' : '🔴 ปิดใช้งานชั่วคราว'}
+                    </div>
+                    <p className="text-sm text-slate-500">
+                      {isActive
+                        ? 'แบบสอบถามนี้สามารถรับคำตอบได้ตามปกติ'
+                        : 'แบบสอบถามนี้ถูกปิดชั่วคราว ผู้ใช้จะไม่สามารถตอบได้'}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      if (isActive) {
+                        // ถ้ากำลังเปิดอยู่ และต้องการปิด → แสดง confirmation
+                        setShowDeactivateConfirm(true);
+                      } else {
+                        // ถ้ากำลังปิดอยู่ และต้องการเปิด → เปิดเลย
+                        handleToggleActive(true);
+                      }
+                    }}
+                    className={cn(
+                      "relative inline-flex h-8 w-14 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2",
+                      isActive ? "bg-green-600" : "bg-slate-400"
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "pointer-events-none inline-block h-7 w-7 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
+                        isActive ? "translate-x-6" : "translate-x-0"
+                      )}
+                    />
+                  </button>
+                </div>
+              </div>
+
+              {/* CSS Integration Settings */}
+              <div className="bg-white p-6 rounded-2xl border-2 border-slate-300">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <svg className="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-semibold">เชื่อมต่อระบบ CSS</h2>
+                    <p className="text-sm text-slate-500">ส่งข้อมูลการร้องเรียนไปยังระบบ CSS อัตโนมัติ</p>
+                  </div>
+                </div>
+
+                {/* Enable Toggle */}
+                <div className="flex items-center justify-between p-4 border-2 border-slate-300 rounded-xl mb-4">
+                  <div className="flex-1">
+                    <div className="font-medium text-slate-900 mb-1">
+                      {cssIntegrationEnabled ? 'เปิดใช้งาน' : 'ปิดใช้งาน'}
+                    </div>
+                    <p className="text-sm text-slate-500">
+                      {cssIntegrationEnabled
+                        ? 'ส่งข้อมูลคำตอบไปยังระบบ CSS อัตโนมัติ'
+                        : 'ไม่ส่งข้อมูลไปยังระบบ CSS'}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setCssIntegrationEnabled(!cssIntegrationEnabled)}
+                    className={cn(
+                      "relative inline-flex h-8 w-14 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2",
+                      cssIntegrationEnabled ? "bg-green-600" : "bg-slate-400"
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "pointer-events-none inline-block h-7 w-7 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
+                        cssIntegrationEnabled ? "translate-x-6" : "translate-x-0"
+                      )}
+                    />
+                  </button>
+                </div>
+
+                {/* CSS Config Form */}
+                {cssIntegrationEnabled && (
+                  <div className="space-y-4">
+                    {/* Global Config Notice */}
+                    <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                      <div className="flex items-start gap-3">
+                        <svg className="w-5 h-5 text-blue-600 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <div>
+                          <p className="text-sm font-medium text-blue-900">ใช้การตั้งค่าจากเมนูตั้งค่า</p>
+                          <p className="text-xs text-blue-700 mt-1">
+                            Contact Channel ID และ User Created ID ถูกตั้งค่าในเมนู "ตั้งค่า &gt; API TO CSS"
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Field Mapping */}
+                    <div>
+                      <h3 className="text-sm font-medium text-slate-700 mb-3">แมปฟิลด์ข้อมูล</h3>
+                      <p className="text-xs text-slate-500 mb-4">เลือกคำถามที่ต้องการส่งไปยังระบบ CSS</p>
+
+                      <div className="space-y-3">
+                        {/* Job Detail Mapping */}
+                        <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                          <label className="block text-sm font-medium text-slate-700 mb-2">
+                            รายละเอียดการร้องเรียน (job_detail) <span className="text-red-500">*</span>
+                          </label>
+                          <select
+                            value={cssFieldMapping.jobDetail}
+                            onChange={(e) => setCssFieldMapping({ ...cssFieldMapping, jobDetail: e.target.value })}
+                            className="w-full px-4 py-2 border-2 border-slate-300 rounded-lg bg-white"
+                          >
+                            <option value="">-- เลือกคำถาม --</option>
+                            {fields.filter(f => f.type === 'textarea' || f.type === 'text').map(field => (
+                              <option key={field.id} value={field.id}>{field.label}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        {/* Customer Name Mapping */}
+                        <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                          <label className="block text-sm font-medium text-slate-700 mb-2">
+                            ชื่อลูกค้า (customer_name) <span className="text-slate-400">(ไม่บังคับ)</span>
+                          </label>
+                          <select
+                            value={cssFieldMapping.customerName}
+                            onChange={(e) => setCssFieldMapping({ ...cssFieldMapping, customerName: e.target.value })}
+                            className="w-full px-4 py-2 border-2 border-slate-300 rounded-lg bg-white"
+                          >
+                            <option value="">-- เลือกคำถาม --</option>
+                            {fields.filter(f => f.type === 'text').map(field => (
+                              <option key={field.id} value={field.id}>{field.label}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        {/* Telephone Mapping */}
+                        <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                          <label className="block text-sm font-medium text-slate-700 mb-2">
+                            เบอร์โทรศัพท์ (telephone) <span className="text-slate-400">(ไม่บังคับ)</span>
+                          </label>
+                          <select
+                            value={cssFieldMapping.telephone}
+                            onChange={(e) => setCssFieldMapping({ ...cssFieldMapping, telephone: e.target.value })}
+                            className="w-full px-4 py-2 border-2 border-slate-300 rounded-lg bg-white"
+                          >
+                            <option value="">-- เลือกคำถาม --</option>
+                            {fields.filter(f => f.type === 'tel' || f.type === 'text').map(field => (
+                              <option key={field.id} value={field.id}>{field.label}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        {/* Email Mapping */}
+                        <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                          <label className="block text-sm font-medium text-slate-700 mb-2">
+                            อีเมล (email) <span className="text-slate-400">(ไม่บังคับ)</span>
+                          </label>
+                          <select
+                            value={cssFieldMapping.email}
+                            onChange={(e) => setCssFieldMapping({ ...cssFieldMapping, email: e.target.value })}
+                            className="w-full px-4 py-2 border-2 border-slate-300 rounded-lg bg-white"
+                          >
+                            <option value="">-- เลือกคำถาม --</option>
+                            {fields.filter(f => f.type === 'email' || f.type === 'text').map(field => (
+                              <option key={field.id} value={field.id}>{field.label}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Save Button */}
+                    <div className="bg-blue-50 rounded-xl p-4 flex items-center justify-between">
+                      <div className="text-sm">
+                        <p className="font-medium text-blue-900">บันทึกการตั้งค่า CSS Integration</p>
+                        <p className="text-blue-700">อัพเดตทันทีโดยไม่ต้อง Publish ใหม่</p>
+                      </div>
+                      <button
+                        onClick={async () => {
+                          try {
+                            const response = await fetch(`/api/forms/${formId}/css-integration`, {
+                              method: 'PATCH',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                css_integration_enabled: cssIntegrationEnabled,
+                                css_field_mapping: cssFieldMapping,
+                              }),
+                            });
+                            
+                            if (!response.ok) throw new Error('Failed to save');
+                            
+                            showToast('success', 'บันทึกการตั้งค่า CSS Integration สำเร็จ');
+                          } catch (err) {
+                            showToast('error', 'เกิดข้อผิดพลาดในการบันทึก');
+                          }
+                        }}
+                        className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        บันทึกการตั้งค่า
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>

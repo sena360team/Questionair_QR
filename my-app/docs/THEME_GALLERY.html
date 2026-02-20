@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Form Theme Gallery</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Noto Sans Thai', sans-serif; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    
+    /* Dropdown arrow for all selects */
+    select {
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.75rem center;
+      background-size: 1.25rem;
+    }
+    
+    /* Theme 6: Dark Mode */
+    .theme-dark select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20' stroke='%239ca3af'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+    }
+    
+    /* Theme 5: Animated gradient */
+    @keyframes gradient {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+    .animate-gradient {
+      background-size: 200% 200%;
+      animation: gradient 5s ease infinite;
+    }
+    
+    /* Theme 7: Floating shapes */
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-20px) rotate(5deg); }
+    }
+    .floating {
+      animation: float 6s ease-in-out infinite;
+    }
+    .floating-delayed {
+      animation: float 6s ease-in-out infinite;
+      animation-delay: 3s;
+    }
+  </style>
+</head>
+<body class="bg-slate-100">
+  
+  <!-- Header -->
+  <header class="bg-white shadow-sm sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 py-4">
+      <h1 class="text-2xl font-bold text-slate-900">🎨 Form Theme Gallery</h1>
+      <p class="text-slate-500">เลือก Theme ที่ต้องการสำหรับแสดงผลแบบฟอร์ม</p>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 py-8 space-y-12">
+
+    <!-- ============================================ -->
+    <!-- THEME 1: Minimal Basic (สุดเรียบง่าย) -->
+    <!-- ============================================ -->
+    <section class="bg-white rounded-2xl shadow-sm overflow-hidden">
+      <div class="bg-slate-800 px-6 py-3 flex items-center justify-between">
+        <div>
+          <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Theme 1</span>
+          <h2 class="text-lg font-bold text-white">Minimal Basic</h2>
+        </div>
+        <span class="px-3 py-1 bg-slate-700 text-slate-300 rounded-full text-sm">แนะนำ</span>
+      </div>
+      
+      <div class="grid lg:grid-cols-2">
+        <!-- Preview -->
+        <div class="p-8 bg-white">
+          <div class="max-w-sm mx-auto">
+            <h1 class="text-xl font-semibold text-slate-900 mb-1">แบบสอบถาม</h1>
+            <p class="text-slate-500 text-sm mb-6">กรุณาตอบคำถาม</p>
+            
+            <form class="space-y-5">
+              <div>
+                <label class="block text-sm text-slate-700 mb-1.5">ชื่อ <span class="text-red-500">*</span></label>
+                <input type="text" class="w-full px-3 py-2 border border-slate-300 rounded focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-sm">
+              </div>
+              
+              <div>
+                <label class="block text-sm text-slate-700 mb-1.5">จังหวัด <span class="text-red-500">*</span></label>
+                <select class="w-full px-3 py-2 pr-10 border border-slate-300 rounded focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-sm bg-white">
+                  <option disabled selected>เลือกจังหวัด</option>
+                  <option>กรุงเทพฯ</option>
+                  <option>เชียงใหม่</option>
+                  <option>ภูเก็ต</option>
+                </select>
+              </div>
+              
+              <div>
+                <label class="block text-sm text-slate-700 mb-1.5">บริการ</label>
+                <select class="w-full px-3 py-2 pr-10 border border-slate-300 rounded focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-sm bg-white">
+                  <option disabled selected>เลือกบริการ</option>
+                  <option>ออนไลน์</option>
+                  <option>ที่สาขา</option>
+                </select>
+              </div>
+              
+              <button class="w-full py-2.5 bg-slate-900 text-white text-sm font-medium rounded hover:bg-slate-800 transition">
+                ส่งคำตอบ
+              </button>
+            </form>
+          </div>
+        </div>
+        
+        <!-- Description -->
+        <div class="p-8 bg-slate-50 border-l border-slate-100">
+          <h3 class="font-semibold text-slate-900 mb-3">✨ ลักษณะเด่น</h3>
+          <ul class="space-y-2 text-sm text-slate-600 mb-6">
+            <li>• เรียบง่ายที่สุด ไม่มีลูกเล่น</li>
+            <li>• โหลดเร็ว ใช้งานง่าย</li>
+            <li>• เหมาะกับฟอร์มสั้นๆ</li>
+            <li>• รองรับทุกอุปกรณ์</li>
+          </ul>
+          
+          <h3 class="font-semibold text-slate-900 mb-3">🎨 Style</h3>
+          <div class="flex flex-wrap gap-2">
+            <span class="px-2 py-1 bg-white border border-slate-200 rounded text-xs">border-slate-300</span>
+            <span class="px-2 py-1 bg-white border border-slate-200 rounded text-xs">focus:ring-1</span>
+            <span class="px-2 py-1 bg-slate-900 text-white rounded text-xs">bg-slate-900</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- THEME 2: Colorful Banner (สีสันสดใส) -->
+    <!-- ============================================ -->
+    <section class="bg-white rounded-2xl shadow-sm overflow-hidden">
+      <div class="bg-gradient-to-r from-orange-500 to-pink-500 px-6 py-3">
+        <span class="text-xs font-bold text-white/70 uppercase tracking-wider">Theme 2</span>
+        <h2 class="text-lg font-bold text-white">Colorful Banner</h2>
+      </div>
+      
+      <div class="grid lg:grid-cols-2">
+        <!-- Preview -->
+        <div class="p-0">
+          <div class="max-w-sm mx-auto bg-white min-h-full">
+            <!-- Banner -->
+            <div class="bg-gradient-to-br from-orange-400 via-pink-500 to-purple-600 p-8 text-center text-white">
+              <div class="text-5xl mb-3">📋</div>
+              <h1 class="text-xl font-bold">แบบสอบถาม</h1>
+              <p class="text-white/80 text-sm mt-1">เราต้องการความคิดเห็นจากคุณ</p>
+            </div>
+            
+            <form class="p-6 space-y-5">
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-2">ชื่อ-นามสกุล <span class="text-red-500">*</span></label>
+                <input type="text" placeholder="กรุณากรอกชื่อ"
+                  class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-pink-500 focus:ring-2 focus:ring-pink-200 outline-none transition-all">
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-2">จังหวัด <span class="text-red-500">*</span></label>
+                <select class="w-full px-4 py-3 pr-12 border-2 border-slate-200 rounded-xl focus:border-pink-500 focus:ring-2 focus:ring-pink-200 outline-none bg-white cursor-pointer transition-all">
+                  <option disabled selected class="text-slate-400">เลือกจังหวัด...</option>
+                  <option>กรุงเทพมหานคร</option>
+                  <option>เชียงใหม่</option>
+                  <option>ภูเก็ต</option>
+                </select>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-2">ประเภทบริการ</label>
+                <select class="w-full px-4 py-3 pr-12 border-2 border-slate-200 rounded-xl focus:border-pink-500 focus:ring-2 focus:ring-pink-200 outline-none bg-white cursor-pointer transition-all">
+                  <option disabled selected class="text-slate-400">เลือกบริการ...</option>
+                  <option>บริการออนไลน์</option>
+                  <option>บริการที่สาขา</option>
+                </select>
+              </div>
+              
+              <button class="w-full py-4 bg-gradient-to-r from-orange-500 to-pink-500 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-pink-200 transition-all">
+                ✨ ส่งคำตอบ
+              </button>
+            </form>
+          </div>
+        </div>
+        
+        <!-- Description -->
+        <div class="p-8 bg-gradient-to-br from-orange-50 to-pink-50 border-l border-orange-100">
+          <h3 class="font-semibold text-slate-900 mb-3">✨ ลักษณะเด่น</h3>
+          <ul class="space-y-2 text-sm text-slate-600 mb-6">
+            <li>• Banner ไล่สีสดใส (Gradient)</li>
+            <li>• ดึงดูดสายตา</li>
+            <li>• ขอบมน (Rounded-xl)</li>
+            <li>• อิโมจิประดับ</li>
+          </ul>
+          
+          <h3 class="font-semibold text-slate-900 mb-3">🎨 Gradient</h3>
+          <div class="h-8 rounded-lg bg-gradient-to-r from-orange-400 via-pink-500 to-purple-600"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- THEME 3: Card Groups (แบ่งกลุ่มชัดเจน) -->
+    <!-- ============================================ -->
+    <section class="bg-white rounded-2xl shadow-sm overflow-hidden">
+      <div class="bg-emerald-600 px-6 py-3">
+        <span class="text-xs font-bold text-emerald-200 uppercase tracking-wider">Theme 3</span>
+        <h2 class="text-lg font-bold text-white">Card Groups</h2>
+      </div>
+      
+      <div class="grid lg:grid-cols-2">
+        <!-- Preview -->
+        <div class="p-6 bg-slate-50">
+          <div class="max-w-md mx-auto space-y-4">
+            
+            <!-- Card 1 -->
+            <div class="bg-white rounded-2xl shadow-sm p-5">
+              <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center text-xl">👤</div>
+                <div>
+                  <h3 class="font-semibold text-slate-900">ข้อมูลส่วนตัว</h3>
+                  <p class="text-xs text-slate-500">ส่วนที่ 1</p>
+                </div>
+              </div>
+              
+              <div class="space-y-4">
+                <div>
+                  <label class="block text-sm text-slate-600 mb-1.5">ชื่อ-นามสกุล</label>
+                  <input type="text" class="w-full px-3 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none">
+                </div>
+                
+                <div>
+                  <label class="block text-sm text-slate-600 mb-1.5">จังหวัด</label>
+                  <select class="w-full px-3 py-2.5 pr-10 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none bg-white cursor-pointer">
+                    <option disabled selected>เลือก...</option>
+                    <option>กรุงเทพฯ</option>
+                    <option>เชียงใหม่</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Card 2 -->
+            <div class="bg-white rounded-2xl shadow-sm p-5">
+              <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center text-xl">🛎️</div>
+                <div>
+                  <h3 class="font-semibold text-slate-900">ข้อมูลบริการ</h3>
+                  <p class="text-xs text-slate-500">ส่วนที่ 2</p>
+                </div>
+              </div>
+              
+              <div class="space-y-4">
+                <div>
+                  <label class="block text-sm text-slate-600 mb-1.5">ประเภทบริการ</label>
+                  <select class="w-full px-3 py-2.5 pr-10 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none bg-white cursor-pointer">
+                    <option disabled selected>เลือกบริการ...</option>
+                    <option>ออนไลน์</option>
+                    <option>ที่สาขา</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label class="block text-sm text-slate-600 mb-1.5">ความพึงพอใจ</label>
+                  <div class="flex gap-2">
+                    <button type="button" class="flex-1 py-2 border border-slate-200 rounded-lg hover:bg-emerald-50 hover:border-emerald-300 transition text-sm">😍</button>
+                    <button type="button" class="flex-1 py-2 border border-slate-200 rounded-lg hover:bg-emerald-50 hover:border-emerald-300 transition text-sm">🙂</button>
+                    <button type="button" class="flex-1 py-2 border border-slate-200 rounded-lg hover:bg-emerald-50 hover:border-emerald-300 transition text-sm">😐</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Submit -->
+            <button class="w-full py-4 bg-emerald-600 text-white font-semibold rounded-xl hover:bg-emerald-700 transition shadow-lg shadow-emerald-200">
+              ส่งคำตอบ
+            </button>
+          </div>
+        </div>
+        
+        <!-- Description -->
+        <div class="p-8 bg-emerald-50 border-l border-emerald-100">
+          <h3 class="font-semibold text-slate-900 mb-3">✨ ลักษณะเด่น</h3>
+          <ul class="space-y-2 text-sm text-slate-600 mb-6">
+            <li>• แบ่งเป็น Card/กลุ่ม</li>
+            <li>• มี Icon ประจำกลุ่ม</li>
+            <li>• อ่านง่าย เป็นระเบียบ</li>
+            <li>• เหมาะกับฟอร์มยาว</li>
+          </ul>
+          
+          <h3 class="font-semibold text-slate-900 mb-3">📦 Components</h3>
+          <div class="space-y-2">
+            <div class="flex items-center gap-2 text-sm">
+              <div class="w-6 h-6 bg-white rounded border border-slate-200"></div>
+              <span>Card Container</span>
+            </div>
+            <div class="flex items-center gap-2 text-sm">
+              <div class="w-6 h-6 bg-emerald-100 rounded-lg"></div>
+              <span>Icon Badge</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- THEME 4: Step Wizard (แบบขั้นตอน) -->
+    <!-- ============================================ -->
+    <section class="bg-white rounded-2xl shadow-sm overflow-hidden">
+      <div class="bg-violet-600 px-6 py-3">
+        <span class="text-xs font-bold text-violet-200 uppercase tracking-wider">Theme 4</span>
+        <h2 class="text-lg font-bold text-white">Step Wizard</h2>
+      </div>
+      
+      <div class="grid lg:grid-cols-2">
+        <!-- Preview -->
+        <div class="p-6 bg-slate-50">
+          <div class="max-w-md mx-auto bg-white rounded-2xl shadow-lg overflow-hidden">
+            <!-- Progress -->
+            <div class="bg-violet-600 p-6">
+              <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-2">
+                  <div class="w-8 h-8 bg-white text-violet-600 rounded-full flex items-center justify-center font-bold text-sm">1</div>
+                  <div class="h-1 w-12 bg-violet-400 rounded"></div>
+                  <div class="w-8 h-8 bg-violet-400 text-white rounded-full flex items-center justify-center font-bold text-sm">2</div>
+                  <div class="h-1 w-12 bg-violet-400/50 rounded"></div>
+                  <div class="w-8 h-8 bg-violet-400/50 text-white rounded-full flex items-center justify-center font-bold text-sm">3</div>
+                </div>
+              </div>
+              <h2 class="text-white font-semibold">ขั้นตอนที่ 2: ข้อมูลบริการ</h2>
+              <p class="text-violet-200 text-sm">กรอกข้อมูลเพิ่มเติม</p>
+            </div>
+            
+            <!-- Form -->
+            <form class="p-6 space-y-5">
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-2">ประเภทบริการ <span class="text-red-500">*</span></label>
+                <select class="w-full px-4 py-3 pr-12 border-2 border-slate-200 rounded-xl focus:border-violet-500 focus:ring-2 focus:ring-violet-200 outline-none bg-white cursor-pointer">
+                  <option disabled selected>เลือกบริการ...</option>
+                  <option>บริการออนไลน์</option>
+                  <option>บริการที่สาขา</option>
+                  <option>บริการโทรศัพท์</option>
+                </select>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-2">จังหวัด</label>
+                <select class="w-full px-4 py-3 pr-12 border-2 border-slate-200 rounded-xl focus:border-violet-500 focus:ring-2 focus:ring-violet-200 outline-none bg-white cursor-pointer">
+                  <option disabled selected>เลือกจังหวัด...</option>
+                  <option>กรุงเทพมหานคร</option>
+                  <option>เชียงใหม่</option>
+                  <option>ภูเก็ต</option>
+                </select>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-2">รายละเอียด</label>
+                <textarea rows="3" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-violet-500 focus:ring-2 focus:ring-violet-200 outline-none resize-none"></textarea>
+              </div>
+              
+              <div class="flex gap-3 pt-2">
+                <button type="button" class="flex-1 py-3 border-2 border-slate-200 text-slate-600 rounded-xl font-medium hover:bg-slate-50 transition">
+                  ← กลับ
+                </button>
+                <button type="button" class="flex-1 py-3 bg-violet-600 text-white rounded-xl font-medium hover:bg-violet-700 transition">
+                  ถัดไป →
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+        
+        <!-- Description -->
+        <div class="p-8 bg-violet-50 border-l border-violet-100">
+          <h3 class="font-semibold text-slate-900 mb-3">✨ ลักษณะเด่น</h3>
+          <ul class="space-y-2 text-sm text-slate-600 mb-6">
+            <li>• แสดง Progress Step</li>
+            <li>• แบ่งเป็นขั้นตอน</li>
+            <li>• ลดความกดดันผู้กรอก</li>
+            <li>• เหมาะกับฟอร์มยาว</li>
+          </ul>
+          
+          <h3 class="font-semibold text-slate-900 mb-3">🎯 UX Pattern</h3>
+          <div class="flex items-center gap-2 text-sm text-slate-600">
+            <span class="w-6 h-6 bg-violet-600 text-white rounded-full flex items-center justify-center text-xs">1</span>
+            <span>ข้อมูลส่วนตัว</span>
+            <span>→</span>
+            <span class="w-6 h-6 bg-violet-400 text-white rounded-full flex items-center justify-center text-xs">2</span>
+            <span>ข้อมูลบริการ</span>
+            <span>→</span>
+            <span class="w-6 h-6 bg-violet-300 text-white rounded-full flex items-center justify-center text-xs">3</span>
+            <span>ยืนยัน</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- THEME 5: Animated Gradient (มี Animation) -->
+    <!-- ============================================ -->
+    <section class="bg-white rounded-2xl shadow-sm overflow-hidden">
+      <div class="bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-500 animate-gradient px-6 py-3">
+        <span class="text-xs font-bold text-white/70 uppercase tracking-wider">Theme 5</span>
+        <h2 class="text-lg font-bold text-white">Animated Gradient</h2>
+      </div>
+      
+      <div class="grid lg:grid-cols-2">
+        <!-- Preview -->
+        <div class="p-0">
+          <div class="max-w-sm mx-auto min-h-full">
+            <!-- Animated Header -->
+            <div class="bg-gradient-to-br from-cyan-400 via-blue-500 to-purple-600 animate-gradient p-8 text-center text-white relative overflow-hidden">
+              <div class="absolute inset-0 bg-white/10"></div>
+              <div class="relative z-10">
+                <div class="text-5xl mb-3 floating">✨</div>
+                <h1 class="text-2xl font-bold">แบบสอบถาม</h1>
+                <p class="text-white/80 text-sm mt-2">ร่วมเป็นส่วนหนึ่งกับเรา</p>
+              </div>
+            </div>
+            
+            <form class="p-6 space-y-5 bg-white">
+              <div class="relative">
+                <label class="block text-sm font-medium text-slate-700 mb-2">ชื่อ-นามสกุล</label>
+                <input type="text" 
+                  class="w-full px-4 py-3 bg-slate-50 border-2 border-transparent rounded-xl focus:bg-white focus:border-blue-500 outline-none transition-all">
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-2">จังหวัด</label>
+                <select class="w-full px-4 py-3 pr-12 bg-slate-50 border-2 border-transparent rounded-xl focus:bg-white focus:border-blue-500 outline-none cursor-pointer transition-all">
+                  <option disabled selected class="text-slate-400">เลือกจังหวัด...</option>
+                  <option>กรุงเทพมหานคร</option>
+                  <option>เชียงใหม่</option>
+                </select>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-2">บริการที่สนใจ</label>
+                <select class="w-full px-4 py-3 pr-12 bg-slate-50 border-2 border-transparent rounded-xl focus:bg-white focus:border-blue-500 outline-none cursor-pointer transition-all">
+                  <option disabled selected class="text-slate-400">เลือกบริการ...</option>
+                  <option>แพ็คเกจพื้นฐาน</option>
+                  <option>แพ็คเกจมาตรฐาน</option>
+                  <option>แพ็คเกจพรีเมียม</option>
+                </select>
+              </div>
+              
+              <button class="w-full py-4 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold rounded-xl hover:shadow-xl hover:shadow-blue-200 transition-all transform hover:-translate-y-0.5">
+                🚀 ส่งคำตอบ
+              </button>
+            </form>
+          </div>
+        </div>
+        
+        <!-- Description -->
+        <div class="p-8 bg-gradient-to-br from-cyan-50 to-blue-50 border-l border-cyan-100">
+          <h3 class="font-semibold text-slate-900 mb-3">✨ ลักษณะเด่น</h3>
+          <ul class="space-y-2 text-sm text-slate-600 mb-6">
+            <li>• Gradient เคลื่อนไหว (Animated)</li>
+            <li>• มีลูกเล่น Floating Icon</li>
+            <li>• Input แบบ Filled</li>
+            <li>• Hover Effect บนปุ่ม</li>
+          </ul>
+          
+          <h3 class="font-semibold text-slate-900 mb-3">✨ Animations</h3>
+          <div class="space-y-2 text-sm text-slate-600">
+            <p>🌊 Gradient Animation (5s loop)</p>
+            <p>☁️ Floating Icon (6s ease)</p>
+            <p>👆 Button Hover (transform)</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- THEME 6: Modern Dark (โมเดิร์น ดาร์ก) -->
+    <!-- ============================================ -->
+    <section class="bg-white rounded-2xl shadow-sm overflow-hidden">
+      <div class="bg-slate-900 px-6 py-3">
+        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Theme 6</span>
+        <h2 class="text-lg font-bold text-white">Modern Dark</h2>
+      </div>
+      
+      <div class="grid lg:grid-cols-2">
+        <!-- Preview -->
+        <div class="p-0">
+          <div class="max-w-sm mx-auto bg-slate-900 min-h-full theme-dark">
+            <!-- Header -->
+            <div class="p-8 text-center border-b border-slate-800">
+              <div class="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center text-3xl">🌙</div>
+              <h1 class="text-xl font-bold text-white">แบบสอบถาม</h1>
+              <p class="text-slate-400 text-sm mt-1">แบบสอบถามความพึงพอใจ</p>
+            </div>
+            
+            <form class="p-6 space-y-5">
+              <div>
+                <label class="block text-sm font-medium text-slate-300 mb-2">ชื่อ-นามสกุล <span class="text-red-400">*</span></label>
+                <input type="text" 
+                  class="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all">
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-slate-300 mb-2">จังหวัด</label>
+                <select class="w-full px-4 py-3 pr-12 bg-slate-800 border border-slate-700 rounded-xl text-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none cursor-pointer transition-all">
+                  <option disabled selected class="text-slate-500">เลือกจังหวัด...</option>
+                  <option class="bg-slate-800">กรุงเทพมหานคร</option>
+                  <option class="bg-slate-800">เชียงใหม่</option>
+                  <option class="bg-slate-800">ภูเก็ต</option>
+                </select>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-slate-300 mb-2">ประเภทบริการ</label>
+                <select class="w-full px-4 py-3 pr-12 bg-slate-800 border border-slate-700 rounded-xl text-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none cursor-pointer transition-all">
+                  <option disabled selected class="text-slate-500">เลือกบริการ...</option>
+                  <option class="bg-slate-800">ออนไลน์</option>
+                  <option class="bg-slate-800">ที่สาขา</option>
+                </select>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-slate-300 mb-3">ความพึงพอใจ</label>
+                <div class="flex justify-between gap-2">
+                  <button type="button" class="flex-1 py-3 bg-slate-800 border border-slate-700 rounded-xl hover:border-indigo-500 hover:bg-slate-750 transition text-2xl">😞</button>
+                  <button type="button" class="flex-1 py-3 bg-slate-800 border border-slate-700 rounded-xl hover:border-indigo-500 hover:bg-slate-750 transition text-2xl">😐</button>
+                  <button type="button" class="flex-1 py-3 bg-slate-800 border border-slate-700 rounded-xl hover:border-indigo-500 hover:bg-slate-750 transition text-2xl">🙂</button>
+                  <button type="button" class="flex-1 py-3 bg-slate-800 border border-slate-700 rounded-xl hover:border-indigo-500 hover:bg-slate-750 transition text-2xl">😍</button>
+                </div>
+              </div>
+              
+              <button class="w-full py-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-indigo-500/25 transition-all">
+                ส่งคำตอบ
+              </button>
+            </form>
+          </div>
+        </div>
+        
+        <!-- Description -->
+        <div class="p-8 bg-slate-950 border-l border-slate-800">
+          <h3 class="font-semibold text-white mb-3">✨ ลักษณะเด่น</h3>
+          <ul class="space-y-2 text-sm text-slate-400 mb-6">
+            <li>• Dark Mode ทั้งหมด</li>
+            <li>• สบายตา ทันสมัย</li>
+            <li>• Gradient บนปุ่ม</li>
+            <li>• Emoji Rating</li>
+          </ul>
+          
+          <h3 class="font-semibold text-white mb-3">🎨 Color Palette</h3>
+          <div class="flex gap-2">
+            <div class="w-8 h-8 bg-slate-900 rounded border border-slate-700"></div>
+            <div class="w-8 h-8 bg-slate-800 rounded border border-slate-700"></div>
+            <div class="w-8 h-8 bg-indigo-500 rounded"></div>
+            <div class="w-8 h-8 bg-purple-600 rounded"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- THEME 7: Playful & Fun (สนุกสนาน) -->
+    <!-- ============================================ -->
+    <section class="bg-white rounded-2xl shadow-sm overflow-hidden">
+      <div class="bg-yellow-400 px-6 py-3">
+        <span class="text-xs font-bold text-yellow-800 uppercase tracking-wider">Theme 7</span>
+        <h2 class="text-lg font-bold text-yellow-900">Playful & Fun</h2>
+      </div>
+      
+      <div class="grid lg:grid-cols-2">
+        <!-- Preview -->
+        <div class="p-0 bg-yellow-50">
+          <div class="max-w-sm mx-auto min-h-full bg-white m-4 rounded-3xl shadow-xl overflow-hidden">
+            <!-- Fun Header -->
+            <div class="bg-yellow-400 p-8 text-center relative overflow-hidden">
+              <div class="absolute top-2 left-4 text-4xl floating">☁️</div>
+              <div class="absolute top-4 right-6 text-3xl floating-delayed">🌈</div>
+              <div class="absolute bottom-2 left-8 text-2xl floating">✨</div>
+              
+              <div class="relative z-10">
+                <div class="w-20 h-20 mx-auto mb-4 bg-white rounded-full flex items-center justify-center text-4xl shadow-lg">🎉</div>
+                <h1 class="text-2xl font-black text-yellow-900">แบบสอบถาม</h1>
+                <p class="text-yellow-800 text-sm mt-1 font-medium">มาร่วมสนุกกัน!</p>
+              </div>
+            </div>
+            
+            <form class="p-6 space-y-5">
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-2">ชื่อเล่นของคุณ 🎈</label>
+                <input type="text" placeholder="ชื่ออะไรเอ่ย~"
+                  class="w-full px-4 py-3 bg-yellow-50 border-2 border-yellow-200 rounded-2xl focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100 outline-none transition-all font-medium">
+              </div>
+              
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-2">จังหวัด 🏠</label>
+                <select class="w-full px-4 py-3 pr-12 bg-yellow-50 border-2 border-yellow-200 rounded-2xl focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100 outline-none cursor-pointer transition-all font-medium">
+                  <option disabled selected class="text-slate-400">เลือกจังหวัด...</option>
+                  <option>กรุงเทพมหานคร 🏙️</option>
+                  <option>เชียงใหม่ 🏔️</option>
+                  <option>ภูเก็ต 🏖️</option>
+                </select>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-2">อาหารที่ชอบ 🍜</label>
+                <select class="w-full px-4 py-3 pr-12 bg-yellow-50 border-2 border-yellow-200 rounded-2xl focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100 outline-none cursor-pointer transition-all font-medium">
+                  <option disabled selected class="text-slate-400">เลือกอาหาร...</option>
+                  <option>ต้มยำกุ้ง 🦐</option>
+                  <option>ผัดไทย 🍜</option>
+                  <option>มาม่าเกาหลี 🍜</option>
+                  <option>ชาบู 🍲</option>
+                </select>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-3">ความสุขวันนี้? 😊</label>
+                <div class="flex justify-center gap-3">
+                  <button type="button" class="w-14 h-14 bg-slate-100 rounded-2xl hover:bg-yellow-200 hover:scale-110 transition-all text-2xl">😴</button>
+                  <button type="button" class="w-14 h-14 bg-slate-100 rounded-2xl hover:bg-yellow-200 hover:scale-110 transition-all text-2xl">😐</button>
+                  <button type="button" class="w-14 h-14 bg-slate-100 rounded-2xl hover:bg-yellow-200 hover:scale-110 transition-all text-2xl">🙂</button>
+                  <button type="button" class="w-14 h-14 bg-yellow-400 rounded-2xl hover:scale-110 transition-all text-2xl shadow-lg">🤩</button>
+                </div>
+              </div>
+              
+              <button class="w-full py-4 bg-yellow-400 text-yellow-900 font-black rounded-2xl hover:bg-yellow-500 transition-all transform hover:scale-[1.02] shadow-lg shadow-yellow-200">
+                ส่งคำตอบ 🚀
+              </button>
+            </form>
+          </div>
+        </div>
+        
+        <!-- Description -->
+        <div class="p-8 bg-yellow-50 border-l border-yellow-200">
+          <h3 class="font-bold text-yellow-900 mb-3">✨ ลักษณะเด่น</h3>
+          <ul class="space-y-2 text-sm text-yellow-800 mb-6">
+            <li>• สีสันสดใส สนุกสนาน</li>
+            <li>• อิโมจิเยอะมาก</li>
+            <li>• ขอบมน (Rounded-3xl)</li>
+            <li>• Animation Floating</li>
+            <li>• เหมาะกับฟอร์ม Casual</li>
+          </ul>
+          
+          <h3 class="font-bold text-yellow-900 mb-3">🎨 Design Elements</h3>
+          <div class="flex flex-wrap gap-2">
+            <span class="px-3 py-1 bg-yellow-400 text-yellow-900 rounded-full text-sm font-bold">☁️ ก้อนเมฆ</span>
+            <span class="px-3 py-1 bg-yellow-400 text-yellow-900 rounded-full text-sm font-bold">🌈 สีรุ้ง</span>
+            <span class="px-3 py-1 bg-yellow-400 text-yellow-900 rounded-full text-sm font-bold">✨ ประกาย</span>
+            <span class="px-3 py-1 bg-white border-2 border-yellow-400 text-yellow-900 rounded-full text-sm font-bold">🎉 ปาร์ตี้</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Summary Table -->
+    <section class="bg-white rounded-2xl shadow-sm p-8">
+      <h2 class="text-xl font-bold text-slate-900 mb-6">📊 Theme Comparison</h2>
+      
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-slate-200">
+              <th class="text-left py-3 px-4 font-semibold text-slate-900">Theme</th>
+              <th class="text-left py-3 px-4 font-semibold text-slate-900">Style</th>
+              <th class="text-left py-3 px-4 font-semibold text-slate-900">Best For</th>
+              <th class="text-left py-3 px-4 font-semibold text-slate-900">Complexity</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            <tr>
+              <td class="py-3 px-4 font-medium">1. Minimal Basic</td>
+              <td class="py-3 px-4 text-slate-600">เรียบง่าย</td>
+              <td class="py-3 px-4 text-slate-600">ฟอร์มสั้น รวดเร็ว</td>
+              <td class="py-3 px-4"><span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">ง่าย</span></td>
+            </tr>
+            <tr>
+              <td class="py-3 px-4 font-medium">2. Colorful Banner</td>
+              <td class="py-3 px-4 text-slate-600">Gradient สดใส</td>
+              <td class="py-3 px-4 text-slate-600">ดึงดูดสายตา</td>
+              <td class="py-3 px-4"><span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded text-xs">ปานกลาง</span></td>
+            </tr>
+            <tr>
+              <td class="py-3 px-4 font-medium">3. Card Groups</td>
+              <td class="py-3 px-4 text-slate-600">แบ่งกลุ่ม</td>
+              <td class="py-3 px-4 text-slate-600">ฟอร์มยาว เป็นระเบียบ</td>
+              <td class="py-3 px-4"><span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded text-xs">ปานกลาง</span></td>
+            </tr>
+            <tr>
+              <td class="py-3 px-4 font-medium">4. Step Wizard</td>
+              <td class="py-3 px-4 text-slate-600">ขั้นตอน</td>
+              <td class="py-3 px-4 text-slate-600">ฟอร์มซับซ้อน</td>
+              <td class="py-3 px-4"><span class="px-2 py-1 bg-orange-100 text-orange-700 rounded text-xs">ยาก</span></td>
+            </tr>
+            <tr>
+              <td class="py-3 px-4 font-medium">5. Animated Gradient</td>
+              <td class="py-3 px-4 text-slate-600">Animation</td>
+              <td class="py-3 px-4 text-slate-600">สร้างความประทับใจ</td>
+              <td class="py-3 px-4"><span class="px-2 py-1 bg-orange-100 text-orange-700 rounded text-xs">ยาก</span></td>
+            </tr>
+            <tr>
+              <td class="py-3 px-4 font-medium">6. Modern Dark</td>
+              <td class="py-3 px-4 text-slate-600">Dark Mode</td>
+              <td class="py-3 px-4 text-slate-600">สบายตา ทันสมัย</td>
+              <td class="py-3 px-4"><span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded text-xs">ปานกลาง</span></td>
+            </tr>
+            <tr>
+              <td class="py-3 px-4 font-medium">7. Playful & Fun</td>
+              <td class="py-3 px-4 text-slate-600">สนุกสนาน</td>
+              <td class="py-3 px-4 text-slate-600">ฟอร์ม Casual</td>
+              <td class="py-3 px-4"><span class="px-2 py-1 bg-orange-100 text-orange-700 rounded text-xs">ยาก</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-white border-t border-slate-200 mt-12">
+    <div class="max-w-7xl mx-auto px-4 py-8">
+      <p class="text-center text-slate-500">
+        Questionnaire QR System - Theme Gallery
+      </p>
+    </div>
+  </footer>
+
+</body>
+</html>

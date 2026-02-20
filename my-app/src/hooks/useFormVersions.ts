@@ -44,6 +44,18 @@ export function useFormVersions(formId: string): UseFormVersionsReturn {
         ...v,
         status: v.is_draft ? 'draft' : 'published',
       }));
+      
+      console.log('[useFormVersions] API Response:', {
+        current_version: result.data.current_version,
+        versions: versionsWithStatus.map((v: any) => ({ 
+          id: v.id, 
+          version: v.version, 
+          is_draft: v.is_draft, 
+          status: v.status,
+          published_at: v.published_at 
+        }))
+      });
+      
       setVersions(versionsWithStatus);
       
       // Find current version
@@ -54,6 +66,14 @@ export function useFormVersions(formId: string): UseFormVersionsReturn {
       
       // Find draft version
       const draft = versionsWithStatus.find((v: FormVersion) => v.status === 'draft') || null;
+      
+      console.log('[useFormVersions] Draft found:', draft ? {
+        id: draft.id,
+        version: draft.version,
+        status: draft.status,
+        published_at: draft.published_at
+      } : 'null');
+      
       setDraftVersion(draft);
       setHasDraft(!!draft);
     } catch (err) {

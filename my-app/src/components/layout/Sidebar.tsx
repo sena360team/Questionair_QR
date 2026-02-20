@@ -10,6 +10,7 @@ import {
   BarChart3,
   FolderKanban,
   ClipboardList,
+  Settings,
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
@@ -21,6 +22,7 @@ const navItems = [
   { href: '/admin/qr-codes', label: 'QR Codes', icon: QrCode },
   { href: '/admin/projects', label: 'โครงการ', icon: FolderKanban },
   { href: '/admin/analytics', label: 'รายงาน', icon: BarChart3 },
+  { href: '/admin/settings', label: 'ตั้งค่า', icon: Settings },
 ];
 
 interface SidebarProps {

@@ -5,6 +5,7 @@ import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import { storeUTMInSession } from '@/lib/utm';
 import { QRCode } from '@/types';
+import FormInactiveState from '@/components/FormInactiveState';
 
 export default function QRRedirectPage() {
   const params = useParams();
@@ -16,6 +17,7 @@ export default function QRRedirectPage() {
   const [status, setStatus] = useState<'loading' | 'redirecting' | 'error'>('loading');
   const [error, setError] = useState<string | null>(null);
   const [qrCode, setQRCode] = useState<QRCode | null>(null);
+  const [isInactive, setIsInactive] = useState(false);
 
   useEffect(() => {
     async function handleRedirect() {
@@ -48,8 +50,7 @@ export default function QRRedirectPage() {
           .single();
           
         if (formError || !formData || !formData.is_active) {
-          setError('แบบสอบถามนี้ถูกปิดใช้งานชั่วคราว');
-          setStatus('error');
+          setIsInactive(true);
           return;
         }
         
@@ -102,6 +103,10 @@ export default function QRRedirectPage() {
       handleRedirect();
     }
   }, [qrSlug, searchParams, router]);
+
+  if (isInactive) {
+    return <FormInactiveState />;
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50">

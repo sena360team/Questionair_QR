@@ -227,27 +227,46 @@ export default function ProjectsPage() {
                   <tr>
                     <th className="text-left py-3 px-6 font-semibold text-slate-700 w-32">รหัสโครงการ</th>
                     <th className="text-left py-3 px-6 font-semibold text-slate-700">ชื่อโครงการ</th>
-                    <th className="text-center py-3 px-6 font-semibold text-slate-700 w-28">สถานะ</th>
-                    <th className="text-right py-3 px-6 font-semibold text-slate-700 w-24">จัดการ</th>
+                    <th className="text-center py-3 px-6 font-semibold text-slate-700 w-36">สถานะ</th>
+                    <th className="text-right py-3 px-6 font-semibold text-slate-700 w-28">จัดการ</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200">
                   {paginatedProjects.map((project) => (
-                    <tr className="border-b border-slate-200" key={project.id} className="hover:bg-slate-50">
+                    <tr 
+                      key={project.id} 
+                      className={cn(
+                        "border-b border-slate-200 hover:bg-slate-50",
+                        !project.is_active && "bg-slate-50/50"
+                      )}
+                    >
                       <td className="py-3 px-6">
-                        <span className="font-mono text-slate-600 bg-slate-100 px-2 py-1 rounded">
+                        <span className={cn(
+                          "font-mono px-2 py-1 rounded",
+                          project.is_active 
+                            ? "text-slate-600 bg-slate-100" 
+                            : "text-slate-400 bg-slate-200"
+                        )}>
                           {project.code}
                         </span>
                       </td>
-                      <td className="py-3 px-6 text-slate-900">{project.name}</td>
+                      <td className={cn(
+                        "py-3 px-6",
+                        project.is_active ? "text-slate-900" : "text-slate-400"
+                      )}>
+                        {project.name}
+                        {!project.is_active && (
+                          <span className="ml-2 text-xs text-slate-400">(ไม่ใช้งาน)</span>
+                        )}
+                      </td>
                       <td className="py-3 px-6 text-center">
                         {project.is_active ? (
-                          <span className="inline-flex items-center gap-1 text-green-600 text-sm">
+                          <span className="inline-flex items-center gap-1 text-green-600 text-sm whitespace-nowrap">
                             <CheckCircle2 className="w-4 h-4" /> ใช้งาน
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 text-slate-400 text-sm">
-                            <XCircle className="w-4 h-4" /> ปิด
+                          <span className="inline-flex items-center gap-1 text-slate-400 text-sm bg-slate-100 px-2 py-1 rounded whitespace-nowrap">
+                            <XCircle className="w-4 h-4" /> ไม่ใช้งาน
                           </span>
                         )}
                       </td>

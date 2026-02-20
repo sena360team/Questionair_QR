@@ -20,7 +20,7 @@ interface ApplyThemeModalProps {
 }
 
 const themeLabels: Record<string, string> = {
-  default: 'ดั้งเดิม',
+  default: 'มาตรฐาน',
   'card-groups': 'การ์ดแยกกลุ่ม',
   'step-wizard': 'ขั้นตอน Step',
   minimal: 'มินิมอล',

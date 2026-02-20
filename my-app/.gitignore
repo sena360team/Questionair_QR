@@ -3,6 +3,9 @@
 /.pnp
 .pnp.js
 .yarn/install-state.gz
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
 
 # Testing
 /coverage
@@ -17,15 +20,20 @@
 # Misc
 .DS_Store
 *.pem
+Thumbs.db
 
 # Debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+.pnpm-debug.log*
 
-# Local env files
-.env*.local
+# Local env files (sensitive - never commit)
 .env
+.env*.local
+.env.development
+.env.test
+.env.production
 
 # Vercel
 .vercel
@@ -39,13 +47,30 @@ next-env.d.ts
 .vscode
 *.swp
 *.swo
+*~
 
 # Supabase
 /supabase/.temp
 /supabase/config.toml
 
-# Migrations
-migrations_manual/
+# Logs
+logs
+*.log
 
-# Docs
-docs/
+# Cache
+.cache
+.eslintcache
+.stylelintcache
+
+# OS files
+*.orig
+
+# Large files
+*.zip
+*.tar.gz
+*.rar
+
+# Temporary files
+*.tmp
+*.temp
+.tmp/

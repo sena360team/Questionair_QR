@@ -21,7 +21,7 @@ export function useProjects() {
       const { data, error } = await supabase
         .from('projects')
         .select('*')
-        .eq('is_active', true)
+        .order('is_active', { ascending: false })
         .order('created_at', { ascending: false });
         
       if (error) throw error;
@@ -108,26 +108,16 @@ export function useForms() {
           submissions:submissions(count)
         `)
         .order('created_at', { ascending: false });
-        
+
       if (formsError) throw formsError;
-      
-      // Fetch draft statuses
-      const { data: draftsData, error: draftsError } = await supabase
-        .from('form_drafts')
-        .select('form_id, status');
-        
-      if (draftsError) throw draftsError;
-      
-      // Create draft lookup map
-      const draftMap = new Map(draftsData?.map(d => [d.form_id, d.status]) || []);
-      
-      // Merge data
-      const mergedForms = (formsData || []).map(form => ({
+
+      // Map forms with has_draft based on draft_version field
+      // If draft_version is not null, it means there's an unpublished draft
+      const mergedForms = (formsData || []).map((form: any) => ({
         ...form,
-        has_draft: draftMap.has(form.id),
-        draft_status: draftMap.get(form.id) || null,
+        has_draft: form.draft_version !== null && form.draft_version !== undefined,
       }));
-      
+
       setForms(mergedForms as Form[]);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Unknown error'));

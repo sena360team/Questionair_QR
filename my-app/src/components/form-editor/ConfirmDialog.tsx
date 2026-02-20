@@ -8,7 +8,7 @@ interface ConfirmDialogProps {
   message: string;
   confirmText?: string;
   cancelText?: string;
-  confirmVariant?: 'danger' | 'primary';
+  confirmVariant?: 'danger' | 'primary' | 'warning';
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -44,8 +44,12 @@ export function ConfirmDialog({
         </button>
 
         {/* Icon */}
-        <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-4">
-          <AlertTriangle className="w-6 h-6 text-red-600" />
+        <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-4 ${
+          confirmVariant === 'warning' ? 'bg-amber-100' : 'bg-red-100'
+        }`}>
+          <AlertTriangle className={`w-6 h-6 ${
+            confirmVariant === 'warning' ? 'text-amber-600' : 'text-red-600'
+          }`} />
         </div>
 
         {/* Content */}
@@ -68,8 +72,10 @@ export function ConfirmDialog({
             onClick={onConfirm}
             className={`
               px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors
-              ${confirmVariant === 'danger' 
-                ? 'bg-red-600 hover:bg-red-700' 
+              ${confirmVariant === 'danger'
+                ? 'bg-red-600 hover:bg-red-700'
+                : confirmVariant === 'warning'
+                ? 'bg-amber-600 hover:bg-amber-700'
                 : 'bg-green-600 hover:bg-green-700'}
             `}
           >

@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Phone Validation - Mobile & Landline</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Noto Sans Thai', sans-serif; }
+    select {
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.75rem center;
+      background-size: 1.25rem;
+    }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      75% { transform: translateX(5px); }
+    }
+    .shake { animation: shake 0.3s ease-in-out; }
+  </style>
+</head>
+<body class="bg-slate-100 min-h-screen p-6">
+  
+  <div class="max-w-3xl mx-auto">
+    
+    <!-- Header -->
+    <div class="text-center mb-8">
+      <h1 class="text-2xl font-bold text-slate-900">📞 Phone Validation</h1>
+      <p class="text-slate-500 mt-2">รองรับเบอร์มือถือและเบอร์บ้าน (Thailand)</p>
+    </div>
+
+    <!-- Info Card -->
+    <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
+      <h3 class="font-bold text-blue-900 mb-2">📋 รูปแบบเบอร์โทรไทย</h3>
+      <div class="grid md:grid-cols-3 gap-4 text-sm">
+        <div class="bg-white rounded-lg p-3">
+          <p class="font-semibold text-slate-900">📱 มือถือ</p>
+          <p class="text-slate-600">0xx-xxx-xxxx</p>
+          <p class="text-xs text-slate-400">10 หลัก</p>
+          <p class="text-xs text-emerald-600 mt-1">ขึ้นต้น 06, 08, 09</p>
+        </div>
+        <div class="bg-white rounded-lg p-3">
+          <p class="font-semibold text-slate-900">🏠 บ้าน กทม</p>
+          <p class="text-slate-600">02-xxx-xxxx</p>
+          <p class="text-xs text-slate-400">9 หลัก</p>
+          <p class="text-xs text-emerald-600 mt-1">ขึ้นต้น 02</p>
+        </div>
+        <div class="bg-white rounded-lg p-3">
+          <p class="font-semibold text-slate-900">🏠 บ้าน ตจว</p>
+          <p class="text-slate-600">0xx-xxx-xxx</p>
+          <p class="text-xs text-slate-400">10 หลัก</p>
+          <p class="text-xs text-emerald-600 mt-1">ขึ้นต้น 0x (ไม่ใช่ 02)</p>
+        </div>
+      </div>
+    </div>
+
+    <form class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-8" onsubmit="return false;">
+
+      <!-- ============================================ -->
+      <!-- 1. SMART PHONE FIELD (Auto-detect Type) -->
+      <!-- ============================================ -->
+      <div>
+        <div class="flex items-center gap-2 mb-4">
+          <span class="w-8 h-8 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center text-sm font-bold">1</span>
+          <h3 class="font-bold text-slate-900">เบอร์โทรศัพท์ (Auto-detect)</h3>
+        </div>
+        
+        <div class="bg-slate-50 rounded-xl p-5 border border-slate-200">
+          <label class="block text-sm font-medium text-slate-700 mb-2">
+            เบอร์โทรศัพท์ <span class="text-red-500">*</span>
+            <span class="text-xs text-slate-400 font-normal ml-2">(มือถือหรือบ้าน)</span>
+          </label>
+          
+          <div class="relative">
+            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">📞</span>
+            <input 
+              type="tel"
+              id="smartPhone"
+              placeholder="0812345678 หรือ 021234567"
+              class="w-full pl-12 pr-24 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all font-mono text-lg tracking-wider"
+              onkeypress="return allowOnlyNumbers(event)"
+              oninput="validateSmartPhone(this)"
+              onpaste="handlePaste(event)"
+            >
+            <!-- Type Badge -->
+            <span id="phoneTypeBadge" class="absolute right-4 top-1/2 -translate-y-1/2 hidden px-2 py-1 rounded text-xs font-medium"></span>
+          </div>
+          
+          <!-- Status -->
+          <div id="smartPhoneStatus" class="mt-2 flex items-center gap-2">
+            <span class="text-sm text-slate-400">พิมพ์เบอร์โทร...</span>
+          </div>
+          
+          <!-- Hint -->
+          <div class="flex flex-wrap gap-2 mt-3 text-xs">
+            <span class="px-2 py-1 bg-slate-200 text-slate-600 rounded">📱 081-234-5678</span>
+            <span class="px-2 py-1 bg-slate-200 text-slate-600 rounded">🏠 02-123-4567</span>
+            <span class="px-2 py-1 bg-slate-200 text-slate-600 rounded">🏠 053-123-456</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================ -->
+      <!-- 2. SEPARATE FIELDS BY TYPE -->
+      <!-- ============================================ -->
+      <div class="border-t border-slate-200 pt-6">
+        <div class="flex items-center gap-2 mb-4">
+          <span class="w-8 h-8 bg-emerald-100 text-emerald-600 rounded-lg flex items-center justify-center text-sm font-bold">2</span>
+          <h3 class="font-bold text-slate-900">แยกตามประเภท (Separate Fields)</h3>
+        </div>
+        
+        <div class="grid md:grid-cols-2 gap-4">
+          
+          <!-- Mobile Only -->
+          <div class="bg-slate-50 rounded-xl p-5 border border-slate-200">
+            <label class="block text-sm font-medium text-slate-700 mb-2">
+              📱 เบอร์มือถือ
+            </label>
+            <div class="relative">
+              <input 
+                type="tel"
+                id="mobileOnly"
+                placeholder="081-234-5678"
+                maxlength="10"
+                class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all font-mono"
+                onkeypress="return allowOnlyNumbers(event)"
+                oninput="validateMobileOnly(this)"
+              >
+              <span id="mobileIcon" class="absolute right-3 top-1/2 -translate-y-1/2 hidden"></span>
+            </div>
+            <p class="text-xs text-slate-400 mt-1.5">10 หลัก ขึ้นต้น 06, 08, 09</p>
+            <p id="mobileError" class="text-xs text-red-500 mt-1 hidden"></p>
+          </div>
+
+          <!-- Landline Only -->
+          <div class="bg-slate-50 rounded-xl p-5 border border-slate-200">
+            <label class="block text-sm font-medium text-slate-700 mb-2">
+              🏠 เบอร์บ้าน/ที่ทำงาน
+            </label>
+            <div class="relative">
+              <input 
+                type="tel"
+                id="landlineOnly"
+                placeholder="02-123-4567"
+                class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all font-mono"
+                onkeypress="return allowOnlyNumbers(event)"
+                oninput="validateLandlineOnly(this)"
+              >
+              <span id="landlineIcon" class="absolute right-3 top-1/2 -translate-y-1/2 hidden"></span>
+            </div>
+            <p class="text-xs text-slate-400 mt-1.5">9-10 หลัก (กทม 9 หลัก, ตจว 10 หลัก)</p>
+            <p id="landlineError" class="text-xs text-red-500 mt-1 hidden"></p>
+          </div>
+          
+        </div>
+      </div>
+
+      <!-- ============================================ -->
+      <!-- 3. FORMATTED DISPLAY -->
+      <!-- ============================================ -->
+      <div class="border-t border-slate-200 pt-6">
+        <div class="flex items-center gap-2 mb-4">
+          <span class="w-8 h-8 bg-violet-100 text-violet-600 rounded-lg flex items-center justify-center text-sm font-bold">3</span>
+          <h3 class="font-bold text-slate-900">แสดงผลแบบจัดรูปแบบ (Formatted)</h3>
+        </div>
+        
+        <div class="bg-slate-50 rounded-xl p-5 border border-slate-200 space-y-4">
+          
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-2">
+              เบอร์โทร (พร้อมจัดรูปแบบอัตโนมัติ)
+            </label>
+            <div class="relative">
+              <input 
+                type="tel"
+                id="formattedPhone"
+                placeholder="พิมพ์ตัวเลขเท่านั้น..."
+                class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition-all font-mono text-lg"
+                onkeypress="return allowOnlyNumbers(event)"
+                oninput="formatPhoneNumber(this)"
+              >
+            </div>
+          </div>
+          
+          <!-- Format Display -->
+          <div id="formatDisplay" class="hidden bg-white rounded-lg p-4 border border-violet-200">
+            <p class="text-xs text-slate-500 mb-1">รูปแบบที่ตรวจพบ:</p>
+            <p id="formattedResult" class="text-lg font-mono font-bold text-violet-700"></p>
+            <p id="phoneTypeResult" class="text-sm text-slate-600 mt-1"></p>
+          </div>
+          
+        </div>
+      </div>
+
+      <!-- ============================================ -->
+      <!-- 4. WITH AREA CODE SELECTOR -->
+      <!-- ============================================ -->
+      <div class="border-t border-slate-200 pt-6">
+        <div class="flex items-center gap-2 mb-4">
+          <span class="w-8 h-8 bg-orange-100 text-orange-600 rounded-lg flex items-center justify-center text-sm font-bold">4</span>
+          <h3 class="font-bold text-slate-900">เลือกรหัสพื้นที่ (Area Code)</h3>
+        </div>
+        
+        <div class="bg-slate-50 rounded-xl p-5 border border-slate-200">
+          <label class="block text-sm font-medium text-slate-700 mb-2">
+            เบอร์โทรศัพท์ (แยกรหัสพื้นที่)
+          </label>
+          
+          <div class="flex gap-2">
+            <!-- Area Code Select -->
+            <select 
+              id="areaCode"
+              class="w-32 px-3 py-3 border border-slate-200 rounded-xl outline-none bg-white text-sm focus:ring-2 focus:ring-orange-500"
+              onchange="updateAreaCode(this.value)"
+            >
+              <option value="">📱 มือถือ</option>
+              <optgroup label="กรุงเทพฯ">
+                <option value="02">02 กทม</option>
+              </optgroup>
+              <optgroup label="ภาคเหนือ">
+                <option value="053">053 เชียงใหม่</option>
+                <option value="054">054 เชียงราย</option>
+                <option value="055">055 ลำพูน</option>
+              </optgroup>
+              <optgroup label="ภาคอีสาน">
+                <option value="043">043 ขอนแก่น</option>
+                <option value="044">044 นครราชสีมา</option>
+                <option value="042">042 อุดรธานี</option>
+              </optgroup>
+              <optgroup label="ภาคใต้">
+                <option value="076">076 ภูเก็ต</option>
+                <option value="074">074 สงขลา</option>
+                <option value="077">077 สุราษฎร์</option>
+              </optgroup>
+              <optgroup label="ภาคกลาง">
+                <option value="033">033 ชลบุรี</option>
+                <option value="034">034 อยุธยา</option>
+                <option value="035">035 อ่างทอง</option>
+              </optgroup>
+            </select>
+            
+            <!-- Phone Number -->
+            <div class="relative flex-1">
+              <input 
+                type="tel"
+                id="areaPhoneNumber"
+                placeholder="12345678"
+                class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all font-mono"
+                onkeypress="return allowOnlyNumbers(event)"
+                oninput="validateAreaPhone(this)"
+              >
+            </div>
+          </div>
+          
+          <p id="areaPhoneHint" class="text-xs text-slate-400 mt-2">เลือกรหัสพื้นที่ หรือเลือก "มือถือ" สำหรับเบอร์มือถือ</p>
+          <p id="areaPhoneFull" class="text-sm font-mono font-bold text-orange-600 mt-2 hidden"></p>
+        </div>
+      </div>
+
+      <!-- Submit -->
+      <div class="pt-4">
+        <button 
+          type="button"
+          onclick="validateAll()"
+          class="w-full py-4 bg-gradient-to-r from-blue-500 to-emerald-500 text-white font-bold rounded-xl hover:shadow-lg transition-all"
+        >
+          ✅ ตรวจสอบทั้งหมด
+        </button>
+      </div>
+
+    </form>
+
+    <!-- Code Reference -->
+    <div class="mt-8 bg-slate-900 rounded-2xl p-6">
+      <h3 class="text-white font-bold mb-4">💻 Code: ตรวจสอบเบอร์โทร</h3>
+      <pre class="text-sm text-green-400 overflow-x-auto"><code>// ตรวจสอบประเภทเบอร์จากตัวเลข
+function detectPhoneType(phone) {
+  const clean = phone.replace(/[^0-9]/g, '');
+  
+  // มือถือ: 10 หลัก ขึ้นต้น 06, 08, 09
+  if (/^0[689]\d{8}$/.test(clean)) {
+    return { type: 'mobile', valid: true };
+  }
+  
+  // บ้าน กทม: 9 หลัก ขึ้นต้น 02
+  if (/^02\d{7}$/.test(clean)) {
+    return { type: 'landline_bkk', valid: true };
+  }
+  
+  // บ้าน ตจว: 10 หลัก ขึ้นต้น 0x (ไม่ใช่ 02, 06, 08, 09)
+  if (/^0[1-9]\d{8}$/.test(clean) && !/^0[2689]/.test(clean)) {
+    return { type: 'landline_province', valid: true };
+  }
+  
+  return { type: 'unknown', valid: false };
+}
+
+// จัดรูปแบบแสดงผล
+function formatPhone(phone) {
+  const clean = phone.replace(/[^0-9]/g, '');
+  
+  if (clean.length === 10 && /^0[689]/.test(clean)) {
+    // มือถือ: 0xx-xxx-xxxx
+    return clean.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
+  }
+  
+  if (clean.length === 9 && clean.startsWith('02')) {
+    // บ้าน กทม: 02-xxx-xxxx
+    return clean.replace(/(\d{2})(\d{3})(\d{4})/, '$1-$2-$3');
+  }
+  
+  if (clean.length === 10 && /^0[3-5]/.test(clean)) {
+    // บ้าน ตจว: 0xx-xxx-xxx
+    return clean.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
+  }
+  
+  return clean;
+}</code></pre>
+    </div>
+
+  </div>
+
+  <script>
+    // ============================================
+    // UTILITY: Allow only numbers
+    // ============================================
+    function allowOnlyNumbers(event) {
+      const charCode = event.which || event.keyCode;
+      const char = String.fromCharCode(charCode);
+      
+      // อนุญาต: ตัวเลข และ control keys
+      const isNumber = /[0-9]/.test(char);
+      const isControl = charCode === 8 || charCode === 46 || charCode === 9 || 
+                       (charCode >= 37 && charCode <= 40);
+      
+      if (!isNumber && !isControl) {
+        event.preventDefault();
+        event.target.classList.add('shake');
+        setTimeout(() => event.target.classList.remove('shake'), 300);
+        return false;
+      }
+      return true;
+    }
+
+    function handlePaste(event) {
+      event.preventDefault();
+      const pasted = (event.clipboardData || window.clipboardData).getData('text');
+      const numbersOnly = pasted.replace(/[^0-9]/g, '');
+      
+      const input = event.target;
+      const start = input.selectionStart;
+      const end = input.selectionEnd;
+      const current = input.value;
+      
+      input.value = current.substring(0, start) + numbersOnly + current.substring(end);
+      input.dispatchEvent(new Event('input'));
+    }
+
+    // ============================================
+    // PHONE DETECTION LOGIC
+    // ============================================
+    function detectPhoneType(phone) {
+      const clean = phone.replace(/[^0-9]/g, '');
+      
+      // มือถือ: 10 หลัก ขึ้นต้น 06, 08, 09
+      if (/^0[689]\d{8}$/.test(clean)) {
+        return { 
+          type: 'mobile', 
+          valid: true, 
+          length: 10,
+          format: clean.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3'),
+          label: '📱 มือถือ'
+        };
+      }
+      
+      // บ้าน กทม: 9 หลัก ขึ้นต้น 02
+      if (/^02\d{7}$/.test(clean)) {
+        return { 
+          type: 'landline_bkk', 
+          valid: true, 
+          length: 9,
+          format: clean.replace(/(\d{2})(\d{3})(\d{4})/, '$1-$2-$3'),
+          label: '🏠 บ้าน (กทม)'
+        };
+      }
+      
+      // บ้าน ตจว: 10 หลัก ขึ้นต้น 0x (ไม่ใช่ 02, 06, 08, 09)
+      if (/^0[3-57]\d{8}$/.test(clean)) {
+        return { 
+          type: 'landline_province', 
+          valid: true, 
+          length: 10,
+          format: clean.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3'),
+          label: '🏠 บ้าน (ตจว)'
+        };
+      }
+      
+      // ยังไม่ครบ หรือไม่ตรง pattern
+      return { 
+        type: 'unknown', 
+        valid: false,
+        length: clean.length,
+        format: clean
+      };
+    }
+
+    // ============================================
+    // 1. SMART PHONE VALIDATION
+    // ============================================
+    function validateSmartPhone(input) {
+      const result = detectPhoneType(input.value);
+      const status = document.getElementById('smartPhoneStatus');
+      const badge = document.getElementById('phoneTypeBadge');
+      
+      if (result.valid) {
+        // Valid phone
+        input.classList.remove('border-red-300');
+        input.classList.add('border-emerald-300');
+        
+        badge.classList.remove('hidden');
+        badge.textContent = result.label;
+        badge.className = 'absolute right-4 top-1/2 -translate-y-1/2 px-2 py-1 rounded text-xs font-medium bg-emerald-100 text-emerald-700';
+        
+        status.innerHTML = `
+          <span class="text-emerald-600 font-medium">✓ ${result.format}</span>
+          <span class="text-xs text-slate-400">(${result.length} หลัก)</span>
+        `;
+      } else if (result.length > 0) {
+        // Typing...
+        input.classList.remove('border-emerald-300', 'border-red-300');
+        badge.classList.add('hidden');
+        
+        let hint = '';
+        const clean = input.value.replace(/[^0-9]/g, '');
+        if (clean.startsWith('02')) {
+          hint = 'บ้าน กทม (9 หลัก)';
+        } else if (/^0[689]/.test(clean)) {
+          hint = 'มือถือ (10 หลัก)';
+        } else if (/^0/.test(clean)) {
+          hint = 'บ้าน ตจว (10 หลัก)';
+        }
+        
+        status.innerHTML = `
+          <span class="text-slate-500">${result.length} หลัก${hint ? ' - ' + hint : ''}...</span>
+        `;
+      } else {
+        // Empty
+        input.classList.remove('border-emerald-300', 'border-red-300');
+        badge.classList.add('hidden');
+        status.innerHTML = '<span class="text-sm text-slate-400">พิมพ์เบอร์โทร...</span>';
+      }
+    }
+
+    // ============================================
+    // 2. SEPARATE VALIDATION
+    // ============================================
+    function validateMobileOnly(input) {
+      const clean = input.value.replace(/[^0-9]/g, '');
+      const icon = document.getElementById('mobileIcon');
+      const error = document.getElementById('mobileError');
+      
+      if (/^0[689]\d{8}$/.test(clean)) {
+        icon.innerHTML = '✅';
+        icon.classList.remove('hidden');
+        error.classList.add('hidden');
+        input.classList.add('border-emerald-300');
+        input.value = clean.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
+      } else {
+        icon.classList.add('hidden');
+        if (clean.length === 10) {
+          error.textContent = 'เบอร์มือถือต้องขึ้นต้นด้วย 06, 08, หรือ 09';
+          error.classList.remove('hidden');
+          input.classList.add('border-red-300');
+        } else {
+          error.classList.add('hidden');
+          input.classList.remove('border-red-300', 'border-emerald-300');
+        }
+      }
+    }
+
+    function validateLandlineOnly(input) {
+      const clean = input.value.replace(/[^0-9]/g, '');
+      const icon = document.getElementById('landlineIcon');
+      const error = document.getElementById('landlineError');
+      
+      // กทม: 9 หลัก, ตจว: 10 หลัก
+      const isBKK = /^02\d{7}$/.test(clean);
+      const isProvince = /^0[3-57]\d{8}$/.test(clean);
+      
+      if (isBKK || isProvince) {
+        icon.innerHTML = '✅';
+        icon.classList.remove('hidden');
+        error.classList.add('hidden');
+        input.classList.add('border-emerald-300');
+        
+        if (isBKK) {
+          input.value = clean.replace(/(\d{2})(\d{3})(\d{4})/, '$1-$2-$3');
+        } else {
+          input.value = clean.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
+        }
+      } else {
+        icon.classList.add('hidden');
+        if (clean.length >= 9) {
+          error.textContent = 'เบอร์บ้าน กทม 9 หลัก, ตจว 10 หลัก';
+          error.classList.remove('hidden');
+        } else {
+          error.classList.add('hidden');
+        }
+      }
+    }
+
+    // ============================================
+    // 3. FORMATTED DISPLAY
+    // ============================================
+    function formatPhoneNumber(input) {
+      const result = detectPhoneType(input.value);
+      const display = document.getElementById('formatDisplay');
+      const formattedResult = document.getElementById('formattedResult');
+      const phoneTypeResult = document.getElementById('phoneTypeResult');
+      
+      if (result.valid) {
+        display.classList.remove('hidden');
+        formattedResult.textContent = result.format;
+        phoneTypeResult.textContent = `${result.label} (${result.length} หลัก)`;
+        input.classList.add('border-violet-300');
+      } else if (input.value.length > 0) {
+        display.classList.add('hidden');
+        input.classList.remove('border-violet-300');
+      } else {
+        display.classList.add('hidden');
+      }
+    }
+
+    // ============================================
+    // 4. AREA CODE
+    // ============================================
+    function updateAreaCode(value) {
+      const input = document.getElementById('areaPhoneNumber');
+      const hint = document.getElementById('areaPhoneHint');
+      
+      if (!value) {
+        // Mobile
+        input.placeholder = '812345678';
+        input.maxLength = 10;
+        hint.textContent = 'มือถือ 10 หลัก (ไม่ต้องใส่ 0 ข้างหน้า)';
+      } else if (value === '02') {
+        // Bangkok
+        input.placeholder = '1234567';
+        input.maxLength = 7;
+        hint.textContent = 'บ้าน กทม 7 หลัก (ไม่ต้องใส่ 02)';
+      } else {
+        // Province
+        input.placeholder = '123456';
+        input.maxLength = 6;
+        hint.textContent = 'บ้าน ตจว 6-7 หลัก (ไม่ต้องใส่รหัสพื้นที่)';
+      }
+      
+      input.focus();
+    }
+
+    function validateAreaPhone(input) {
+      const areaCode = document.getElementById('areaCode').value;
+      const clean = input.value.replace(/[^0-9]/g, '');
+      const fullDisplay = document.getElementById('areaPhoneFull');
+      
+      if (!areaCode) {
+        // Mobile
+        if (clean.length === 9) {
+          fullDisplay.classList.remove('hidden');
+          fullDisplay.textContent = `0${clean.replace(/(\d{2})(\d{3})(\d{4})/, '$1-$2-$3')}`;
+        } else {
+          fullDisplay.classList.add('hidden');
+        }
+      } else {
+        // Landline
+        const full = areaCode + clean;
+        if ((areaCode === '02' && clean.length === 7) || 
+            (areaCode !== '02' && clean.length >= 6)) {
+          fullDisplay.classList.remove('hidden');
+          if (areaCode === '02') {
+            fullDisplay.textContent = full.replace(/(\d{2})(\d{3})(\d{4})/, '$1-$2-$3');
+          } else {
+            fullDisplay.textContent = full.replace(/(\d{3})(\d{3})(\d{3,4})/, '$1-$2-$3');
+          }
+        } else {
+          fullDisplay.classList.add('hidden');
+        }
+      }
+    }
+
+    // ============================================
+    // VALIDATE ALL
+    // ============================================
+    function validateAll() {
+      const results = [];
+      
+      // Check smart phone
+      const smart = document.getElementById('smartPhone').value;
+      const smartResult = detectPhoneType(smart);
+      results.push(`Smart: ${smartResult.valid ? '✅' : '❌'} ${smartResult.label || 'ไม่ถูกต้อง'}`);
+      
+      // Check mobile
+      const mobile = document.getElementById('mobileOnly').value;
+      const mobileValid = /^0[689]\d{8}$/.test(mobile.replace(/[^0-9]/g, ''));
+      results.push(`Mobile: ${mobileValid ? '✅' : '❌'}`);
+      
+      // Check landline
+      const landline = document.getElementById('landlineOnly').value;
+      const landlineClean = landline.replace(/[^0-9]/g, '');
+      const landlineValid = /^02\d{7}$/.test(landlineClean) || /^0[3-57]\d{8}$/.test(landlineClean);
+      results.push(`Landline: ${landlineValid ? '✅' : '❌'}`);
+      
+      alert(results.join('\n'));
+    }
+  </script>
+
+</body>
+</html>

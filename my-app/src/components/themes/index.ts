@@ -6,7 +6,7 @@ export { MinimalTheme } from './MinimalTheme';
 export type ThemeType = 'default' | 'card-groups' | 'step-wizard' | 'minimal';
 
 export const themeLabels: Record<ThemeType, string> = {
-  'default': 'ดั้งเดิม',
+  'default': 'มาตรฐาน',
   'card-groups': 'การ์ดแยกกลุ่ม',
   'step-wizard': 'ขั้นตอน Step',
   'minimal': 'มินิมอล',

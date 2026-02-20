@@ -29,6 +29,22 @@ import { getVersionBadgeStyle } from '@/lib/versionColors';
 export default function FormsPage() {
   const { forms, loading, deleteForm } = useForms();
   const { submissions } = useSubmissions();
+  
+  // DEBUG: Log forms with has_draft
+  useEffect(() => {
+    console.log('[FormsPage] Forms loaded:', forms.length);
+    console.log('[FormsPage] Forms with has_draft:', forms.filter(f => f.has_draft).map(f => ({ id: f.id, code: f.code, has_draft: f.has_draft })));
+  }, [forms]);
+  
+  // Check if we need to refresh forms list (after creating draft)
+  useEffect(() => {
+    const shouldRefresh = sessionStorage.getItem('refreshFormsList');
+    if (shouldRefresh) {
+      console.log('[FormsPage] Refreshing forms list after draft created');
+      sessionStorage.removeItem('refreshFormsList');
+      window.location.reload();
+    }
+  }, []);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
@@ -210,6 +226,11 @@ interface FormCardProps {
 
 function FormCard({ form, submissionCount, onDelete, onDuplicate }: FormCardProps) {
   const [showActions, setShowActions] = useState(false);
+  
+  // DEBUG: Log form has_draft (only when form is loaded)
+  useEffect(() => {
+    console.log('[FormCard] Form loaded:', form.code, 'has_draft:', form.has_draft, 'id:', form.id);
+  }, [form]);
 
   // Get status color
   const getStatusColor = () => {
@@ -289,18 +310,10 @@ function FormCard({ form, submissionCount, onDelete, onDuplicate }: FormCardProp
                   >
                     <Edit className="w-4 h-4" />
                     แก้ไข
+                    {form.has_draft && (
+                      <span className="ml-1 px-1.5 py-0.5 bg-amber-100 text-amber-700 text-xs rounded">มี Draft</span>
+                    )}
                   </Link>
-                  
-                  {form.status === 'published' && (
-                    <Link
-                      href={`/admin/forms/${form.id}?draft=true`}
-                      className="flex items-center gap-2 px-4 py-2 text-sm text-amber-700 hover:bg-amber-50"
-                      onClick={() => setShowActions(false)}
-                    >
-                      <Edit3 className="w-4 h-4" />
-                      {form.has_draft ? 'แก้ไข Draft ที่ร่างไว้' : 'แก้ไข (Draft)'}
-                    </Link>
-                  )}
                   
                   <Link
                     href={`/admin/forms/${form.id}?tab=history`}
@@ -423,7 +436,7 @@ function FormCard({ form, submissionCount, onDelete, onDuplicate }: FormCardProp
           
           {/* Edit Button */}
           <Link
-            href={form.status === 'published' ? `/admin/forms/${form.id}?draft=true` : `/admin/forms/${form.id}`}
+            href={`/admin/forms/${form.id}`}
             className="p-2 text-slate-600 hover:bg-slate-200 rounded-lg transition-colors"
             title="แก้ไข"
             onClick={(e) => e.stopPropagation()}

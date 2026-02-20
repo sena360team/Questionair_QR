@@ -7,6 +7,8 @@ import { getUTMParamsFromURL, getUTMFromSession, clearUTMSession, storeUTMInSess
 import { Form } from '@/types';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import { CheckCircle, XCircle } from 'lucide-react';
+import FormInactiveState from '@/components/FormInactiveState';
+import { sendToCSS } from '@/lib/css-api';
 
 interface SubmitStatus {
   type: 'success' | 'error';
@@ -27,6 +29,7 @@ export default function FormPage() {
   const [utmParams, setUtmParams] = useState<Record<string, string>>({});
   const [submitStatus, setSubmitStatus] = useState<SubmitStatus>({ type: 'success', message: '', show: false });
   const [qrSlug, setQrSlug] = useState<string | null>(null);
+  const [isInactive, setIsInactive] = useState(false);
 
   // ดึงข้อมูลฟอร์มและ UTM parameters
   useEffect(() => {
@@ -76,7 +79,7 @@ export default function FormPage() {
         
         if (result.data.status === 'published' && !isActive) {
           console.log('❌ Published form is inactive');
-          setError('แบบสอบถามนี้ถูกปิดใช้งานชั่วคราว');
+          setIsInactive(true);
           return;
         }
         
@@ -244,6 +247,46 @@ export default function FormPage() {
       
       console.log('✅ Submission saved:', data);
       
+      // Send to CSS if enabled
+      if (form.css_integration_enabled && form.css_field_mapping) {
+        console.log('📤 Sending to CSS...');
+        
+        // Fetch global CSS config from settings
+        const { data: cssConfigData } = await supabase
+          .from('app_settings')
+          .select('value')
+          .eq('key', 'css_api_config')
+          .single();
+        
+        const cssConfig = cssConfigData?.value || {};
+        
+        if (!cssConfig.contactChannelId || !cssConfig.userCreated) {
+          console.warn('⚠️ CSS Config not set in global settings');
+        } else {
+          const qrData = {
+            utm_medium: finalUtmParams.utm_medium || undefined,
+            utm_source: finalUtmParams.utm_source || undefined,
+            utm_campaign: finalUtmParams.utm_campaign || undefined,
+          };
+          
+          sendToCSS(
+            cleanResponses as Record<string, any>,
+            form.css_field_mapping,
+            cssConfig.contactChannelId,
+            cssConfig.userCreated,
+            qrData
+          ).then(result => {
+            if (result.success) {
+              console.log('✅ CSS API: Sent successfully');
+            } else {
+              console.error('❌ CSS API Error:', result.error);
+            }
+          }).catch(err => {
+            console.error('❌ CSS API Exception:', err);
+          });
+        }
+      }
+      
       // ล้าง UTM session หลัง submit สำเร็จ
       clearUTMSession();
       console.log('🔍 UTM session cleared after successful submission');
@@ -274,12 +317,16 @@ export default function FormPage() {
     );
   }
 
+  if (isInactive) {
+    return <FormInactiveState />;
+  }
+
   if (error || !form) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-slate-900 mb-2">ไม่พบหน้านี้</h1>
-          <p className="text-slate-600">{error || 'แบบสอบถามไม่พบหรือถูกลบ'}</p>
+          <p className="text-slate-600">{error || 'แบวสอบถามไม่พบหรือถูกลบ'}</p>
         </div>
       </div>
     );
