@@ -4,12 +4,12 @@ import { useState } from 'react';
 import { Form } from '@/types';
 import { useDuplicateForm } from '@/hooks/useDuplicateForm';
 import { useRouter } from 'next/navigation';
-import { 
-  Copy, 
-  X, 
-  FileText, 
-  Settings, 
-  Image as ImageIcon, 
+import {
+  Copy,
+  X,
+  FileText,
+  Settings,
+  Image as ImageIcon,
   Check,
   AlertCircle,
   Loader2
@@ -33,8 +33,8 @@ interface CopyOption {
 
 export function DuplicateFormDialog({ form, isOpen, onClose }: DuplicateFormDialogProps) {
   const router = useRouter();
-  const { duplicate, isDuplicating } = useDuplicateForm();
-  
+  const { duplicateForm, loading: isDuplicating } = useDuplicateForm();
+
   const [newTitle, setNewTitle] = useState(`${form.title} (Copy)`);
   const [options, setOptions] = useState({
     copy_questions: true,
@@ -75,19 +75,16 @@ export function DuplicateFormDialog({ form, isOpen, onClose }: DuplicateFormDial
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    
+
     if (!newTitle.trim()) {
       setError('กรุณาระบุชื่อฟอร์ม');
       return;
     }
-    
+
     try {
-      const result = await duplicate(form.id, newTitle.trim(), options);
-      console.log('Duplicate result:', result);
-      console.log('new_form_id:', result.new_form_id);
-      console.log('Type of new_form_id:', typeof result.new_form_id);
+      const newFormId = await duplicateForm(form.id, newTitle.trim(), options);
       onClose();
-      router.push(`/admin/forms/${result.new_form_id}`);
+      router.push(`/admin/forms/${newFormId}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'เกิดข้อผิดพลาด');
     }
@@ -116,7 +113,7 @@ export function DuplicateFormDialog({ form, isOpen, onClose }: DuplicateFormDial
             <X className="w-5 h-5 text-slate-400" />
           </button>
         </div>
-        
+
         {/* Content */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* Error */}
@@ -126,7 +123,7 @@ export function DuplicateFormDialog({ form, isOpen, onClose }: DuplicateFormDial
               {error}
             </div>
           )}
-          
+
           {/* Title Input */}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1.5">
@@ -144,7 +141,7 @@ export function DuplicateFormDialog({ form, isOpen, onClose }: DuplicateFormDial
               รหัสฟอร์มจะสร้างอัตโนมัติ (เช่น FRM-024)
             </p>
           </div>
-          
+
           {/* Copy Options */}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-3">
@@ -192,7 +189,7 @@ export function DuplicateFormDialog({ form, isOpen, onClose }: DuplicateFormDial
               ))}
             </div>
           </div>
-          
+
           {/* Info Box */}
           <div className="bg-slate-50 p-4 rounded-xl text-sm text-slate-600">
             <p className="flex items-start gap-2">
@@ -202,7 +199,7 @@ export function DuplicateFormDialog({ form, isOpen, onClose }: DuplicateFormDial
               </span>
             </p>
           </div>
-          
+
           {/* Actions */}
           <div className="flex gap-3 pt-2">
             <button

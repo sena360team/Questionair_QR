@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { FormBuilder } from '@/components/FormBuilder';
 import { FormRenderer } from '@/components/FormRenderer';
-import { useForms } from '@/hooks/useSupabase';
+
 import { slugify } from '@/lib/utils';
 import { FormField } from '@/types';
 import { ArrowLeft, Save, Eye, X, Hash, FileText, Shield, Rocket, Edit3, CheckCircle, AlertCircle } from 'lucide-react';
@@ -36,13 +36,13 @@ const createMockForm = (
   title,
   description,
   logo_url: logoUrl,
-  logo_position: logoPosition,
-  logo_size: logoSize,
-  theme,
-  banner_color: bannerColor,
+  logo_position: logoPosition as 'center' | 'left' | 'right' | undefined,
+  logo_size: logoSize as 'small' | 'medium' | 'large' | undefined,
+  theme: theme as 'default' | 'card-groups' | 'step-wizard' | 'minimal' | undefined,
+  banner_color: bannerColor as 'blue' | 'black' | 'white' | 'custom' | undefined,
   banner_custom_color: bannerCustomColor,
-  banner_mode: bannerMode,
-  accent_color: accentColor,
+  banner_mode: bannerMode as 'gradient' | 'solid' | undefined,
+  accent_color: accentColor as 'blue' | 'sky' | 'teal' | 'emerald' | 'violet' | 'rose' | 'orange' | 'slate' | 'black' | 'custom' | undefined,
   accent_custom_color: accentCustomColor,
   fields,
   is_active: true,
@@ -58,7 +58,38 @@ const createMockForm = (
 
 export default function CreateFormPage() {
   const router = useRouter();
-  const { forms, createForm } = useForms();
+  const [forms, setForms] = useState<any[]>([]);
+  
+  // Fetch forms on mount
+  useEffect(() => {
+    async function fetchForms() {
+      try {
+        const response = await fetch('/api/forms');
+        if (response.ok) {
+          const result = await response.json();
+          setForms(Array.isArray(result) ? result : (result.data || []));
+        }
+      } catch (err) {
+        console.error('Failed to fetch forms:', err);
+      }
+    }
+    fetchForms();
+  }, []);
+  
+  // Create form via API (PostgreSQL)
+  const createForm = async (input: any) => {
+    const response = await fetch('/api/forms', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to create form');
+    }
+    const result = await response.json();
+    return result.data;
+  };
   
   const [code, setCode] = useState('');
   const [title, setTitle] = useState('');

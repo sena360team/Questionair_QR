@@ -2,11 +2,11 @@
 
 import Link from 'next/link';
 import { useForms, useQRCodes, useSubmissions } from '@/hooks/useSupabase';
-import { 
-  FileText, 
-  QrCode, 
-  BarChart3, 
-  TrendingUp, 
+import {
+  FileText,
+  QrCode,
+  BarChart3,
+  TrendingUp,
   TrendingDown,
   ArrowRight,
   Calendar,
@@ -119,8 +119,8 @@ export default function DashboardPage() {
         <div className="xl:col-span-2 2xl:col-span-3 space-y-6">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-slate-900">แบบสอบถามล่าสุด</h2>
-            <Link 
-              href="/admin/forms" 
+            <Link
+              href="/admin/forms"
               className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
             >
               ดูทั้งหมด <ChevronRight className="w-4 h-4" />
@@ -132,7 +132,7 @@ export default function DashboardPage() {
               <div className="p-12 text-center text-slate-500">
                 <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
                 <p>ยังไม่มีแบบสอบถาม</p>
-                <Link 
+                <Link
                   href="/admin/forms/create"
                   className="text-blue-600 hover:text-blue-700 text-sm mt-2 inline-block"
                 >
@@ -142,8 +142,8 @@ export default function DashboardPage() {
             ) : (
               <div className="divide-y divide-slate-200">
                 {forms.slice(0, 10).map((form) => (
-                  <div 
-                    key={form.id} 
+                  <div
+                    key={form.id}
                     className="p-4 lg:p-6 flex items-center justify-between hover:bg-slate-50 transition-colors"
                   >
                     <div className="flex items-center gap-4">
@@ -153,10 +153,10 @@ export default function DashboardPage() {
                       <div className="min-w-0">
                         <h3 className="font-medium text-slate-900 truncate">{form.title}</h3>
                         <p className="text-sm text-slate-500">
-                          {form.fields?.length || 0} คำถาม • สร้างเมื่อ {formatDate(form.created_at, { 
-                            year: 'numeric', 
-                            month: 'short', 
-                            day: 'numeric' 
+                          {form.fields?.length || 0} คำถาม • สร้างเมื่อ {formatDate(form.created_at, {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric'
                           })}
                         </p>
                       </div>
@@ -185,7 +185,7 @@ export default function DashboardPage() {
         {/* Recent Activity - Takes 1/3 on xl, 1/4 on 2xl */}
         <div className="space-y-6">
           <h2 className="text-lg font-semibold text-slate-900">กิจกรรมล่าสุด</h2>
-          
+
           <div className="bg-white rounded-2xl border-2 border-slate-300 p-6">
             {recentSubmissions.length === 0 ? (
               <p className="text-center text-slate-500 py-8">ยังไม่มีกิจกรรม</p>
@@ -206,9 +206,9 @@ export default function DashboardPage() {
                           {form?.title || 'แบบสอบถาม'}
                         </p>
                         <p className="text-xs text-slate-400 mt-1">
-                          {formatDate(sub.submitted_at, { 
-                            hour: '2-digit', 
-                            minute: '2-digit' 
+                          {formatDate(sub.submitted_at, {
+                            hour: '2-digit',
+                            minute: '2-digit'
                           })}
                         </p>
                       </div>
@@ -240,8 +240,8 @@ function StatCard({ icon, label, value, trend, trendUp, href, highlight }: StatC
   const content = (
     <div className={cn(
       "p-4 lg:p-6 rounded-2xl transition-all h-full",
-      highlight 
-        ? "bg-blue-600 text-white" 
+      highlight
+        ? "bg-blue-600 text-white"
         : "bg-white border-2 border-slate-300 hover:border-blue-300 hover:shadow-lg"
     )}>
       <div className="flex items-start justify-between">
@@ -257,8 +257,8 @@ function StatCard({ icon, label, value, trend, trendUp, href, highlight }: StatC
             highlight ? "text-blue-100" : "text-slate-500"
           )}>
             {trendUp !== undefined && (
-              trendUp 
-                ? <TrendingUp className="w-3 h-3" /> 
+              trendUp
+                ? <TrendingUp className="w-3 h-3" />
                 : <TrendingDown className="w-3 h-3" />
             )}
             {trend}
@@ -284,7 +284,7 @@ function StatCard({ icon, label, value, trend, trendUp, href, highlight }: StatC
 
   if (href) {
     return (
-      <Link href={href} className="block">
+      <Link href={href as any} className="block">
         {content}
       </Link>
     );

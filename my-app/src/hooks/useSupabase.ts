@@ -1,8 +1,12 @@
-// React Hooks for Supabase
+// ============================================================
+// useSupabase.ts — React Hooks สำหรับ Fetch Data
+// เปลี่ยนจาก Supabase Client → ใช้ fetch เรียก API Routes แทน
+// ทุก hook เรียก /api/... เพื่อดึงและแก้ไขข้อมูล
+// ============================================================
+
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { getSupabaseBrowser } from '@/lib/supabase';
 import type { Form, QRCode, Submission, Project, FormCreateInput, QRCodeCreateInput, ProjectCreateInput } from '@/types';
 
 // ============================================================
@@ -17,15 +21,9 @@ export function useProjects() {
   const fetchProjects = useCallback(async () => {
     try {
       setLoading(true);
-      const supabase = getSupabaseBrowser();
-      const { data, error } = await supabase
-        .from('projects')
-        .select('*')
-        .order('is_active', { ascending: false })
-        .order('created_at', { ascending: false });
-        
-      if (error) throw error;
-      setProjects((data as Project[]) || []);
+      const res = await fetch('/api/projects');
+      if (!res.ok) throw new Error(await res.text());
+      setProjects(await res.json());
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Unknown error'));
     } finally {
@@ -36,50 +34,47 @@ export function useProjects() {
   useEffect(() => { fetchProjects(); }, [fetchProjects]);
 
   const createProject = useCallback(async (input: ProjectCreateInput) => {
-    const supabase = getSupabaseBrowser();
-    const { data, error } = await supabase
-      .from('projects')
-      .insert(input)
-      .select()
-      .single();
-      
-    if (error) throw error;
-    setProjects(prev => [data as Project, ...prev]);
-    return data as Project;
+    const res = await fetch('/api/projects', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const project = await res.json();
+    setProjects(prev => [project, ...prev]);
+    return project as Project;
   }, []);
 
   const updateProject = useCallback(async (id: string, updates: Partial<Project>) => {
-    const supabase = getSupabaseBrowser();
-    const { data, error } = await supabase
-      .from('projects')
-      .update(updates)
-      .eq('id', id)
-      .select()
-      .single();
-      
-    if (error) throw error;
-    setProjects(prev => prev.map(p => p.id === id ? data as Project : p));
-    return data as Project;
+    const res = await fetch(`/api/projects/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updates),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const project = await res.json();
+    setProjects(prev => prev.map(p => p.id === id ? project : p));
+    return project as Project;
   }, []);
 
   const deleteProject = useCallback(async (id: string) => {
-    const supabase = getSupabaseBrowser();
-    const { error } = await supabase.from('projects').delete().eq('id', id);
-    if (error) throw error;
+    const res = await fetch(`/api/projects/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error(await res.text());
     setProjects(prev => prev.filter(p => p.id !== id));
   }, []);
 
-  // Bulk import from Excel
   const importProjects = useCallback(async (data: ProjectCreateInput[]) => {
-    const supabase = getSupabaseBrowser();
-    const { data: imported, error } = await supabase
-      .from('projects')
-      .insert(data)
-      .select();
-      
-    if (error) throw error;
-    setProjects(prev => [...(imported as Project[]), ...prev]);
-    return imported as Project[];
+    const results: Project[] = [];
+    for (const item of data) {
+      const res = await fetch('/api/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(item),
+      });
+      if (res.ok) results.push(await res.json());
+    }
+    setProjects(prev => [...results, ...prev]);
+    return results;
   }, []);
 
   return { projects, loading, error, refresh: fetchProjects, createProject, updateProject, deleteProject, importProjects };
@@ -97,28 +92,9 @@ export function useForms() {
   const fetchForms = useCallback(async () => {
     try {
       setLoading(true);
-      const supabase = getSupabaseBrowser();
-      
-      // Fetch forms with counts
-      const { data: formsData, error: formsError } = await supabase
-        .from('forms')
-        .select(`
-          *,
-          qr_codes:qr_codes(count),
-          submissions:submissions(count)
-        `)
-        .order('created_at', { ascending: false });
-
-      if (formsError) throw formsError;
-
-      // Map forms with has_draft based on draft_version field
-      // If draft_version is not null, it means there's an unpublished draft
-      const mergedForms = (formsData || []).map((form: any) => ({
-        ...form,
-        has_draft: form.draft_version !== null && form.draft_version !== undefined,
-      }));
-
-      setForms(mergedForms as Form[]);
+      const res = await fetch('/api/forms');
+      if (!res.ok) throw new Error(await res.text());
+      setForms(await res.json());
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Unknown error'));
     } finally {
@@ -129,73 +105,61 @@ export function useForms() {
   useEffect(() => { fetchForms(); }, [fetchForms]);
 
   const createForm = useCallback(async (input: FormCreateInput) => {
-    const supabase = getSupabaseBrowser();
-    const { data, error } = await supabase
-      .from('forms')
-      .insert(input)
-      .select()
-      .single();
-      
-    if (error) throw error;
-    setForms(prev => [data as Form, ...prev]);
-    return data as Form;
+    const res = await fetch('/api/forms', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const form = await res.json();
+    setForms(prev => [form, ...prev]);
+    return form as Form;
   }, []);
 
   const updateForm = useCallback(async (id: string, updates: Partial<Form>) => {
-    const supabase = getSupabaseBrowser();
-    const { data, error } = await supabase
-      .from('forms')
-      .update(updates)
-      .eq('id', id)
-      .select()
-      .single();
-      
-    if (error) throw error;
-    setForms(prev => prev.map(f => f.id === id ? data as Form : f));
-    return data as Form;
+    const res = await fetch(`/api/forms/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updates),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const form = await res.json();
+    setForms(prev => prev.map(f => f.id === id ? form : f));
+    return form as Form;
   }, []);
 
   const deleteForm = useCallback(async (id: string) => {
-    const supabase = getSupabaseBrowser();
-    const { error } = await supabase.from('forms').delete().eq('id', id);
-    if (error) throw error;
+    const res = await fetch(`/api/forms/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error(await res.text());
     setForms(prev => prev.filter(f => f.id !== id));
   }, []);
 
   const publishForm = useCallback(async (id: string, changeSummary?: string) => {
-    const supabase = getSupabaseBrowser();
-    const { data, error } = await supabase
-      .rpc('publish_form', {
-        p_form_id: id,
-        p_change_summary: changeSummary || 'Publish ครั้งแรก'
-      });
-    if (error) throw error;
-    
-    // อัพเดท local state
-    setForms(prev => prev.map(f => 
-      f.id === id 
-        ? { ...f, status: 'published', current_version: 1 } as Form
-        : f
+    const res = await fetch(`/api/forms/${id}/publish`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ changeSummary }),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const data = await res.json();
+    setForms(prev => prev.map(f =>
+      f.id === id ? { ...f, status: 'published', current_version: data.version } as Form : f
     ));
-    return data as number;
+    return data.version as number;
   }, []);
 
   const createNewVersion = useCallback(async (id: string, changeSummary?: string) => {
-    const supabase = getSupabaseBrowser();
-    const { data, error } = await supabase
-      .rpc('create_new_version', {
-        p_form_id: id,
-        p_change_summary: changeSummary
-      });
-    if (error) throw error;
-    
-    // อัพเดท local state
-    setForms(prev => prev.map(f => 
-      f.id === id 
-        ? { ...f, current_version: data as number } as Form
-        : f
+    const res = await fetch(`/api/forms/${id}/new-version`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ changeSummary }),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const data = await res.json();
+    setForms(prev => prev.map(f =>
+      f.id === id ? { ...f, current_version: data.version } as Form : f
     ));
-    return data as number;
+    return data.version as number;
   }, []);
 
   return { forms, loading, error, refresh: fetchForms, createForm, updateForm, deleteForm, publishForm, createNewVersion };
@@ -207,26 +171,12 @@ export function useForm(slug: string) {
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    async function fetchForm() {
-      if (!slug) { setLoading(false); return; }
-      try {
-        setLoading(true);
-        const supabase = getSupabaseBrowser();
-        const { data, error } = await supabase
-          .from('forms')
-          .select('*')
-          .eq('slug', slug)
-          .single();
-          
-        if (error) throw error;
-        setForm(data as Form);
-      } catch (err) {
-        setError(err instanceof Error ? err : new Error('Unknown error'));
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchForm();
+    if (!slug) { setLoading(false); return; }
+    fetch(`/api/forms/${slug}`)
+      .then(r => r.ok ? r.json() : Promise.reject(new Error('Form not found')))
+      .then(data => setForm(data as Form))
+      .catch(err => setError(err))
+      .finally(() => setLoading(false));
   }, [slug]);
 
   return { form, loading, error };
@@ -244,22 +194,10 @@ export function useQRCodes(formId?: string) {
   const fetchQRCodes = useCallback(async () => {
     try {
       setLoading(true);
-      const supabase = getSupabaseBrowser();
-      let query = supabase
-        .from('qr_codes')
-        .select(`
-          *,
-          project:projects(*)
-        `)
-        .order('created_at', { ascending: false });
-        
-      if (formId) {
-        query = query.eq('form_id', formId);
-      }
-      
-      const { data, error } = await query;
-      if (error) throw error;
-      setQrCodes((data as QRCode[]) || []);
+      const url = formId ? `/api/qr-codes?formId=${formId}` : '/api/qr-codes';
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(await res.text());
+      setQrCodes(await res.json());
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Unknown error'));
     } finally {
@@ -270,36 +208,32 @@ export function useQRCodes(formId?: string) {
   useEffect(() => { fetchQRCodes(); }, [fetchQRCodes]);
 
   const createQRCode = useCallback(async (input: QRCodeCreateInput) => {
-    const supabase = getSupabaseBrowser();
-    const { data, error } = await supabase
-      .from('qr_codes')
-      .insert(input)
-      .select()
-      .single();
-      
-    if (error) throw error;
-    setQrCodes(prev => [data as QRCode, ...prev]);
-    return data as QRCode;
+    const res = await fetch('/api/qr-codes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const qrCode = await res.json();
+    setQrCodes(prev => [qrCode, ...prev]);
+    return qrCode as QRCode;
   }, []);
 
   const updateQRCode = useCallback(async (id: string, updates: Partial<QRCode>) => {
-    const supabase = getSupabaseBrowser();
-    const { data, error } = await supabase
-      .from('qr_codes')
-      .update(updates)
-      .eq('id', id)
-      .select()
-      .single();
-      
-    if (error) throw error;
-    setQrCodes(prev => prev.map(qr => qr.id === id ? data as QRCode : qr));
-    return data as QRCode;
+    const res = await fetch(`/api/qr-codes/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updates),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const qrCode = await res.json();
+    setQrCodes(prev => prev.map(qr => qr.id === id ? qrCode : qr));
+    return qrCode as QRCode;
   }, []);
 
   const deleteQRCode = useCallback(async (id: string) => {
-    const supabase = getSupabaseBrowser();
-    const { error } = await supabase.from('qr_codes').delete().eq('id', id);
-    if (error) throw error;
+    const res = await fetch(`/api/qr-codes/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error(await res.text());
     setQrCodes(prev => prev.filter(qr => qr.id !== id));
   }, []);
 
@@ -318,22 +252,14 @@ export function useSubmissions(formId?: string) {
   const fetchSubmissions = useCallback(async () => {
     try {
       setLoading(true);
-      const supabase = getSupabaseBrowser();
-      let query = supabase
-        .from('submissions')
-        .select(`
-          *,
-          qr_code:qr_codes(name, qr_slug)
-        `)
-        .order('submitted_at', { ascending: false });
-        
-      if (formId) {
-        query = query.eq('form_id', formId);
-      }
-      
-      const { data, error } = await query;
-      if (error) throw error;
-      setSubmissions((data as Submission[]) || []);
+      const url = formId
+        ? `/api/forms/${formId}/submissions`
+        : '/api/submissions';
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(await res.text());
+      const data = await res.json();
+      // API ส่งมาเป็น { submissions: [...], ... } ถ้ามี formId
+      setSubmissions(Array.isArray(data) ? data : (data.submissions || []));
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Unknown error'));
     } finally {
@@ -364,30 +290,24 @@ export function useSubmitForm() {
     try {
       setSubmitting(true);
       setError(null);
-      const supabase = getSupabaseBrowser();
-      
-      const submission = {
-        form_id: formId,
-        qr_code_id: options?.qrCodeId || null,
-        project_id: options?.projectId || null,
-        responses,
-        utm_source: options?.utmParams?.utm_source || null,
-        utm_medium: options?.utmParams?.utm_medium || null,
-        utm_campaign: options?.utmParams?.utm_campaign || null,
-        utm_content: options?.utmParams?.utm_content || null,
-        utm_term: options?.utmParams?.utm_term || null,
-        fingerprint: options?.fingerprint || null,
-        metadata: options?.metadata || {}
-      };
-      
-      const { data, error } = await supabase
-        .from('submissions')
-        .insert(submission)
-        .select()
-        .single();
-        
-      if (error) throw error;
-      return data as Submission;
+      const res = await fetch(`/api/forms/${formId}/submissions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          responses,
+          qr_code_id: options?.qrCodeId,
+          project_id: options?.projectId,
+          utm_source: options?.utmParams?.utm_source,
+          utm_medium: options?.utmParams?.utm_medium,
+          utm_campaign: options?.utmParams?.utm_campaign,
+          utm_content: options?.utmParams?.utm_content,
+          utm_term: options?.utmParams?.utm_term,
+          fingerprint: options?.fingerprint,
+          metadata: options?.metadata,
+        }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      return await res.json() as Submission;
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to submit form'));
       throw err;

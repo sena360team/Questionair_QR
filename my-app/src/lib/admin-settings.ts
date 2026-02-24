@@ -1,39 +1,31 @@
-// Server-side only - use service role key for admin operations
-// This file should ONLY be used in Server Components or API Routes
+// ============================================================
+// Admin Settings Library
+// แทนที่ Supabase admin client ด้วย Prisma
+// ใช้ table: app_settings สำหรับจัดเก็บการตั้งค่าระบบ
+// Return: config object { contactChannelId, userCreated }
+// ============================================================
 
-import { createClient } from '@supabase/supabase-js';
+import prisma from '@/lib/db';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-
-// Client with service role - admin access only
-export const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false,
-  },
-});
-
+// ดึงการตั้งค่า CSS API
+// Returns: { contactChannelId: string, userCreated: string }
 export async function getCSSConfig() {
-  const { data, error } = await supabaseAdmin
-    .from('app_settings')
-    .select('value')
-    .eq('key', 'css_api_config')
-    .single();
-  
-  if (error) throw error;
-  return data?.value || { contactChannelId: '', userCreated: '' };
+  const setting = await prisma.appSetting.findUnique({
+    where: { key: 'css_api_config' },
+    select: { value: true },
+  });
+
+  return (setting?.value as any) || { contactChannelId: '', userCreated: '' };
 }
 
+// บันทึกการตั้งค่า CSS API
+// Parameters: config { contactChannelId: string, userCreated: string }
 export async function saveCSSConfig(config: { contactChannelId: string; userCreated: string }) {
-  const { error } = await supabaseAdmin
-    .from('app_settings')
-    .upsert({
-      key: 'css_api_config',
-      value: config,
-      description: 'Configuration for CSS API',
-    }, { onConflict: 'key' });
-  
-  if (error) throw error;
+  await prisma.appSetting.upsert({
+    where: { key: 'css_api_config' },
+    create: { key: 'css_api_config', value: config as any },
+    update: { value: config as any },
+  });
+
   return true;
 }

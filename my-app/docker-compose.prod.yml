@@ -1,0 +1,38 @@
+# ============================================
+# Docker Compose for Production
+# Uses external PostgreSQL @ senxgroup.com
+# ============================================
+
+version: '3.8'
+
+services:
+  # Next.js Application Only
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: questionair-app-prod
+    restart: unless-stopped
+    ports:
+      - "1881:1881"
+    environment:
+      # External Database Connection (senxgroup.com)
+      DATABASE_HOST: 172.18.0.2
+      DATABASE_PORT: 5432
+      DATABASE_USERNAME: complaint
+      DATABASE_PASSWORD: 5wRV%C%9
+      DATABASE_NAME: complaint_qr_db
+      DATABASE_URL: postgresql://complaint:5wRV%C%9@172.18.0.2:5432/complaint_qr_db
+      
+      # Application
+      NODE_ENV: production
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:1881}
+      
+      # Optional: CSS API
+      CSS_API_KEY: ${CSS_API_KEY:-}
+    networks:
+      - questionair-network
+
+networks:
+  questionair-network:
+    driver: bridge

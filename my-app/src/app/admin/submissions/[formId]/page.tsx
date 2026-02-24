@@ -3,11 +3,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { getSupabaseBrowser } from '@/lib/supabase';
 import { Submission, Form, FormField } from '@/types';
-import { 
-  ArrowLeft, 
-  Download, 
+import {
+  ArrowLeft,
+  Download,
   FileText,
   ChevronLeft,
   ChevronRight,
@@ -37,7 +36,7 @@ export default function FormSubmissionsPage() {
   const [loading, setLoading] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
-  
+
   // Filters
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
@@ -47,7 +46,7 @@ export default function FormSubmissionsPage() {
   // Compute unified fields from form.fields
   const unifiedFields = useMemo(() => {
     if (!form?.fields?.length) return [];
-    
+
     return form.fields.map((field: FormField) => ({
       key: field.id,
       label: field.label,
@@ -59,50 +58,37 @@ export default function FormSubmissionsPage() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const supabase = getSupabaseBrowser();
-      
-      // Get form details
-      const { data: formData, error: formError } = await supabase
-        .from('forms')
-        .select('*')
-        .eq('id', formId)
-        .single();
-      
-      if (formError) {
-        console.error('❌ Form error:', formError);
-      } else {
+      // Fetch form details and submissions in parallel
+      const queryParams = new URLSearchParams({
+        formId,
+        page: String(currentPage),
+        limit: String(ITEMS_PER_PAGE),
+      });
+      if (dateFrom) queryParams.set('dateFrom', dateFrom);
+      if (dateTo) queryParams.set('dateTo', dateTo);
+
+      const [formRes, subsRes] = await Promise.all([
+        fetch(`/api/forms/${formId}`),
+        fetch(`/api/submissions?${queryParams}`),
+      ]);
+
+      if (formRes.ok) {
+        const formData = await formRes.json();
         setForm(formData as Form);
-      }
-      
-      // Get submissions with QR Code + Project info
-      let query = supabase
-        .from('submissions')
-        .select(`
-          *,
-          qr_code:qr_codes(id, name, utm_source, utm_medium, utm_campaign, utm_content, project_id),
-          project:projects(id, code, name)
-        `, { count: 'exact' })
-        .eq('form_id', formId)
-        .order('submitted_at', { ascending: false });
-
-      if (dateFrom) {
-        query = query.gte('submitted_at', dateFrom);
-      }
-      if (dateTo) {
-        query = query.lte('submitted_at', dateTo + 'T23:59:59');
+      } else {
+        console.error('Failed to fetch form:', formRes.status);
       }
 
-      const from = (currentPage - 1) * ITEMS_PER_PAGE;
-      const to = from + ITEMS_PER_PAGE - 1;
-      
-      const { data, count, error } = await query.range(from, to);
-      
-      if (error) throw error;
-      
-      setSubmissions(data as Submission[] || []);
-      setTotalCount(count || 0);
+      if (subsRes.ok) {
+        const subsResult = await subsRes.json();
+        // API returns { data: [...], total: N }
+        setSubmissions(subsResult.data || []);
+        setTotalCount(subsResult.total || 0);
+      } else {
+        console.error('Failed to fetch submissions:', subsRes.status);
+      }
     } catch (err) {
-      console.error('❌ Error fetching data:', err);
+      console.error('Error fetching data:', err);
     } finally {
       setLoading(false);
     }
@@ -116,7 +102,7 @@ export default function FormSubmissionsPage() {
 
   const handleExport = () => {
     if (!submissions.length) return;
-    
+
     const headers = [
       'ID',
       'เวลาส่ง',
@@ -132,14 +118,14 @@ export default function FormSubmissionsPage() {
       'Consent Location (Lat,Lng)',
       'Consent Time'
     ];
-    
+
     const rows = submissions.map(sub => {
       const row = [
         sub.id,
         formatDate(sub.submitted_at, { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
         `v${sub.form_version || 1}`,
       ];
-      
+
       // Field responses
       unifiedFields.forEach(field => {
         const value = (sub.responses as Record<string, unknown>)?.[field.key];
@@ -151,27 +137,27 @@ export default function FormSubmissionsPage() {
           row.push(String(value));
         }
       });
-      
+
       // QR Code & Project info
       row.push(sub.qr_code?.name || '-');
       row.push(sub.project?.code || sub.qr_code?.project_id || '-');
       row.push(sub.project?.name || '-');
       row.push(sub.qr_code?.utm_source || '-');
       row.push(sub.qr_code?.utm_medium || '-');
-      
+
       // Consent Stamp
       row.push(sub.consent_given ? 'ยินยอม' : '-');
       row.push(sub.consent_ip || '-');
       row.push(sub.consent_location ? `${sub.consent_location.latitude},${sub.consent_location.longitude}` : '-');
       row.push(sub.consented_at ? formatDate(sub.consented_at, { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-');
-      
+
       return row;
     });
-    
+
     const csv = [headers, ...rows]
       .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
       .join('\n');
-    
+
     const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
@@ -204,16 +190,15 @@ export default function FormSubmissionsPage() {
           </div>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
-          <button 
+          <button
             onClick={() => setShowFilters(!showFilters)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-colors ${
-              showFilters ? 'bg-blue-100 text-blue-700' : 'border-2 border-slate-300 hover:bg-slate-50 bg-white'
-            }`}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-colors ${showFilters ? 'bg-blue-100 text-blue-700' : 'border-2 border-slate-300 hover:bg-slate-50 bg-white'
+              }`}
           >
             <Calendar className="w-5 h-5" />
             <span className="hidden sm:inline">ช่วงวันที่</span>
           </button>
-          <button 
+          <button
             onClick={handleExport}
             disabled={!submissions.length}
             className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 disabled:opacity-50"
@@ -290,14 +275,14 @@ export default function FormSubmissionsPage() {
                     {unifiedFields.map((field) => {
                       const versionColor = getVersionColor(field.version);
                       return (
-                        <th 
-                          key={field.key} 
+                        <th
+                          key={field.key}
                           className="px-4 py-3 text-left font-semibold whitespace-nowrap bg-slate-50 text-slate-700"
                         >
                           <div className="max-w-[200px] truncate flex items-center gap-1" title={`${field.label}${field.version > 1 ? ` (เพิ่ม v${field.version})` : ''}`}>
                             {field.label}
                             {field.version > 1 && (
-                              <span 
+                              <span
                                 className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium border"
                                 style={{
                                   backgroundColor: versionColor ? `${versionColor}20` : '#dbeafe',
@@ -324,21 +309,21 @@ export default function FormSubmissionsPage() {
                 </thead>
                 <tbody className="divide-y divide-slate-200">
                   {submissions.map((sub) => (
-                    <tr className="border-b border-slate-200" key={sub.id} className="hover:bg-slate-50 transition-colors">
+                    <tr className="border-b border-slate-200 hover:bg-slate-50 transition-colors" key={sub.id}>
                       <td className="px-4 py-3 font-mono text-slate-500 whitespace-nowrap">
                         #{sub.id?.slice(-6)}
                       </td>
                       <td className="px-4 py-3 text-slate-900 whitespace-nowrap">
-                        {formatDate(sub.submitted_at, { 
-                          day: '2-digit', 
-                          month: 'short', 
+                        {formatDate(sub.submitted_at, {
+                          day: '2-digit',
+                          month: 'short',
                           year: 'numeric',
                           hour: '2-digit',
                           minute: '2-digit'
                         })}
                       </td>
                       <td className="px-4 py-3 text-center">
-                        <span 
+                        <span
                           className="inline-flex px-2 py-0.5 text-xs font-medium rounded border"
                           style={getVersionBadgeStyle(sub.form_version || 1)}
                         >
@@ -348,8 +333,8 @@ export default function FormSubmissionsPage() {
                       {unifiedFields.map((field) => {
                         const value = getFieldDisplayValue(sub, field);
                         return (
-                          <td 
-                            key={field.key} 
+                          <td
+                            key={field.key}
                             className="px-4 py-3 max-w-[200px] truncate text-slate-700"
                             title={value !== '-' ? value : undefined}
                           >
@@ -438,7 +423,7 @@ export default function FormSubmissionsPage() {
           </>
         )}
       </div>
-      
+
       {/* View Submission Modal */}
       {selectedSubmission && form && (
         <ViewSubmissionModal
@@ -452,17 +437,17 @@ export default function FormSubmissionsPage() {
 }
 
 // View Submission Modal Component - แสดงคำตอบในรูปแบบฟอร์ม
-function ViewSubmissionModal({ 
-  submission, 
-  form, 
-  onClose 
-}: { 
-  submission: Submission; 
-  form: Form; 
+function ViewSubmissionModal({
+  submission,
+  form,
+  onClose
+}: {
+  submission: Submission;
+  form: Form;
   onClose: () => void;
 }) {
   const responses = submission.responses as Record<string, unknown>;
-  
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
@@ -471,9 +456,9 @@ function ViewSubmissionModal({
           <div>
             <h3 className="text-lg font-semibold text-slate-900">คำตอบ #{submission.id?.slice(-6)}</h3>
             <p className="text-sm text-slate-500">
-              ส่งเมื่อ {formatDate(submission.submitted_at, { 
-                day: 'numeric', 
-                month: 'long', 
+              ส่งเมื่อ {formatDate(submission.submitted_at, {
+                day: 'numeric',
+                month: 'long',
                 year: 'numeric',
                 hour: '2-digit',
                 minute: '2-digit'
@@ -487,49 +472,49 @@ function ViewSubmissionModal({
             <X className="w-5 h-5 text-slate-500" />
           </button>
         </div>
-        
+
         {/* Content - Form View */}
         <div className="flex-1 overflow-auto p-6 bg-slate-50">
           <div className="bg-white rounded-xl p-6 space-y-6">
             {/* Version Badge */}
             <div className="flex items-center gap-2 pb-4 border-b border-slate-100">
               <span className="text-sm text-slate-500">ฟอร์มเวอร์ชัน:</span>
-              <span 
+              <span
                 className="inline-flex px-2 py-0.5 text-xs font-medium rounded border"
                 style={getVersionBadgeStyle(submission.form_version || 1)}
               >
                 v{submission.form_version || 1}
               </span>
             </div>
-            
+
             {/* Form Fields with Answers */}
             {form.fields?.map((field: FormField, index: number) => {
               const answer = responses?.[field.id] ?? responses?.[field.label];
-              
+
               return (
                 <div key={field.id || index} className="space-y-2">
                   {/* Question */}
                   <label className="block text-sm font-medium text-slate-700">
-                    {field.label || field.question || `คำถาม ${index + 1}`}
+                    {field.label || `คำถาม ${index + 1}`}
                     {field.required && <span className="text-red-500 ml-1">*</span>}
                   </label>
-                  
+
                   {/* Answer Display */}
                   <div className="bg-slate-50 border-2 border-slate-200 rounded-xl px-4 py-3 min-h-[48px]">
                     {answer === undefined || answer === null || answer === '' ? (
                       <span className="text-slate-400 italic">ไม่ได้ตอบ</span>
-                    ) : field.type === 'checkbox' || Array.isArray(answer) ? (
+                    ) : field.type === 'multiple_choice' || Array.isArray(answer) ? (
                       <div className="flex flex-wrap gap-2">
                         {(Array.isArray(answer) ? answer : [answer]).map((item: string, i: number) => (
-                          <span 
-                            key={i} 
+                          <span
+                            key={i}
                             className="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-700 text-sm rounded-full"
                           >
                             {item}
                           </span>
                         ))}
                       </div>
-                    ) : field.type === 'radio' || field.type === 'select' ? (
+                    ) : field.type === 'choice' || field.type === 'dropdown' ? (
                       <span className="inline-flex items-center px-3 py-1 bg-green-100 text-green-700 text-sm rounded-full">
                         {String(answer)}
                       </span>
@@ -540,7 +525,7 @@ function ViewSubmissionModal({
                 </div>
               );
             })}
-            
+
             {/* Consent Section */}
             {submission.consent_given && (
               <div className="mt-6 pt-6 border-t border-slate-200">
@@ -557,9 +542,9 @@ function ViewSubmissionModal({
                     <div className="flex justify-between">
                       <span className="text-slate-600">เวลายินยอม:</span>
                       <span className="text-slate-900">
-                        {formatDate(submission.consented_at, { 
-                          day: '2-digit', 
-                          month: 'short', 
+                        {formatDate(submission.consented_at, {
+                          day: '2-digit',
+                          month: 'short',
                           year: 'numeric',
                           hour: '2-digit',
                           minute: '2-digit'
@@ -586,7 +571,7 @@ function ViewSubmissionModal({
             )}
           </div>
         </div>
-        
+
         {/* Footer */}
         <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 flex justify-end">
           <button

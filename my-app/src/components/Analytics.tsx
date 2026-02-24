@@ -17,14 +17,14 @@ export function AnalyticsDashboard({ submissions, qrCodes }: AnalyticsProps) {
   const stats = useMemo(() => {
     const totalSubmissions = submissions.length;
     const totalScans = qrCodes.reduce((sum, qr) => sum + qr.scan_count, 0);
-    
+
     // Submissions by date (last 7 days)
     const last7Days = Array.from({ length: 7 }, (_, i) => {
       const d = new Date();
       d.setDate(d.getDate() - (6 - i));
       return d.toISOString().split('T')[0];
     });
-    
+
     const submissionsByDate = last7Days.map(date => ({
       date: new Date(date).toLocaleDateString('th-TH', { weekday: 'short' }),
       count: submissions.filter(s => s.submitted_at.startsWith(date)).length
@@ -105,28 +105,28 @@ export function AnalyticsDashboard({ submissions, qrCodes }: AnalyticsProps) {
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={stats.submissionsByDate}>
-                <XAxis 
-                  dataKey="date" 
+                <XAxis
+                  dataKey="date"
                   tick={{ fontSize: 12 }}
                   axisLine={false}
                   tickLine={false}
                 />
-                <YAxis 
+                <YAxis
                   tick={{ fontSize: 12 }}
                   axisLine={false}
                   tickLine={false}
                 />
-                <Tooltip 
+                <Tooltip
                   cursor={{ fill: '#F1F5F9' }}
-                  contentStyle={{ 
-                    borderRadius: '8px', 
-                    border: 'none', 
-                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' 
+                  contentStyle={{
+                    borderRadius: '8px',
+                    border: 'none',
+                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
                   }}
                 />
-                <Bar 
-                  dataKey="count" 
-                  fill="#3B82F6" 
+                <Bar
+                  dataKey="count"
+                  fill="#3B82F6"
                   radius={[4, 4, 0, 0]}
                 />
               </BarChart>
@@ -166,8 +166,8 @@ export function AnalyticsDashboard({ submissions, qrCodes }: AnalyticsProps) {
           <div className="flex flex-wrap justify-center gap-4 mt-4">
             {stats.utmSourceData.map((item, idx) => (
               <div key={item.name} className="flex items-center gap-2">
-                <div 
-                  className="w-3 h-3 rounded-full" 
+                <div
+                  className="w-3 h-3 rounded-full"
                   style={{ backgroundColor: COLORS[idx % COLORS.length] }}
                 />
                 <span className="text-sm text-slate-600">{item.name}</span>
@@ -199,18 +199,18 @@ export function AnalyticsDashboard({ submissions, qrCodes }: AnalyticsProps) {
                 </tr>
               ) : (
                 stats.qrPerformance.map((qr) => (
-                  <tr className="border-b border-slate-200" key={qr.name} className="border-b border-slate-300">
+                  <tr key={qr.name} className="border-b border-slate-300">
                     <td className="py-3 px-4">{qr.name}</td>
                     <td className="text-center py-3 px-4">{formatNumber(qr.scans)}</td>
                     <td className="text-center py-3 px-4 font-medium">{formatNumber(qr.submissions)}</td>
                     <td className="text-center py-3 px-4">
                       <span className={cn(
                         "px-2 py-1 rounded-full text-xs font-medium",
-                        qr.submissions / qr.scans > 0.5 
+                        qr.submissions / qr.scans > 0.5
                           ? "bg-green-100 text-green-700"
                           : qr.submissions / qr.scans > 0.2
-                          ? "bg-yellow-100 text-yellow-700"
-                          : "bg-red-100 text-red-700"
+                            ? "bg-yellow-100 text-yellow-700"
+                            : "bg-red-100 text-red-700"
                       )}>
                         {qr.scans > 0 ? Math.round((qr.submissions / qr.scans) * 100) : 0}%
                       </span>
@@ -231,9 +231,9 @@ export function AnalyticsDashboard({ submissions, qrCodes }: AnalyticsProps) {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={stats.utmContentData} layout="vertical">
                 <XAxis type="number" tick={{ fontSize: 12 }} />
-                <YAxis 
-                  dataKey="name" 
-                  type="category" 
+                <YAxis
+                  dataKey="name"
+                  type="category"
                   tick={{ fontSize: 12 }}
                   width={120}
                 />
@@ -250,15 +250,15 @@ export function AnalyticsDashboard({ submissions, qrCodes }: AnalyticsProps) {
 
 // ==================== Stat Card Component ====================
 
-function StatCard({ 
-  icon, 
-  label, 
-  value, 
-  color 
-}: { 
-  icon: React.ReactNode; 
-  label: string; 
-  value: string; 
+function StatCard({
+  icon,
+  label,
+  value,
+  color
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
   color: 'blue' | 'green' | 'purple' | 'amber';
 }) {
   const colorClasses = {

@@ -3,11 +3,11 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { QRCode } from '@/types';
-import { 
-  QrCode, 
-  ExternalLink, 
-  Download, 
-  BarChart3, 
+import {
+  QrCode,
+  ExternalLink,
+  Download,
+  BarChart3,
   Calendar,
   Plus,
   Copy,
@@ -37,11 +37,11 @@ export function QRCodeTab({ formId, formCode }: QRCodeTabProps) {
       setLoading(true);
       const response = await fetch(`/api/forms/${formId}/qr-codes`);
       const result = await response.json();
-      
+
       if (!result.success) {
         throw new Error(result.error || 'Failed to fetch QR codes');
       }
-      
+
       setQrCodes(result.data);
     } catch (err: any) {
       setError(err.message);
@@ -112,7 +112,7 @@ export function QRCodeTab({ formId, formCode }: QRCodeTabProps) {
           <h3 className="text-lg font-medium text-slate-900 mb-2">ยังไม่มี QR Code</h3>
           <p className="text-slate-500 mb-6">สร้าง QR Code เพื่อให้ผู้ใช้สแกนเข้าถึงแบบสอบถามนี้</p>
           <Link
-            href={`/admin/qr-codes/create?formId=${formId}`}
+            href={`/admin/qr-codes/create?formId=${formId}` as any}
             className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700"
           >
             <Plus className="w-5 h-5" />
@@ -218,14 +218,14 @@ export function QRCodeTab({ formId, formCode }: QRCodeTabProps) {
                     <Download className="w-4 h-4" />
                   </a>
                   <Link
-                    href={`/admin/qr-codes/${qr.id}`}
+                    href={`/admin/qr-codes/${qr.id}` as any}
                     className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                     title="แก้ไข"
                   >
                     <Edit className="w-4 h-4" />
                   </Link>
                   <Link
-                    href={`/admin/qr-codes/${qr.id}/stats`}
+                    href={`/admin/qr-codes/${qr.id}/stats` as any}
                     className="p-2 text-slate-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
                     title="สถิติ"
                   >

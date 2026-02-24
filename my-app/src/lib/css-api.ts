@@ -38,7 +38,7 @@ export async function sendToCSS(
   contactChannelId: string,
   userCreated: string,
   qrData?: QRData
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; error?: string; data?: any }> {
   try {
     // Validate required fields
     if (!contactChannelId || !userCreated) {
@@ -51,7 +51,7 @@ export async function sendToCSS(
 
     // Extract values from answers based on mapping
     const jobDetail = answers[fieldMapping.jobDetail];
-    
+
     if (!jobDetail) {
       return { success: false, error: 'Job detail is empty' };
     }
@@ -90,13 +90,13 @@ export async function sendToCSS(
 
     const result = await response.json();
     console.log('[CSS API] Response:', result);
-    
+
     if (!result.success) {
       const errorMsg = result.data?.message || result.data?.error || `CSS API Error: ${result.status}`;
       console.error('[CSS API] Error:', errorMsg);
       return { success: false, error: errorMsg };
     }
-    
+
     return { success: true, data: result.data };
   } catch (err: any) {
     console.error('[CSS API] Exception:', err);

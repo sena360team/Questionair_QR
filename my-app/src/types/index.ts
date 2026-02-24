@@ -27,9 +27,9 @@ export interface ProjectCreateInput {
 // Form Types
 // ============================================================
 
-export type FieldType = 'heading' | 'section' | 'info_box' | 'text' | 'textarea' | 'email' | 'number' | 'tel' | 
-                        'choice' | 'multiple_choice' | 'dropdown' | 'rating' | 'date' | 
-                        'time' | 'scale' | 'nps';
+export type FieldType = 'heading' | 'section' | 'info_box' | 'text' | 'textarea' | 'email' | 'number' | 'tel' |
+  'choice' | 'multiple_choice' | 'dropdown' | 'rating' | 'date' |
+  'time' | 'scale' | 'nps';
 
 export interface FormField {
   id: string;
@@ -64,15 +64,15 @@ export interface Form {
   published_by?: string | null;
   // Theme
   theme?: 'default' | 'card-groups' | 'step-wizard' | 'minimal';
+  // Logo settings
+  logo_position?: 'center' | 'left' | 'right';
+  logo_size?: 'small' | 'medium' | 'large';
   // Color Theme Settings
   banner_color?: 'blue' | 'black' | 'white' | 'custom';
   banner_custom_color?: string;
   banner_mode?: 'gradient' | 'solid';
   accent_color?: 'blue' | 'sky' | 'teal' | 'emerald' | 'violet' | 'rose' | 'orange' | 'slate' | 'black' | 'custom';
   accent_custom_color?: string;
-  // Logo Settings
-  logo_position?: 'left' | 'center' | 'right';
-  logo_size?: 'small' | 'medium' | 'large';
   // Consent settings
   require_consent?: boolean;
   consent_heading?: string;  // หัวข้อ Consent (e.g., "การยินยอม", "ข้อตกลง")
@@ -324,7 +324,7 @@ export interface QRCode {
   created_at: string;
   updated_at: string;
   created_by: string | null;
-  
+
   // Join data
   form?: Form;
   project?: Project;  // NEW
@@ -363,7 +363,7 @@ export interface Submission {
   fingerprint: string | null;
   submitted_at: string;
   metadata: Record<string, unknown> | null;
-  
+
   // Consent Stamp
   consent_given?: boolean;
   consent_ip?: string | null;
@@ -374,7 +374,9 @@ export interface Submission {
     address?: string;
   } | null;
   consented_at?: string | null;
-  
+
+  // Return Types
+  form_version?: number; // DB level addition 
   // Join data
   form?: Form;
   qr_code?: QRCode;

@@ -15,9 +15,9 @@ interface CardGroupsThemeProps {
 
 // Group fields by section markers only
 // Section starts new card, Heading is just a text element inside the card
-function groupFields(fields: FormField[]): { 
+function groupFields(fields: FormField[]): {
   introBoxes: FormField[];
-  groups: { title: string; fields: (FormField | { type: 'heading_render'; label: string; helpText?: string })[] }[] 
+  groups: { title: string; fields: (FormField | { type: 'heading_render'; label: string; helpText?: string })[] }[]
 } {
   const groups: { title: string; fields: (FormField | { type: 'heading_render'; label: string; helpText?: string })[] }[] = [];
   let currentGroup: (FormField | { type: 'heading_render'; label: string; helpText?: string })[] = [];
@@ -31,7 +31,7 @@ function groupFields(fields: FormField[]): {
       introBoxes.push(field);
       return;
     }
-    
+
     // Section field = start new group with this title
     if (field.type === 'section') {
       foundFirstSection = true;
@@ -43,14 +43,14 @@ function groupFields(fields: FormField[]): {
       // Use this field's label as new group title
       currentTitle = field.label || 'หัวข้อใหม่';
       // Don't include section field itself in the group (it's just a marker)
-    } 
+    }
     // Heading field = render as text element inside current group
     else if (field.type === 'heading') {
       foundFirstSection = true;
-      currentGroup.push({ 
-        type: 'heading_render', 
+      currentGroup.push({
+        type: 'heading_render',
         label: field.label || '',
-        helpText: field.helpText || field.description
+        helpText: field.helpText
       });
     }
     else {
@@ -86,7 +86,7 @@ const getBannerColor = (form: Form) => {
     black: '#0F172A',
     white: '#FFFFFF',
   };
-  
+
   if (form.banner_color === 'custom' && form.banner_custom_color) {
     return form.banner_custom_color;
   }
@@ -106,7 +106,7 @@ const getAccentColor = (form: Form) => {
     slate: '#475569',
     black: '#0F172A',
   };
-  
+
   if (form.accent_color === 'custom' && form.accent_custom_color) {
     return form.accent_custom_color;
   }
@@ -119,11 +119,11 @@ const adjustBrightness = (hex: string, percent: number) => {
   let r = parseInt(hex.substring(0, 2), 16);
   let g = parseInt(hex.substring(2, 4), 16);
   let b = parseInt(hex.substring(4, 6), 16);
-  
+
   r = Math.min(255, Math.max(0, r + (r * percent / 100)));
   g = Math.min(255, Math.max(0, g + (g * percent / 100)));
   b = Math.min(255, Math.max(0, b + (b * percent / 100)));
-  
+
   const toHex = (n: number) => Math.round(n).toString(16).padStart(2, '0');
   return '#' + toHex(r) + toHex(g) + toHex(b);
 };
@@ -142,7 +142,7 @@ export function CardGroupsTheme({
   const accentColor = getAccentColor(form);
   const bannerMode = form.banner_mode || 'gradient';
   const isWhiteBanner = bannerColor.toLowerCase() === '#ffffff';
-  
+
   // Generate banner style
   const getBannerStyle = () => {
     if (bannerMode === 'solid') {
@@ -158,19 +158,18 @@ export function CardGroupsTheme({
   return (
     <div className="max-w-5xl mx-auto space-y-6 bg-white rounded-xl p-6 shadow-sm">
       {/* Header Card - Title always centered, logo position independent */}
-      <div 
+      <div
         className={`rounded-2xl p-8 shadow-xl text-center ${isWhiteBanner ? 'text-slate-800 border border-slate-200' : 'text-white'}`}
         style={getBannerStyle()}
       >
         {form.logo_url && (
-          <img 
-            src={form.logo_url} 
-            alt="Logo" 
-            className={`${logoSizeClass} object-contain mb-4 ${
-              form.logo_position === 'center' ? 'mx-auto' : 
-              form.logo_position === 'right' ? 'ml-auto' : 
-              'mr-auto'
-            }`}
+          <img
+            src={form.logo_url}
+            alt="Logo"
+            className={`${logoSizeClass} object-contain mb-4 ${form.logo_position === 'center' ? 'mx-auto' :
+              form.logo_position === 'right' ? 'ml-auto' :
+                'mr-auto'
+              }`}
           />
         )}
         <h1 className="text-2xl lg:text-3xl font-bold mb-2">
@@ -191,9 +190,9 @@ export function CardGroupsTheme({
               {field.label && (
                 <h4 className="font-medium text-blue-900 mb-2">{field.label}</h4>
               )}
-              {(field.helpText || field.description) && (
+              {field.helpText && (
                 <div className="text-sm text-blue-700 whitespace-pre-wrap">
-                  {field.helpText || field.description}
+                  {field.helpText}
                 </div>
               )}
             </div>
@@ -203,8 +202,8 @@ export function CardGroupsTheme({
 
       {/* Field Groups */}
       {groups.map((group, groupIndex) => (
-        <div 
-          key={groupIndex} 
+        <div
+          key={groupIndex}
           className="bg-white rounded-xl shadow-md border border-slate-200 overflow-hidden hover:shadow-lg transition-shadow"
         >
           {/* Group Header */}
@@ -236,14 +235,14 @@ export function CardGroupsTheme({
                     </div>
                   );
                 }
-                
+
                 // Regular field
                 const regularField = field as FormField;
                 questionNumber++;
                 return (
                   <div key={regularField.id} className="space-y-2">
                     <label className="flex items-start gap-2 font-medium text-slate-900">
-                      <span 
+                      <span
                         className="flex-shrink-0 w-5 h-5 rounded text-xs font-medium flex items-center justify-center text-white"
                         style={{ backgroundColor: accentColor }}
                       >
@@ -256,8 +255,8 @@ export function CardGroupsTheme({
                         )}
                       </span>
                     </label>
-                    {regularField.description && (
-                      <p className="text-sm text-slate-500 ml-7">{regularField.description}</p>
+                    {regularField.helpText && (
+                      <p className="text-sm text-slate-500 ml-7">{regularField.helpText}</p>
                     )}
                     <div className="ml-7">
                       {renderField(regularField)}

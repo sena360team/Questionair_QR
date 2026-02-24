@@ -1,59 +1,61 @@
 // ============================================================
-// API: List All Forms
-// GET /api/forms
+// API Route: /api/forms
+// GET  — ดึงรายการแบบสอบถามทั้งหมด (พร้อม count)
+// POST — สร้างแบบสอบถามใหม่
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase';
+import prisma from '@/lib/db';
 
-// Initialize Supabase with service role key for API access
-const supabase = createServerClient();
-
-export async function GET(request: NextRequest) {
+// GET /api/forms — ดึง forms ทั้งหมดพร้อม qr_codes count และ submissions count
+export async function GET(req: NextRequest) {
   try {
-    // Get query params
-    const { searchParams } = new URL(request.url);
-    const status = searchParams.get('status'); // published | draft | archived
-    const limit = parseInt(searchParams.get('limit') || '100');
-    const offset = parseInt(searchParams.get('offset') || '0');
-    
-    // Build query
-    let query = supabase
-      .from('forms')
-      .select('id, code, title, slug, description, status, current_version, is_active, created_at, updated_at, fields')
-      .order('created_at', { ascending: false })
-      .range(offset, offset + limit - 1);
-    
-    // Filter by status if provided
-    if (status) {
-      query = query.eq('status', status);
-    }
-    
-    const { data, error, count } = await query;
-    
-    if (error) {
-      console.error('API Error:', error);
-      return NextResponse.json(
-        { success: false, error: error.message },
-        { status: 500 }
-      );
-    }
-    
-    return NextResponse.json({
-      success: true,
-      data: data || [],
-      meta: {
-        total: count,
-        limit,
-        offset
-      }
+    const forms = await prisma.form.findMany({
+      orderBy: { created_at: 'desc' },
+      include: {
+        _count: {
+          select: { qr_codes: true, submissions: true },
+        },
+      },
     });
-    
-  } catch (err: any) {
-    console.error('API Error:', err);
-    return NextResponse.json(
-      { success: false, error: err.message || 'Internal server error' },
-      { status: 500 }
-    );
+
+    // แปลงรูปแบบให้ตรงกับที่ Frontend ใช้อยู่
+    const result = forms.map((form: any) => ({
+      ...form,
+      has_draft: form.draft_version !== null,
+      qr_codes: [{ count: form._count.qr_codes }],
+      submissions: [{ count: form._count.submissions }],
+      _count: undefined,
+    }));
+
+    return NextResponse.json(result);
+  } catch (error: any) {
+    console.error('GET /api/forms error:', error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
+// POST /api/forms — สร้างแบบสอบถามใหม่
+// Body: { code, slug, title, description?, fields?, ... }
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json();
+    const { code, slug, title, ...rest } = body;
+
+    if (!code || !slug || !title) {
+      return NextResponse.json({ error: 'code, slug, title are required' }, { status: 400 });
+    }
+
+    const form = await prisma.form.create({
+      data: { code, slug, title, ...rest },
+    });
+
+    return NextResponse.json(form, { status: 201 });
+  } catch (error: any) {
+    console.error('POST /api/forms error:', error);
+    if (error.code === 'P2002') {
+      return NextResponse.json({ error: 'Form code or slug already exists' }, { status: 409 });
+    }
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

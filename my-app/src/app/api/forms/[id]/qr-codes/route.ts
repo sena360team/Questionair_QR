@@ -1,69 +1,58 @@
 // ============================================================
-// API: Get QR Codes by Form ID
-// GET /api/forms/{id}/qr-codes
+// API: /api/forms/[id]/qr-codes
+// GET  — ดึง QR Codes ของ form
+// POST — สร้าง QR Code ใหม่สำหรับ form
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import prisma from '@/lib/db';
 
-interface Params {
-  params: Promise<{ id: string }>;
-}
-
-export async function GET(request: NextRequest, { params }: Params) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    
-    // Create Supabase client with service role
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    
-    if (!supabaseUrl || !supabaseKey) {
-      return NextResponse.json(
-        { success: false, error: 'Missing Supabase configuration' },
-        { status: 500 }
-      );
-    }
-    
-    const supabase = createClient(supabaseUrl, supabaseKey);
-    
-    // Get QR codes by form_id
-    const { data, error } = await supabase
-      .from('qr_codes')
-      .select(`
-        id,
-        name,
-        qr_slug,
-        redirect_url,
-        utm_source,
-        utm_medium,
-        utm_campaign,
-        utm_content,
-        scan_count,
-        last_scanned_at,
-        created_at
-      `)
-      .eq('form_id', id)
-      .order('created_at', { ascending: false });
-    
-    if (error) {
-      console.error('Database Error:', error);
-      return NextResponse.json(
-        { success: false, error: 'Failed to fetch QR codes: ' + error.message },
-        { status: 500 }
-      );
-    }
-    
-    return NextResponse.json({
-      success: true,
-      data: data || []
+
+    // ค้นหา form
+    const form = await prisma.form.findFirst({
+      where: { OR: [{ id }, { slug: id }] },
+      select: { id: true },
     });
-    
-  } catch (err: any) {
-    console.error('API Error:', err);
-    return NextResponse.json(
-      { success: false, error: err.message || 'Internal server error' },
-      { status: 500 }
-    );
+
+    if (!form) return NextResponse.json({ error: 'Form not found' }, { status: 404 });
+
+    const qrCodes = await prisma.qrCode.findMany({
+      where: { form_id: form.id },
+      include: { project: true },
+      orderBy: { created_at: 'desc' },
+    });
+
+    return NextResponse.json(qrCodes);
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const { id } = await params;
+    const body = await request.json();
+
+    const form = await prisma.form.findFirst({
+      where: { OR: [{ id }, { slug: id }] },
+      select: { id: true },
+    });
+
+    if (!form) return NextResponse.json({ error: 'Form not found' }, { status: 404 });
+
+    const qrCode = await prisma.qrCode.create({
+      data: { ...body, form_id: form.id },
+      include: { project: true },
+    });
+
+    return NextResponse.json(qrCode, { status: 201 });
+  } catch (error: any) {
+    if (error.code === 'P2002') {
+      return NextResponse.json({ error: 'QR slug already exists' }, { status: 409 });
+    }
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

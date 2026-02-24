@@ -2,12 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { getSupabaseBrowser } from '@/lib/supabase';
 import { Form } from '@/types';
-import { 
-  ArrowLeft, 
-  FileText, 
-  BarChart3, 
+import {
+  ArrowLeft,
+  FileText,
+  BarChart3,
   ChevronRight,
   RefreshCw,
   Eye
@@ -24,35 +23,17 @@ export default function SubmissionsListPage() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const supabase = getSupabaseBrowser();
-      
-      // Get all forms
-      const { data: formsData, error: formsError } = await supabase
-        .from('forms')
-        .select('id, code, title, current_version, status, is_active')
-        .order('created_at', { ascending: false });
-      
-      if (formsError) throw formsError;
-      
-      // Get submission counts
-      const { data: countsData, error: countsError } = await supabase
-        .from('submissions')
-        .select('form_id');
-      
-      if (countsError) throw countsError;
-      
-      // Count submissions per form
-      const countMap = new Map<string, number>();
-      countsData?.forEach((sub: { form_id: string }) => {
-        countMap.set(sub.form_id, (countMap.get(sub.form_id) || 0) + 1);
-      });
-      
-      // Combine data
-      const formsWithCount = (formsData || []).map((form: Form) => ({
+      const response = await fetch('/api/forms');
+      if (!response.ok) throw new Error('Failed to fetch forms');
+      const data = await response.json();
+
+      // /api/forms returns forms with submissions: [{ count: N }]
+      const formsArr = Array.isArray(data) ? data : (data.data || []);
+      const formsWithCount = formsArr.map((form: any) => ({
         ...form,
-        submission_count: countMap.get(form.id) || 0
+        submission_count: form.submissions?.[0]?.count ?? form._count?.submissions ?? 0,
       }));
-      
+
       setForms(formsWithCount);
     } catch (err) {
       console.error('Error fetching data:', err);
@@ -78,7 +59,7 @@ export default function SubmissionsListPage() {
             <p className="text-slate-500">เลือกแบบสอบถามเพื่อดูรายละเอียดคำตอบ</p>
           </div>
         </div>
-        <button 
+        <button
           onClick={fetchData}
           className="flex items-center justify-center gap-2 px-4 py-2 border-2 border-slate-300 rounded-xl hover:bg-slate-50"
           title="รีเฟรช"
@@ -115,7 +96,7 @@ export default function SubmissionsListPage() {
               </thead>
               <tbody className="divide-y divide-slate-200">
                 {forms.map((form) => (
-                  <tr className="border-b border-slate-200" key={form.id} className="hover:bg-slate-50 transition-colors">
+                  <tr className="border-b border-slate-200 hover:bg-slate-50 transition-colors" key={form.id}>
                     <td className="px-6 py-4">
                       <span className="text-sm font-mono text-slate-600">{form.code}</span>
                     </td>

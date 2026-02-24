@@ -1,16 +1,16 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { createPortal } from 'react-dom';
 import { useQRCodes, useForms, useSubmissions, useProjects } from '@/hooks/useSupabase';
 import { QRGenerator } from '@/components/QRGenerator';
 import { generateQRCodeDataURL, buildQRRedirectURL } from '@/lib/qr';
-import { 
-  QrCode, 
-  Plus, 
-  Search, 
+import {
+  QrCode,
+  Plus,
+  Search,
   ExternalLink,
   Download,
   Trash2,
@@ -23,24 +23,24 @@ import {
 import { formatNumber, cn } from '@/lib/utils';
 import { QRCode as QRCodeType } from '@/types';
 
-export default function QRCodesPage() {
+function QRCodesPageContent() {
   const searchParams = useSearchParams();
   const formFilterFromUrl = searchParams.get('form');
   const actionFromUrl = searchParams.get('action');
-  
+
   const { qrCodes, loading, deleteQRCode, createQRCode } = useQRCodes();
   const { forms } = useForms();
   const { projects } = useProjects();
   const { submissions } = useSubmissions();
-  
+
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedForm, setSelectedForm] = useState<string>('');
-  
+
   // Filters
   const [selectedFormFilter, setSelectedFormFilter] = useState<string>(formFilterFromUrl || '');
   const [selectedProjectFilter, setSelectedProjectFilter] = useState<string>('');
-  
+
   // Auto-open create modal if action=create
   useEffect(() => {
     if (actionFromUrl === 'create' && formFilterFromUrl) {
@@ -53,30 +53,30 @@ export default function QRCodesPage() {
     // Search term filter
     const matchesSearch = qr.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       qr.qr_slug.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     // Form filter
     const matchesForm = !selectedFormFilter || qr.form_id === selectedFormFilter;
-    
+
     // Project filter
     const matchesProject = !selectedProjectFilter || qr.project_id === selectedProjectFilter;
-    
+
     return matchesSearch && matchesForm && matchesProject;
   });
-  
+
   // Update URL filter when changed
   useEffect(() => {
     if (formFilterFromUrl) {
       setSelectedFormFilter(formFilterFromUrl);
     }
   }, [formFilterFromUrl]);
-  
+
   // Clear filters
   const clearFilters = () => {
     setSelectedFormFilter('');
     setSelectedProjectFilter('');
     setSearchTerm('');
   };
-  
+
   const hasActiveFilters = selectedFormFilter || selectedProjectFilter || searchTerm;
 
   // Check for duplicate QR slug
@@ -94,19 +94,19 @@ export default function QRCodesPage() {
     utm_term?: string;
   }) => {
     if (!selectedForm) return;
-    
+
     // Check for duplicate
     if (checkDuplicateQR(qrData.qr_slug)) {
       if (!confirm(`รหัส QR "${qrData.qr_slug}" มีในระบบแล้ว\n\nต้องการสร้างซ้ำหรือไม่?`)) {
         return;
       }
     }
-    
+
     await createQRCode({
       form_id: selectedForm,
       ...qrData,
     });
-    
+
     setShowCreateModal(false);
     setSelectedForm('');
   };
@@ -190,7 +190,7 @@ export default function QRCodesPage() {
             className="w-full pl-12 pr-4 py-3 border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           />
         </div>
-        
+
         {/* Filter Options */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Form Filter */}
@@ -209,7 +209,7 @@ export default function QRCodesPage() {
               ))}
             </select>
           </div>
-          
+
           {/* Project Filter */}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1.5">โครงการ</label>
@@ -227,7 +227,7 @@ export default function QRCodesPage() {
             </select>
           </div>
         </div>
-        
+
         {/* Clear Filters */}
         {hasActiveFilters && (
           <div className="flex items-center justify-between pt-2 border-t border-slate-200">
@@ -316,7 +316,7 @@ export default function QRCodesPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl w-full max-w-6xl max-h-[90vh] overflow-auto p-6 lg:p-8">
             <h2 className="text-xl font-bold text-slate-900 mb-6">สร้าง QR Code ใหม่</h2>
-            
+
             {!selectedForm ? (
               <div className="space-y-4">
                 <p className="text-slate-600">เลือกแบบสอบถามที่ต้องการสร้าง QR Code:</p>
@@ -378,6 +378,15 @@ export default function QRCodesPage() {
         </div>
       )}
     </div>
+  );
+}
+
+// Suspense wrapper required by Next.js when using useSearchParams() in static pages
+export default function QRCodesPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-96"><div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full" /></div>}>
+      <QRCodesPageContent />
+    </Suspense>
   );
 }
 
@@ -537,7 +546,7 @@ function QRCodeRow({ qr, form, project, submissionCount, onDelete }: QRCodeRowPr
           <div className="bg-white rounded-2xl p-8 max-w-lg w-full text-center">
             <h3 className="font-semibold text-slate-900 mb-2">{qr.name}</h3>
             <p className="text-sm text-slate-500 mb-6">/{qr.qr_slug}</p>
-            
+
             {/* QR Code Image */}
             <div className="w-56 h-56 bg-white rounded-xl mx-auto mb-6 flex items-center justify-center border-2 border-slate-300 p-2">
               {generating ? (

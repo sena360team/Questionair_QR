@@ -3,13 +3,6 @@
 import { useState, useEffect } from 'react';
 import { Settings, Code, Database, Shield, Save, CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { createClient } from '@supabase/supabase-js';
-
-// Use anon key directly for public access
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 type TabType = 'api-css' | 'general' | 'security';
 
@@ -24,7 +17,7 @@ export default function SettingsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
-  
+
   // CSS API Config
   const [cssConfig, setCssConfig] = useState<CSSConfig>({
     apiKey: '',
@@ -39,19 +32,13 @@ export default function SettingsPage() {
 
   const loadSettings = async () => {
     try {
-      
-      // Load CSS Config
-      const { data: cssData } = await supabase
-        .from('app_settings')
-        .select('value')
-        .eq('key', 'css_api_config')
-        .single();
-      
-      if (cssData?.value) {
+      const res = await fetch('/api/admin/settings/css');
+      if (res.ok) {
+        const data = await res.json();
         setCssConfig({
-          apiKey: cssData.value.apiKey || '',
-          contactChannelId: cssData.value.contactChannelId || '',
-          userCreated: cssData.value.userCreated || '',
+          apiKey: data.apiKey || '',
+          contactChannelId: data.contactChannelId || '',
+          userCreated: data.userCreated || '',
         });
       }
     } catch (err) {
@@ -64,26 +51,20 @@ export default function SettingsPage() {
   const handleSaveCSS = async () => {
     setIsSaving(true);
     setSaveSuccess(false);
-    
+
     try {
-      
-      // Upsert CSS config
-      const { error } = await supabase
-        .from('app_settings')
-        .upsert({
-          key: 'css_api_config',
-          value: {
-            apiKey: cssConfig.apiKey.trim(),
-            contactChannelId: cssConfig.contactChannelId.trim(),
-            userCreated: cssConfig.userCreated.trim(),
-          },
-          updated_at: new Date().toISOString(),
-        }, {
-          onConflict: 'key'
-        });
-      
-      if (error) throw error;
-      
+      const res = await fetch('/api/admin/settings/css', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          apiKey: cssConfig.apiKey.trim(),
+          contactChannelId: cssConfig.contactChannelId.trim(),
+          userCreated: cssConfig.userCreated.trim(),
+        }),
+      });
+
+      if (!res.ok) throw new Error('Failed to save settings');
+
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err) {
@@ -243,7 +224,7 @@ export default function SettingsPage() {
                   </>
                 )}
               </button>
-              
+
               {saveSuccess && (
                 <div className="flex items-center gap-2 text-green-600">
                   <CheckCircle className="w-5 h-5" />

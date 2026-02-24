@@ -154,8 +154,8 @@ export function DefaultTheme({
                   <h2 className="text-xl font-bold text-slate-800">
                     {field.label}
                   </h2>
-                  {(field.helpText || field.description) && (
-                    <p className="text-sm text-slate-500 mt-1">{field.helpText || field.description}</p>
+                  {(field.helpText || field.helpText) && (
+                    <p className="text-sm text-slate-500 mt-1">{field.helpText || field.helpText}</p>
                   )}
                 </div>
               );
@@ -168,8 +168,8 @@ export function DefaultTheme({
                   <h3 className="text-lg font-semibold" style={{ color: accentColor }}>
                     {field.label}
                   </h3>
-                  {(field.helpText || field.description) && (
-                    <p className="text-sm text-slate-500 mt-1">{field.helpText || field.description}</p>
+                  {(field.helpText || field.helpText) && (
+                    <p className="text-sm text-slate-500 mt-1">{field.helpText || field.helpText}</p>
                   )}
                 </div>
               );
@@ -202,8 +202,8 @@ export function DefaultTheme({
                     )}
                   </label>
                 </div>
-                {field.description && (
-                  <p className="text-sm text-slate-500 ml-8">{field.description}</p>
+                {field.helpText && (
+                  <p className="text-sm text-slate-500 ml-8">{field.helpText}</p>
                 )}
                 <div className="ml-8">
                   {renderField(field)}

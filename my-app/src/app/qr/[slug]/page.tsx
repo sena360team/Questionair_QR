@@ -1,65 +1,47 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
-import { getSupabaseBrowser } from '@/lib/supabase';
 import { storeUTMInSession } from '@/lib/utm';
 import { QRCode } from '@/types';
 import FormInactiveState from '@/components/FormInactiveState';
 
-export default function QRRedirectPage() {
+// ============================================================
+// QR Redirect Page — แทนที่ Supabase ด้วย fetch API
+// ============================================================
+
+function QRRedirectPageContent() {
   const params = useParams();
   const searchParams = useSearchParams();
   const router = useRouter();
-  
   const qrSlug = params.slug as string;
-  
+
   const [status, setStatus] = useState<'loading' | 'redirecting' | 'error'>('loading');
   const [error, setError] = useState<string | null>(null);
-  const [qrCode, setQRCode] = useState<QRCode | null>(null);
   const [isInactive, setIsInactive] = useState(false);
 
   useEffect(() => {
     async function handleRedirect() {
       try {
-        console.log('🔍 QR Redirect started:', qrSlug);
-        const supabase = getSupabaseBrowser();
-        
-        // 1. ดึงข้อมูล QR Code
-        console.log('🔍 Fetching QR Code...');
-        const { data: qrData, error: qrError } = await supabase
-          .from('qr_codes')
-          .select('*')
-          .eq('qr_slug', qrSlug)
-          .single();
-          
-        if (qrError || !qrData) {
+        // 1. ดึงข้อมูล QR Code ผ่าน API
+        const qrRes = await fetch(`/api/qr-codes/${qrSlug}`);
+        if (!qrRes.ok) {
           setError('QR Code นี้ไม่มีในระบบ');
           setStatus('error');
           return;
         }
-        
-        setQRCode(qrData as QRCode);
-        console.log('🔍 QR Data:', qrData);
-        
-        // 2. ดึงข้อมูลฟอร์มเพื่อตรวจสอบ is_active
-        const { data: formData, error: formError } = await supabase
-          .from('forms')
-          .select('*')
-          .eq('id', qrData.form_id)
-          .single();
-          
-        if (formError || !formData || !formData.is_active) {
-          setIsInactive(true);
-          return;
-        }
-        
-        // 3. บันทึกการสแกน
-        console.log('🔍 Recording scan...');
-        await supabase.rpc('record_qr_scan', { qr_slug_param: qrSlug });
-        
+        const qrData: QRCode & { form?: any } = await qrRes.json();
+
+        // 2. ตรวจสอบว่า form active หรือไม่
+        const formRes = await fetch(`/api/forms/${qrData.form_id}`);
+        if (!formRes.ok) { setIsInactive(true); return; }
+        const formData = await formRes.json();
+        if (!formData.is_active) { setIsInactive(true); return; }
+
+        // 3. บันทึกการสแกน QR
+        fetch(`/api/qr-codes/${qrData.id}/scan`, { method: 'POST' }).catch(() => { });
+
         // 4. เก็บ UTM parameters ลง sessionStorage
-        console.log('🔍 Building UTM params from QR:', qrData);
         const utmParams = {
           utm_source: searchParams.get('utm_source') || qrData.utm_source || 'qr_code',
           utm_medium: searchParams.get('utm_medium') || qrData.utm_medium || 'offline',
@@ -67,46 +49,26 @@ export default function QRRedirectPage() {
           utm_content: searchParams.get('utm_content') || qrData.utm_content || undefined,
           utm_term: searchParams.get('utm_term') || qrData.utm_term || undefined,
         };
-        console.log('🔍 UTM Params:', utmParams);
-        
         storeUTMInSession(utmParams);
-        console.log('🔍 UTM stored in session');
-        
-        // 5. Redirect ไปยังฟอร์ม พร้อม qr_slug สำหรับ lookup
+
+        // 5. Redirect ไปยังฟอร์ม
         setStatus('redirecting');
-        
-        // สร้าง URL พร้อม qr_slug สำหรับติดตาม
-        const baseUrl = qrData.redirect_url 
-          ? qrData.redirect_url
-          : `/form/${formData.slug}`;
-        
-        // เพิ่ม qr_slug เป็น query param เพื่อให้ form หา QR Code ได้ถูกต้อง
+        const baseUrl = qrData.redirect_url || `/form/${formData.slug}`;
         const separator = baseUrl.includes('?') ? '&' : '?';
         const targetUrl = `${baseUrl}${separator}_qr=${qrSlug}`;
-        
-        console.log('🔍 Redirecting to:', targetUrl);
-          
-        // รอสักครู่แล้ว redirect
-        setTimeout(() => {
-          console.log('🔍 Executing redirect...');
-          router.push(targetUrl);
-        }, 500);
-        
+
+        setTimeout(() => { router.push(targetUrl as any); }, 500);
       } catch (err) {
         console.error('QR redirect error:', err);
         setError('เกิดข้อผิดพลาด กรุณาลองใหม่');
         setStatus('error');
       }
     }
-    
-    if (qrSlug) {
-      handleRedirect();
-    }
+
+    if (qrSlug) handleRedirect();
   }, [qrSlug, searchParams, router]);
 
-  if (isInactive) {
-    return <FormInactiveState />;
-  }
+  if (isInactive) return <FormInactiveState />;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -114,37 +76,35 @@ export default function QRRedirectPage() {
         {status === 'loading' && (
           <>
             <div className="animate-spin w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4" />
-            <h1 className="text-xl font-semibold text-slate-900">กำลังโหลด...</h1>
-            <p className="text-slate-500">กรุณารอสักครู่</p>
+            <p className="text-slate-600">กำลังโหลด QR Code...</p>
           </>
         )}
-        
         {status === 'redirecting' && (
           <>
-            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-              </svg>
-            </div>
-            <h1 className="text-xl font-semibold text-slate-900">กำลังพาไปยังแบบสอบถาม</h1>
-            {qrCode && (
-              <p className="text-slate-500 mt-2">{qrCode.name}</p>
-            )}
+            <div className="animate-spin w-12 h-12 border-4 border-green-500 border-t-transparent rounded-full mx-auto mb-4" />
+            <p className="text-slate-600">กำลังนำทางไปยังแบบสอบถาม...</p>
           </>
         )}
-        
         {status === 'error' && (
-          <>
-            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </div>
-            <h1 className="text-xl font-semibold text-slate-900">ไม่สามารถเข้าถึงได้</h1>
-            <p className="text-slate-500 mt-2">{error}</p>
-          </>
+          <div className="text-center p-8">
+            <div className="text-6xl mb-4">❌</div>
+            <h1 className="text-2xl font-bold text-red-600 mb-2">เกิดข้อผิดพลาด</h1>
+            <p className="text-slate-600">{error}</p>
+          </div>
         )}
       </div>
     </div>
+  );
+}
+
+export default function QRRedirectPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full" />
+      </div>
+    }>
+      <QRRedirectPageContent />
+    </Suspense>
   );
 }

@@ -1,0 +1,216 @@
+// Prisma Schema — Questionnaire QR System
+// แทนที่ Supabase type definitions ด้วย schema จริงของ PostgreSQL
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// โครงการ
+// ============================================================
+model Project {
+  id          String   @id @default(uuid())
+  code        String   @unique
+  name        String
+  description String?
+  is_active   Boolean  @default(true)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  qr_codes    QrCode[]
+  submissions Submission[]
+
+  @@map("projects")
+}
+
+// ============================================================
+// แบบสอบถาม
+// ============================================================
+model Form {
+  id                     String   @id @default(uuid())
+  code                   String   @unique
+  slug                   String   @unique
+  title                  String
+  description            String?
+  fields                 Json     @default("[]")
+  is_active              Boolean  @default(true)
+  allow_multiple_responses Boolean @default(true)
+  status                 String   @default("draft") // draft | published
+  current_version        Int?
+  draft_version          Int?
+  created_by             String?
+  created_at             DateTime @default(now())
+  updated_at             DateTime @updatedAt
+
+  // Theme settings
+  theme                  String? // default | card-groups | step-wizard | minimal
+  banner_color           String? // blue | black | white | custom
+  banner_custom_color    String?
+  banner_mode            String? // gradient | solid
+  accent_color           String? // blue | sky | teal | emerald | violet | rose | orange | slate | black | custom
+  accent_custom_color    String?
+
+  // Logo settings
+  logo_url               String?
+  logo_position          String? // left | center | right
+  logo_size              String? // small | medium | large
+
+  // Consent settings
+  require_consent        Boolean? @default(false)
+  consent_heading        String?
+  consent_text           String?
+  consent_require_location Boolean? @default(false)
+
+  qr_codes               QrCode[]
+  submissions            Submission[]
+  versions               FormVersion[]
+  draft                  FormDraft?
+
+  @@map("forms")
+}
+
+// ============================================================
+// Version ของแบบสอบถาม
+// ============================================================
+model FormVersion {
+  id                     String   @id @default(uuid())
+  form_id                String
+  version                Int
+  status                 String   @default("published") // published | draft
+  title                  String?
+  description            String?
+  fields                 Json     @default("[]")
+  change_summary         String?
+  published_at           DateTime?
+  created_at             DateTime @default(now())
+
+  // Theme settings (snapshot at publish time)
+  theme                  String?
+  banner_color           String?
+  banner_custom_color    String?
+  banner_mode            String?
+  accent_color           String?
+  accent_custom_color    String?
+  logo_url               String?
+  logo_position          String?
+  logo_size              String?
+  require_consent        Boolean?
+  consent_heading        String?
+  consent_text           String?
+  consent_require_location Boolean?
+
+  form                   Form    @relation(fields: [form_id], references: [id], onDelete: Cascade)
+
+  @@unique([form_id, version])
+  @@map("form_versions")
+}
+
+// ============================================================
+// แบบร่างแบบสอบถาม
+// ============================================================
+model FormDraft {
+  id                     String   @id @default(uuid())
+  form_id                String   @unique
+  status                 String   @default("editing") // editing | pending_review | approved | rejected
+  title                  String?
+  description            String?
+  fields                 Json?
+  logo_url               String?
+  logo_position          String?
+  logo_size              String?
+  theme                  String?
+  banner_color           String?
+  banner_custom_color    String?
+  banner_mode            String?
+  accent_color           String?
+  accent_custom_color    String?
+  require_consent        Boolean?
+  consent_heading        String?
+  consent_text           String?
+  consent_require_location Boolean?
+  submitted_at           DateTime?
+  submitted_notes        String?
+  reviewed_at            DateTime?
+  review_notes           String?
+  created_at             DateTime @default(now())
+  updated_at             DateTime @updatedAt
+
+  form                   Form    @relation(fields: [form_id], references: [id], onDelete: Cascade)
+
+  @@map("form_drafts")
+}
+
+// ============================================================
+// QR Codes
+// ============================================================
+model QrCode {
+  id             String    @id @default(uuid())
+  form_id        String
+  project_id     String?
+  name           String
+  qr_slug        String    @unique
+  redirect_url   String?
+  scan_count     Int       @default(0)
+  last_scanned_at DateTime?
+  utm_source     String?
+  utm_medium     String?
+  utm_campaign   String?
+  utm_content    String?
+  utm_term       String?
+  created_by     String?
+  created_at     DateTime  @default(now())
+  updated_at     DateTime  @updatedAt
+
+  form           Form      @relation(fields: [form_id], references: [id], onDelete: Cascade)
+  project        Project?  @relation(fields: [project_id], references: [id])
+  submissions    Submission[]
+
+  @@map("qr_codes")
+}
+
+// ============================================================
+// คำตอบแบบสอบถาม
+// ============================================================
+model Submission {
+  id           String   @id @default(uuid())
+  form_id      String
+  form_version Int?
+  qr_code_id   String?
+  project_id   String?
+  responses    Json     @default("{}")
+  utm_source   String?
+  utm_medium   String?
+  utm_campaign String?
+  utm_content  String?
+  utm_term     String?
+  fingerprint  String?
+  ip_address   String?
+  user_agent   String?
+  referrer     String?
+  metadata     Json?
+  submitted_at DateTime @default(now())
+
+  form         Form       @relation(fields: [form_id], references: [id], onDelete: Cascade)
+  qr_code      QrCode?    @relation(fields: [qr_code_id], references: [id])
+  project      Project?   @relation(fields: [project_id], references: [id])
+
+  @@map("submissions")
+}
+
+// ============================================================
+// การตั้งค่าระบบ
+// ============================================================
+model AppSetting {
+  id         String   @id @default(uuid())
+  key        String   @unique
+  value      Json
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("app_settings")
+}

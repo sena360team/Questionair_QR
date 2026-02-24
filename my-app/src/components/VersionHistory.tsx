@@ -171,10 +171,10 @@ export function VersionHistory({ formId, currentVersion }: VersionHistoryProps) 
                           {version.status === 'draft'
                             ? '(Draft)'
                             : formatDate(version.published_at, {
-                                day: 'numeric',
-                                month: 'short',
-                                year: 'numeric'
-                              })
+                              day: 'numeric',
+                              month: 'short',
+                              year: 'numeric'
+                            })
                           }
                         </span>
                         {isExpanded ? (
@@ -260,19 +260,19 @@ export function VersionHistory({ formId, currentVersion }: VersionHistoryProps) 
                     title: selectedVersion.title || '',
                     description: selectedVersion.description || '',
                     logo_url: selectedVersion.logo_url,
-                    logo_position: selectedVersion.logo_position,
-                    logo_size: selectedVersion.logo_size,
+                    logo_position: selectedVersion.logo_position as 'center' | 'left' | 'right' | undefined,
+                    logo_size: selectedVersion.logo_size as 'small' | 'medium' | 'large' | undefined,
                     fields: selectedVersion.fields as FormField[],
                     // Theme settings from version
-                    theme: selectedVersion.theme,
-                    banner_color: selectedVersion.banner_color,
-                    banner_custom_color: selectedVersion.banner_custom_color,
-                    banner_mode: selectedVersion.banner_mode,
-                    accent_color: selectedVersion.accent_color,
-                    accent_custom_color: selectedVersion.accent_custom_color,
+                    theme: selectedVersion.theme as 'default' | 'card-groups' | 'step-wizard' | 'minimal' | undefined,
+                    banner_color: selectedVersion.banner_color as 'blue' | 'black' | 'white' | 'custom' | undefined,
+                    banner_custom_color: selectedVersion.banner_custom_color ?? undefined,
+                    banner_mode: selectedVersion.banner_mode as 'gradient' | 'solid' | undefined,
+                    accent_color: selectedVersion.accent_color as 'blue' | 'sky' | 'teal' | 'emerald' | 'violet' | 'rose' | 'orange' | 'slate' | 'black' | 'custom' | undefined,
+                    accent_custom_color: selectedVersion.accent_custom_color ?? undefined,
                     require_consent: selectedVersion.require_consent,
                     consent_heading: selectedVersion.consent_heading,
-                    consent_text: selectedVersion.consent_text,
+                    consent_text: selectedVersion.consent_text ?? undefined,
                     consent_require_location: selectedVersion.consent_require_location,
                     is_active: true,
                     allow_multiple_responses: false,
@@ -280,6 +280,7 @@ export function VersionHistory({ formId, currentVersion }: VersionHistoryProps) 
                     current_version: selectedVersion.version,
                     created_at: selectedVersion.published_at || '',
                     updated_at: selectedVersion.published_at || '',
+                    created_by: null,
                   }}
                   onSubmit={(data) => {
                     alert('นี่คือตัวอย่างฟอร์มเท่านั้น (Version History)\n\nข้อมูลที่กรอก:\n' + JSON.stringify(data, null, 2));

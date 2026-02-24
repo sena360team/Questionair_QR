@@ -9,7 +9,7 @@ import { VersionHistory } from '@/components/VersionHistory';
 import { DuplicateFormDialog } from '@/components/DuplicateFormDialog';
 import { QRCodeTab } from '@/components/form-tabs/QRCodeTab';
 import { DraftAlert, FormHeaderV4, FormTabs, ActionBar, ConfirmDialog, SuccessModal, ApplyThemeModal, type TabType } from '@/components/form-editor';
-import { getSupabaseBrowser } from '@/lib/supabase';
+
 import { useFormDraft } from '@/hooks/useFormDraft';
 import { useFormVersions } from '@/hooks/useFormVersions';
 import { Form, FormField } from '@/types';
@@ -117,53 +117,44 @@ export default function EditFormPage() {
   useEffect(() => {
     async function loadForm() {
       try {
-        const supabase = getSupabaseBrowser();
-        const { data, error } = await supabase
-          .from('forms')
-          .select('*')
-          .eq('id', formId)
-          .single();
-
-        if (error || !data) {
+        const response = await fetch(`/api/forms/${formId}`);
+        if (!response.ok) {
           router.push('/admin/forms');
           return;
         }
-
-        const formData = data as Form;
+        const formData = await response.json() as Form;
+        if (!formData || !formData.title) {
+          router.push('/admin/forms');
+          return;
+        }
         setForm(formData);
 
         // If has existing draft version, automatically load it
-        if (draftVersion) {
+        if (draftVersion && draftVersion.id) {
           setIsEditingDraft(true);
           setDraftVersionId(draftVersion.id);
-          setTitle(draftVersion.title);
-          setSlug(formData.slug);
-          setDescription(draftVersion.description || '');
-          setFields(draftVersion.fields);
+          setTitle(draftVersion.title ?? formData.title ?? '');
+          setSlug(formData.slug || '');
+          setDescription(draftVersion.description ?? formData.description ?? '');
+          setFields(draftVersion.fields ?? formData.fields ?? []);
           setOriginalFields(JSON.parse(JSON.stringify(draftVersion.fields)));
           setLogoUrl(draftVersion.logo_url || '');
-          setLogoPosition(draftVersion.logo_position || 'center');
-          setLogoSize(draftVersion.logo_size || 'medium');
-          setTheme(draftVersion.theme || 'default');
-          setBannerColor(draftVersion.banner_color || 'blue');
+          setLogoPosition((draftVersion.logo_position || 'center') as 'center' | 'left' | 'right');
+          setLogoSize((draftVersion.logo_size || 'medium') as 'small' | 'medium' | 'large');
+          setTheme((draftVersion.theme || 'default') as 'default' | 'card-groups' | 'step-wizard' | 'minimal');
+          setBannerColor((draftVersion.banner_color || 'blue') as 'blue' | 'black' | 'white' | 'custom');
           setBannerCustomColor(draftVersion.banner_custom_color || '#2563EB');
-          setBannerMode(draftVersion.banner_mode || 'gradient');
-          setAccentColor(draftVersion.accent_color || 'blue');
+          setBannerMode((draftVersion.banner_mode || 'gradient') as 'solid' | 'gradient');
+          setAccentColor((draftVersion.accent_color || 'blue') as 'blue' | 'black' | 'custom' | 'sky' | 'teal' | 'emerald' | 'violet' | 'rose' | 'orange' | 'slate');
           setAccentCustomColor(draftVersion.accent_custom_color || '#2563EB');
-          setRequireConsent(draftVersion.require_consent);
-          setConsentHeading(draftVersion.consent_heading);
+          setRequireConsent(draftVersion.require_consent || false);
+          setConsentHeading(draftVersion.consent_heading || 'การยินยอม (Consent)');
           setConsentText(draftVersion.consent_text || '');
-          setConsentRequireLocation(draftVersion.consent_require_location);
+          setConsentRequireLocation(draftVersion.consent_require_location || false);
           setIsActive(formData.is_active ?? true);
           // CSS Integration from published form (draft inherits)
           // CSS Config (contactChannelId, userCreated) now in global Settings
           setCssIntegrationEnabled(formData.css_integration_enabled || false);
-          setCssFieldMapping({
-            jobDetail: formData.css_field_mapping?.jobDetail || '',
-            customerName: formData.css_field_mapping?.customerName || '',
-            telephone: formData.css_field_mapping?.telephone || '',
-            email: formData.css_field_mapping?.email || ''
-          });
           setCssFieldMapping({
             jobDetail: formData.css_field_mapping?.jobDetail || '',
             customerName: formData.css_field_mapping?.customerName || '',
@@ -212,7 +203,7 @@ export default function EditFormPage() {
     if (formId) {
       loadForm();
     }
-  }, [formId, draftVersion]);
+  }, [formId, draftVersion?.id]);
 
   // Auto-save draft every 30 seconds (pause when preview is open)
   useEffect(() => {
@@ -445,13 +436,17 @@ export default function EditFormPage() {
   const handleToggleActive = async (newActiveState: boolean) => {
     setIsSaving(true);
     try {
-      const supabase = getSupabaseBrowser();
-      const { error } = await supabase
-        .from('forms')
-        .update({ is_active: newActiveState })
-        .eq('id', formId);
-
-      if (error) throw error;
+      // Use PostgreSQL instead of Supabase
+      const response = await fetch(`/api/forms/${formId}/toggle-active`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_active: newActiveState }),
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to update');
+      }
 
       setIsActive(newActiveState);
       setShowDeactivateConfirm(false);
@@ -472,10 +467,10 @@ export default function EditFormPage() {
     console.log('[handleSavePublished] Called');
     setIsSaving(true);
     try {
-      const supabase = getSupabaseBrowser();
-      const { error } = await supabase
-        .from('forms')
-        .update({
+      const response = await fetch(`/api/forms/${formId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           title,
           slug,
           description,
@@ -487,11 +482,13 @@ export default function EditFormPage() {
           consent_require_location: consentRequireLocation,
           css_integration_enabled: cssIntegrationEnabled,
           css_field_mapping: cssFieldMapping,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', formId);
+        }),
+      });
 
-      if (error) throw error;
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to save');
+      }
       console.log('[handleSavePublished] Success');
       showToast('success', 'บันทึกสำเร็จ');
     } catch (err) {
@@ -525,13 +522,14 @@ export default function EditFormPage() {
 
     setIsSaving(true);
     try {
-      const supabase = getSupabaseBrowser();
       const currentVersion = form?.current_version || 0;
       const newVersion = currentVersion + 1;
 
-      const { error: updateError } = await supabase
-        .from('forms')
-        .update({
+      // Update form
+      const updateResponse = await fetch(`/api/forms/${formId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           title,
           slug,
           description,
@@ -549,18 +547,22 @@ export default function EditFormPage() {
           is_active: true,
           status: 'published',
           current_version: newVersion,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', formId);
+        }),
+      });
 
-      if (updateError) throw updateError;
+      if (!updateResponse.ok) {
+        const error = await updateResponse.json();
+        throw new Error(error.message || 'Failed to update form');
+      }
 
-      const { error: versionError } = await supabase
-        .from('form_versions')
-        .insert({
+      // Create new version
+      const versionResponse = await fetch('/api/form-versions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           form_id: formId,
           version: newVersion,
-          fields: fields,
+          fields,
           title,
           description,
           logo_url: logoUrl,
@@ -573,9 +575,13 @@ export default function EditFormPage() {
           css_field_mapping: cssFieldMapping,
           change_summary: `Updated to version ${newVersion}`,
           published_at: new Date().toISOString(),
-        });
+        }),
+      });
 
-      if (versionError) throw versionError;
+      if (!versionResponse.ok) {
+        const error = await versionResponse.json();
+        throw new Error(error.message || 'Failed to create version');
+      }
 
       // Clean up old draft if exists
       if (oldDraft) {
@@ -719,7 +725,6 @@ export default function EditFormPage() {
   return (
     <div className="space-y-6">
       {/* Draft Alert - V4 */}
-      {console.log('[EditFormPage] DraftAlert condition:', { isEditingDraft, hasCurrentVersion: !!currentVersion, currentVersionNumber: form?.current_version })}
       {isEditingDraft && (
         <DraftAlert currentVersion={form?.current_version ?? null} />
       )}
@@ -1486,7 +1491,7 @@ export default function EditFormPage() {
         }}
       />
 
-      {/* Toast -->
+      {/* Toast */}
       {toast && (
         <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-2 fade-in duration-300">
           <div className={`flex items-center gap-3 px-6 py-4 rounded-xl shadow-2xl ${toast.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'

@@ -20,11 +20,11 @@ interface StepWizardThemeProps {
 // Heading is just a text element inside the step
 function createSteps(fields: FormField[]): { title: string; isWelcome?: boolean; fields: (FormField | { type: 'heading_render'; label: string; helpText?: string })[] }[] {
   const steps: { title: string; isWelcome?: boolean; fields: (FormField | { type: 'heading_render'; label: string; helpText?: string })[] }[] = [];
-  
+
   // Step 1: Extract Info Box fields as Welcome step
   const infoBoxFields: (FormField | { type: 'heading_render'; label: string; helpText?: string })[] = [];
   const remainingFields: FormField[] = [];
-  
+
   fields.forEach((field) => {
     if (field.type === 'info_box') {
       infoBoxFields.push(field);
@@ -32,12 +32,12 @@ function createSteps(fields: FormField[]): { title: string; isWelcome?: boolean;
       remainingFields.push(field);
     }
   });
-  
+
   // Add Welcome step if there are Info Box fields
   if (infoBoxFields.length > 0) {
     steps.push({ title: 'ยินดีต้อนรับ', isWelcome: true, fields: infoBoxFields });
   }
-  
+
   // Create steps from remaining fields (sections, headings, questions)
   let currentStepFields: (FormField | { type: 'heading_render'; label: string; helpText?: string })[] = [];
   let currentStepTitle = 'เริ่มต้น';
@@ -53,13 +53,13 @@ function createSteps(fields: FormField[]): { title: string; isWelcome?: boolean;
       // Use this field's label as new step title
       currentStepTitle = field.label || 'หัวข้อใหม่';
       // Don't include section field itself in the step (it's just a marker)
-    } 
+    }
     // Heading field = render as text element inside current step
     else if (field.type === 'heading') {
-      currentStepFields.push({ 
-        type: 'heading_render', 
+      currentStepFields.push({
+        type: 'heading_render',
         label: field.label || '',
-        helpText: field.helpText || field.description
+        helpText: field.helpText || field.helpText
       });
     }
     else {
@@ -95,7 +95,7 @@ const getBannerColor = (form: Form) => {
     black: "#0F172A",
     white: "#FFFFFF",
   };
-  
+
   if (form.banner_color === "custom" && form.banner_custom_color) {
     return form.banner_custom_color;
   }
@@ -115,7 +115,7 @@ const getAccentColor = (form: Form) => {
     slate: '#475569',
     black: '#0F172A',
   };
-  
+
   if (form.accent_color === 'custom' && form.accent_custom_color) {
     return form.accent_custom_color;
   }
@@ -128,11 +128,11 @@ const adjustBrightness = (hex: string, percent: number) => {
   let r = parseInt(hex.substring(0, 2), 16);
   let g = parseInt(hex.substring(2, 4), 16);
   let b = parseInt(hex.substring(4, 6), 16);
-  
+
   r = Math.min(255, Math.max(0, r + (r * percent / 100)));
   g = Math.min(255, Math.max(0, g + (g * percent / 100)));
   b = Math.min(255, Math.max(0, b + (b * percent / 100)));
-  
+
   const toHex = (n: number) => Math.round(n).toString(16).padStart(2, '0');
   return '#' + toHex(r) + toHex(g) + toHex(b);
 };
@@ -147,7 +147,7 @@ export function StepWizardTheme({
   renderSubmitButton,
 }: StepWizardThemeProps) {
   const [currentStep, setCurrentStep] = useState(0);
-  
+
   const steps = useMemo(() => createSteps(form.fields), [form.fields]);
   const totalSteps = steps.length + (form.require_consent ? 1 : 0);
   const isLastStep = currentStep === steps.length - 1 && !form.require_consent;
@@ -156,7 +156,7 @@ export function StepWizardTheme({
   const bannerColor = getBannerColor(form);
   const bannerMode = form.banner_mode || "gradient";
   const isWhiteBanner = bannerColor.toLowerCase() === "#ffffff";
-  
+
   // Generate banner style
   const getBannerStyle = () => {
     if (bannerMode === "solid") {
@@ -188,19 +188,18 @@ export function StepWizardTheme({
   return (
     <div className="max-w-5xl mx-auto bg-white rounded-xl p-8 shadow-sm">
       {/* Header - with custom banner color */}
-      <div 
+      <div
         className="mb-8 text-center p-8 rounded-xl"
         style={getBannerStyle()}
       >
         {form.logo_url && (
-          <img 
-            src={form.logo_url} 
-            alt="Logo" 
-            className={`${logoSizeClass} object-contain mb-4 ${
-              form.logo_position === 'center' ? 'mx-auto' : 
-              form.logo_position === 'right' ? 'ml-auto' : 
-              'mr-auto'
-            }`}
+          <img
+            src={form.logo_url}
+            alt="Logo"
+            className={`${logoSizeClass} object-contain mb-4 ${form.logo_position === 'center' ? 'mx-auto' :
+                form.logo_position === 'right' ? 'ml-auto' :
+                  'mr-auto'
+              }`}
           />
         )}
         <h1 className={`text-2xl font-bold mb-2 ${isWhiteBanner ? 'text-slate-800' : 'text-white'}`}>
@@ -222,9 +221,9 @@ export function StepWizardTheme({
           </span>
         </div>
         <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
-          <div 
+          <div
             className="h-full transition-all duration-300"
-            style={{ 
+            style={{
               width: `${((currentStep + 1) / totalSteps) * 100}%`,
               background: `linear-gradient(to right, ${accentColor}, ${lighterAccent})`
             }}
@@ -297,24 +296,24 @@ export function StepWizardTheme({
                     </div>
                   );
                 }
-                
+
                 // Info Box field
                 const regularField = field as FormField;
                 if (regularField.type === 'info_box') {
                   return (
-                    <div key={regularField.id} className="border-l-4 border-slate-300 bg-slate-50 rounded-r-xl p-6 my-4">
+                    <div key={regularField.id} className="border border-slate-200 rounded-xl p-6 my-4 bg-white">
                       {regularField.label && (
-                        <h4 className="text-lg font-semibold text-slate-900 mb-3">{regularField.label}</h4>
+                        <h4 className="text-lg font-semibold text-slate-800 mb-3">{regularField.label}</h4>
                       )}
-                      {regularField.description && (
-                        <div className="text-slate-600 whitespace-pre-wrap leading-relaxed">
-                          {regularField.description}
+                      {regularField.helpText && (
+                        <div className="text-slate-700 whitespace-pre-wrap leading-relaxed">
+                          {regularField.helpText}
                         </div>
                       )}
                     </div>
                   );
                 }
-                
+
                 // Regular field
                 return (
                   <div key={regularField.id} className="space-y-2">
@@ -324,8 +323,8 @@ export function StepWizardTheme({
                         <span className="text-red-500 ml-1">*</span>
                       )}
                     </label>
-                    {regularField.description && (
-                      <p className="text-sm text-slate-500">{regularField.description}</p>
+                    {regularField.helpText && (
+                      <p className="text-sm text-slate-500">{regularField.helpText}</p>
                     )}
                     {renderField(regularField)}
                     {errors[regularField.id] && (

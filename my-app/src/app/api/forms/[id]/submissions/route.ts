@@ -1,184 +1,127 @@
 // ============================================================
-// API: Get Submissions for a Form
-// GET /api/forms/{id}/submissions
-// GET /api/forms/{code}/submissions
-// Query params:
-//   - limit: number (default: 50)
-//   - offset: number (default: 0)
-//   - date_from: YYYY-MM-DD
-//   - date_to: YYYY-MM-DD
-//   - qr_code_id: filter by QR code
-//   - project_id: filter by project
+// API: /api/forms/[id]/submissions
+// GET  — ดึง submissions ของ form (พร้อม pagination, filter)
+// POST — สร้าง submission ใหม่ (ตอบแบบสอบถาม)
+// Query params: limit, offset, date_from, date_to, qr_code_id, project_id
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase';
-
-const supabase = createServerClient();
+import prisma from '@/lib/db';
 
 interface Params {
   params: Promise<{ id: string }>;
 }
 
+// GET /api/forms/[id]/submissions
 export async function GET(request: NextRequest, { params }: Params) {
   try {
     const { id } = await params;
     const { searchParams } = new URL(request.url);
-    
+
     // Pagination
-    const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 100); // Max 100
+    const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 100);
     const offset = parseInt(searchParams.get('offset') || '0');
-    
-    // Date filters
+
+    // Filters
     const dateFrom = searchParams.get('date_from');
     const dateTo = searchParams.get('date_to');
-    
-    // Other filters
     const qrCodeId = searchParams.get('qr_code_id');
     const projectId = searchParams.get('project_id');
-    
-    // First, find the form by ID, code, or slug
-    let formQuery = supabase
-      .from('forms')
-      .select('id, code, title, fields, current_version')
-      .eq('id', id)
-      .single();
-    
-    let { data: form, error: formError } = await formQuery;
-    
-    // Try by code
-    if (formError || !form) {
-      const { data: byCode, error: errByCode } = await supabase
-        .from('forms')
-        .select('id, code, title, fields, current_version')
-        .eq('code', id)
-        .single();
-      form = byCode;
-      formError = errByCode;
-    }
-    
-    // Try by slug
-    if (formError || !form) {
-      const { data: bySlug, error: errBySlug } = await supabase
-        .from('forms')
-        .select('id, code, title, fields, current_version')
-        .eq('slug', id)
-        .single();
-      form = bySlug;
-      formError = errBySlug;
-    }
-    
-    if (formError || !form) {
-      return NextResponse.json(
-        { success: false, error: 'Form not found' },
-        { status: 404 }
-      );
-    }
-    
-    // Build submissions query
-    let submissionsQuery = supabase
-      .from('submissions')
-      .select(`
-        id,
-        form_id,
-        form_version,
-        qr_code_id,
-        project_id,
-        responses,
-        utm_source,
-        utm_medium,
-        utm_campaign,
-        utm_content,
-        utm_term,
-        submitted_at,
-        metadata,
-        qr_code:qr_codes(id, name, project_id),
-        project:projects(id, code, name)
-      `, { count: 'exact' })
-      .eq('form_id', form.id)
-      .order('submitted_at', { ascending: false })
-      .range(offset, offset + limit - 1);
-    
-    // Apply filters
-    if (dateFrom) {
-      submissionsQuery = submissionsQuery.gte('submitted_at', dateFrom);
-    }
-    if (dateTo) {
-      submissionsQuery = submissionsQuery.lte('submitted_at', dateTo + 'T23:59:59');
-    }
-    if (qrCodeId) {
-      submissionsQuery = submissionsQuery.eq('qr_code_id', qrCodeId);
-    }
-    if (projectId) {
-      submissionsQuery = submissionsQuery.eq('project_id', projectId);
-    }
-    
-    const { data: submissions, error: submissionsError, count } = await submissionsQuery;
-    
-    if (submissionsError) {
-      console.error('API Error:', submissionsError);
-      return NextResponse.json(
-        { success: false, error: submissionsError.message },
-        { status: 500 }
-      );
-    }
-    
-    // Format response - extract field labels
-    const fieldLabels = form.fields?.map((f: any) => ({
-      key: f.id,
-      label: f.label,
-      type: f.type
-    })) || [];
-    
-    // Format submissions for display
-    const formattedSubmissions = (submissions || []).map((sub: any) => ({
-      id: sub.id,
-      submitted_at: sub.submitted_at,
-      form_version: sub.form_version,
-      responses: sub.responses,
-      utm: {
-        source: sub.utm_source,
-        medium: sub.utm_medium,
-        campaign: sub.utm_campaign,
-        content: sub.utm_content,
-        term: sub.utm_term
-      },
-      qr_code: sub.qr_code ? {
-        id: sub.qr_code.id,
-        name: sub.qr_code.name
-      } : null,
-      project: sub.project ? {
-        id: sub.project.id,
-        code: sub.project.code,
-        name: sub.project.name
-      } : null
-    }));
-    
-    return NextResponse.json({
-      success: true,
-      data: {
-        form: {
-          id: form.id,
-          code: form.code,
-          title: form.title,
-          current_version: form.current_version,
-          fields: fieldLabels
-        },
-        submissions: formattedSubmissions
-      },
-      meta: {
-        total: count || 0,
-        limit,
-        offset,
-        has_more: (count || 0) > offset + limit
-      }
+
+    // ค้นหา form จาก id หรือ slug หรือ code
+    const form = await prisma.form.findFirst({
+      where: { OR: [{ id }, { slug: id }, { code: id }] },
+      select: { id: true, code: true, title: true, fields: true, current_version: true },
     });
-    
-  } catch (err: any) {
-    console.error('API Error:', err);
-    return NextResponse.json(
-      { success: false, error: err.message || 'Internal server error' },
-      { status: 500 }
-    );
+
+    if (!form) {
+      return NextResponse.json({ error: 'Form not found' }, { status: 404 });
+    }
+
+    // Build filter conditions
+    const where: any = { form_id: form.id };
+    if (dateFrom || dateTo) {
+      where.submitted_at = {};
+      if (dateFrom) where.submitted_at.gte = new Date(dateFrom);
+      if (dateTo) {
+        const end = new Date(dateTo);
+        end.setHours(23, 59, 59, 999);
+        where.submitted_at.lte = end;
+      }
+    }
+    if (qrCodeId) where.qr_code_id = qrCodeId;
+    if (projectId) where.project_id = projectId;
+
+    // ดึง submissions
+    const [submissions, total] = await Promise.all([
+      prisma.submission.findMany({
+        where,
+        skip: offset,
+        take: limit,
+        orderBy: { submitted_at: 'desc' },
+        include: {
+          qr_code: { select: { name: true, qr_slug: true } },
+        },
+      }),
+      prisma.submission.count({ where }),
+    ]);
+
+    return NextResponse.json({
+      form,
+      submissions,
+      pagination: { total, limit, offset, hasMore: offset + limit < total },
+    });
+  } catch (error: any) {
+    console.error('GET /api/forms/[id]/submissions error:', error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
+// POST /api/forms/[id]/submissions — ส่งคำตอบแบบสอบถาม
+// Body: { responses, qr_code_id?, project_id?, utm_*, fingerprint?, metadata? }
+export async function POST(request: NextRequest, { params }: Params) {
+  try {
+    const { id } = await params;
+    const body = await request.json();
+
+    // ค้นหา form
+    const form = await prisma.form.findFirst({
+      where: { OR: [{ id }, { slug: id }], is_active: true },
+    });
+
+    if (!form) {
+      return NextResponse.json({ error: 'Form not found or inactive' }, { status: 404 });
+    }
+
+    // สร้าง submission
+    const submission = await prisma.submission.create({
+      data: {
+        form_id: form.id,
+        form_version: form.current_version,
+        qr_code_id: body.qr_code_id || null,
+        project_id: body.project_id || null,
+        responses: body.responses || {},
+        utm_source: body.utm_source || null,
+        utm_medium: body.utm_medium || null,
+        utm_campaign: body.utm_campaign || null,
+        utm_content: body.utm_content || null,
+        utm_term: body.utm_term || null,
+        fingerprint: body.fingerprint || null,
+        metadata: body.metadata || null,
+      },
+    });
+
+    // เพิ่ม scan count ถ้ามาจาก QR
+    if (body.qr_code_id) {
+      await prisma.qrCode.update({
+        where: { id: body.qr_code_id },
+        data: { scan_count: { increment: 1 } },
+      }).catch(() => { });
+    }
+
+    return NextResponse.json(submission, { status: 201 });
+  } catch (error: any) {
+    console.error('POST /api/forms/[id]/submissions error:', error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

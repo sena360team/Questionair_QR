@@ -140,8 +140,8 @@ export function MinimalTheme({
                 <h2 className="text-lg font-semibold text-slate-800">
                   {field.label}
                 </h2>
-                {(field.helpText || field.description) && (
-                  <p className="text-sm text-slate-500 mt-1">{field.helpText || field.description}</p>
+                {(field.helpText || field.helpText) && (
+                  <p className="text-sm text-slate-500 mt-1">{field.helpText || field.helpText}</p>
                 )}
               </div>
             );
@@ -154,8 +154,8 @@ export function MinimalTheme({
                 <h3 className="text-base font-medium" style={{ color: accentColor }}>
                   {field.label}
                 </h3>
-                {(field.helpText || field.description) && (
-                  <p className="text-sm text-slate-500 mt-1">{field.helpText || field.description}</p>
+                {(field.helpText || field.helpText) && (
+                  <p className="text-sm text-slate-500 mt-1">{field.helpText || field.helpText}</p>
                 )}
               </div>
             );
@@ -169,8 +169,8 @@ export function MinimalTheme({
                   <span className="text-red-500 ml-0.5">*</span>
                 )}
               </label>
-              {field.description && (
-                <p className="text-xs text-slate-400">{field.description}</p>
+              {field.helpText && (
+                <p className="text-xs text-slate-400">{field.helpText}</p>
               )}
               {renderField(field)}
               {errors[field.id] && (
