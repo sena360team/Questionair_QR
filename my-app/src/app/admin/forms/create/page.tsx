@@ -146,7 +146,7 @@ export default function CreateFormPage() {
 
     setSaving(true);
     try {
-      // 1. สร้างฟอร์มเป็น draft ก่อน (current_version = NULL, draft_version = NULL)
+      // บันทึก Draft = สร้างแค่ form (status=draft) ไม่สร้าง version
       const form = await createForm({
         code,
         title,
@@ -169,37 +169,7 @@ export default function CreateFormPage() {
         consent_require_location: consentRequireLocation,
       });
 
-      // 2. สร้าง version 0 (draft) ใน form_versions table
-      const versionResponse = await fetch('/api/form-versions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          formId: form.id,
-          title,
-          description,
-          logo_url: logoUrl,
-          logo_position: logoPosition,
-          logo_size: logoSize,
-          theme,
-          banner_color: bannerColor,
-          banner_custom_color: bannerCustomColor,
-          banner_mode: bannerMode,
-          accent_color: accentColor,
-          accent_custom_color: accentCustomColor,
-          fields,
-          require_consent: requireConsent,
-          consent_heading: consentHeading,
-          consent_text: consentText,
-          consent_require_location: consentRequireLocation,
-          change_summary: 'Initial draft',
-        }),
-      });
-
-      if (!versionResponse.ok) {
-        throw new Error('Failed to create version 0 draft');
-      }
-
-      showToast('success', 'บันทึก Draft สำเร็จ (v0 draft)');
+      showToast('success', 'บันทึก Draft สำเร็จ');
       setTimeout(() => {
         router.push('/admin/forms');
       }, 500);
@@ -242,12 +212,13 @@ export default function CreateFormPage() {
         consent_require_location: consentRequireLocation,
       });
 
-      // 2. สร้าง version 0 (draft) ใน form_versions table
+      // 2. สร้าง version 1 (draft) ใน form_versions table
       const versionResponse = await fetch('/api/form-versions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           formId: form.id,
+          isDraft: true,
           title,
           description,
           logo_url: logoUrl,
@@ -269,13 +240,13 @@ export default function CreateFormPage() {
       });
 
       if (!versionResponse.ok) {
-        throw new Error('Failed to create version 0');
+        throw new Error('Failed to create version');
       }
 
       const versionResult = await versionResponse.json();
       const versionId = versionResult.data.id;
 
-      // 3. Publish version 0 ทันที → status: 'published', current_version: 0
+      // 3. Publish ทันที → status: 'published', current_version: 1
       const publishResponse = await fetch('/api/form-versions/publish', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -286,10 +257,10 @@ export default function CreateFormPage() {
       });
 
       if (!publishResponse.ok) {
-        throw new Error('Failed to publish version 0');
+        throw new Error('Failed to publish version');
       }
 
-      showToast('success', 'สร้างและ Publish แบบสอบถามสำเร็จ (v0)');
+      showToast('success', 'สร้างและ Publish แบบสอบถามสำเร็จ');
       setTimeout(() => {
         router.push('/admin/forms');
       }, 500);
@@ -362,7 +333,7 @@ export default function CreateFormPage() {
             className="flex items-center justify-center gap-2 px-4 lg:px-6 py-2 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <Rocket className="w-5 h-5" />
-            {saving ? 'กำลังบันทึก...' : 'Publish v0'}
+            {saving ? 'กำลังบันทึก...' : 'Publish'}
           </button>
         </div>
       </div>
@@ -897,7 +868,7 @@ export default function CreateFormPage() {
                   disabled={!isValid}
                   className="px-6 py-2.5 bg-green-600 text-white rounded-xl hover:bg-green-700 disabled:opacity-50"
                 >
-                  Publish v0
+                  Publish
                 </button>
               </div>
             </div>

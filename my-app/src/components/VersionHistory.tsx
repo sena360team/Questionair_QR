@@ -15,7 +15,8 @@ import {
   FileText,
   AlertCircle,
   CheckCircle,
-  Loader2
+  Loader2,
+  Copy
 } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import { getVersionBadgeStyle } from '@/lib/versionColors';
@@ -26,11 +27,12 @@ interface VersionHistoryProps {
 }
 
 export function VersionHistory({ formId, currentVersion }: VersionHistoryProps) {
-  const { versions, draftVersion, isLoading, error } = useFormVersions(formId);
+  const { versions, draftVersion, formStatus, isLoading, error } = useFormVersions(formId);
   const router = useRouter();
 
   const [selectedVersion, setSelectedVersion] = useState<FormVersion | null>(null);
   const [expandedVersions, setExpandedVersions] = useState<Set<number>>(new Set());
+  const [duplicatingVersion, setDuplicatingVersion] = useState<string | null>(null);
 
   const [toast, setToast] = useState<{ type: 'success' | 'error', message: string } | null>(null);
 
@@ -49,11 +51,44 @@ export function VersionHistory({ formId, currentVersion }: VersionHistoryProps) 
     setExpandedVersions(newExpanded);
   };
 
-
-
   const handleEditDraft = () => {
     if (draftVersion) {
       router.push(`/admin/forms/${formId}?draft=true`);
+    }
+  };
+
+  const handleDuplicateVersion = async (version: FormVersion) => {
+    const title = prompt(`คัดลอก v${version.version} ไปเป็นฟอร์มใหม่\n\nชื่อฟอร์มใหม่:`, `${version.title} (Copy from v${version.version})`);
+
+    if (!title || title.trim() === '') {
+      return;
+    }
+
+    setDuplicatingVersion(version.id);
+
+    try {
+      const response = await fetch(`/api/form-versions/${version.id}/duplicate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: title.trim() }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to duplicate version');
+      }
+
+      const { newFormId } = await response.json();
+      showToast('success', `คัดลอก v${version.version} สำเร็จ!`);
+
+      // Redirect to new form after a short delay
+      setTimeout(() => {
+        router.push(`/admin/forms/${newFormId}`);
+      }, 1000);
+    } catch (err: any) {
+      showToast('error', err.message || 'เกิดข้อผิดพลาดในการคัดลอก');
+    } finally {
+      setDuplicatingVersion(null);
     }
   };
 
@@ -77,6 +112,27 @@ export function VersionHistory({ formId, currentVersion }: VersionHistoryProps) 
   // Filter published versions only
   const publishedVersions = versions?.filter(v => v.status === 'published') || [];
 
+  // ถ้า form เป็น draft (ยังไม่เคย publish) และไม่มี version เลย → แสดง "Draft"
+  const isFormDraft = formStatus === 'draft' && publishedVersions.length === 0;
+
+  if (isFormDraft) {
+    return (
+      <div className="space-y-6 pt-6 px-4 sm:px-6">
+        <div className="bg-amber-50 border-2 border-amber-200 rounded-xl p-6">
+          <div className="flex items-center gap-3">
+            <Edit3 className="w-6 h-6 text-amber-600" />
+            <div>
+              <p className="font-semibold text-amber-900 text-lg">Draft</p>
+              <p className="text-sm text-amber-700 mt-1">
+                ฟอร์มนี้ยังไม่ได้ Publish — กด Publish เพื่อเผยแพร่ให้ผู้ใช้เข้าถึงได้
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (!versions || versions.length === 0) {
     return (
       <div className="text-center py-12 text-slate-500">
@@ -99,14 +155,16 @@ export function VersionHistory({ formId, currentVersion }: VersionHistoryProps) 
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <p className="font-medium text-amber-900">
-                      มี Draft Version {draftVersion.version} ที่กำลังแก้ไข
+                      กำลังแก้ไข Draft{draftVersion.version > 1 ? ` v${draftVersion.version}` : ''}
                     </p>
-                    <span
-                      className="px-2 py-0.5 text-xs font-medium rounded-full border"
-                      style={getVersionBadgeStyle(draftVersion.version)}
-                    >
-                      v{draftVersion.version}
-                    </span>
+                    {draftVersion.version > 1 && (
+                      <span
+                        className="px-2 py-0.5 text-xs font-medium rounded-full border"
+                        style={getVersionBadgeStyle(draftVersion.version)}
+                      >
+                        v{draftVersion.version}
+                      </span>
+                    )}
                   </div>
                   <p className="text-sm text-amber-700 mt-1">
                     สร้างเมื่อ {formatDate(draftVersion.created_at, {
@@ -162,20 +220,15 @@ export function VersionHistory({ formId, currentVersion }: VersionHistoryProps) 
                             <span className="ml-1 text-xs opacity-75">(current)</span>
                           )}
                         </span>
-
-
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <span className={`text-sm ${version.status === 'draft' ? 'text-amber-600 font-medium' : 'text-slate-500'}`}>
-                          {version.status === 'draft'
-                            ? '(Draft)'
-                            : formatDate(version.published_at, {
-                              day: 'numeric',
-                              month: 'short',
-                              year: 'numeric'
-                            })
-                          }
+                        <span className="text-sm text-slate-500">
+                          {formatDate(version.published_at, {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric'
+                          })}
                         </span>
                         {isExpanded ? (
                           <ChevronUp className="w-4 h-4 text-slate-400" />
@@ -196,7 +249,6 @@ export function VersionHistory({ formId, currentVersion }: VersionHistoryProps) 
                         <FileText className="w-3.5 h-3.5" />
                         {(version.fields as FormField[]).length} คำถาม
                       </span>
-
                     </div>
                   </div>
 
@@ -214,8 +266,21 @@ export function VersionHistory({ formId, currentVersion }: VersionHistoryProps) 
                           <Eye className="w-4 h-4" />
                           ดูตัวอย่าง
                         </button>
-
-
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDuplicateVersion(version);
+                          }}
+                          disabled={duplicatingVersion === version.id}
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {duplicatingVersion === version.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Copy className="w-4 h-4" />
+                          )}
+                          Copy as New Form
+                        </button>
                       </div>
                     </div>
                   )}
@@ -250,7 +315,7 @@ export function VersionHistory({ formId, currentVersion }: VersionHistoryProps) 
                 </div>
               </div>
 
-              {/* Actual Form Preview with FormRenderer - No border, let FormRenderer handle header */}
+              {/* Actual Form Preview */}
               <div className="bg-white rounded-xl overflow-hidden">
                 <FormRenderer
                   form={{
@@ -263,7 +328,6 @@ export function VersionHistory({ formId, currentVersion }: VersionHistoryProps) 
                     logo_position: selectedVersion.logo_position as 'center' | 'left' | 'right' | undefined,
                     logo_size: selectedVersion.logo_size as 'small' | 'medium' | 'large' | undefined,
                     fields: selectedVersion.fields as FormField[],
-                    // Theme settings from version
                     theme: selectedVersion.theme as 'default' | 'card-groups' | 'step-wizard' | 'minimal' | undefined,
                     banner_color: selectedVersion.banner_color as 'blue' | 'black' | 'white' | 'custom' | undefined,
                     banner_custom_color: selectedVersion.banner_custom_color ?? undefined,
@@ -299,7 +363,6 @@ export function VersionHistory({ formId, currentVersion }: VersionHistoryProps) 
           )}
         </div>
       </div>
-
 
       {/* Toast Notification */}
       {toast && (

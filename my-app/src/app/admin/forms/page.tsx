@@ -270,9 +270,9 @@ function FormCard({ form, submissionCount, onDelete, onDuplicate }: FormCardProp
               <div className="flex items-center gap-2 mt-1">
                 <span 
                   className="px-2 py-0.5 text-xs rounded-full font-medium border"
-                  style={getVersionBadgeStyle(form.current_version || 0)}
+                  style={getVersionBadgeStyle(form.current_version || 1)}
                 >
-                  Version {form.current_version || 0}
+                  {form.status === 'draft' ? 'Draft' : `Version ${form.current_version || 1}`}
                 </span>
                 {form.has_draft && (
                   <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-xs rounded-full flex items-center gap-1">

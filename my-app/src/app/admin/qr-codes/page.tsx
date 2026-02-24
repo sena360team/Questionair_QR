@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState, useEffect, useCallback, useMemo, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { createPortal } from 'react-dom';
 import { useQRCodes, useForms, useSubmissions, useProjects } from '@/hooks/useSupabase';
 import { QRGenerator } from '@/components/QRGenerator';
@@ -25,8 +25,10 @@ import { QRCode as QRCodeType } from '@/types';
 
 function QRCodesPageContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const formFilterFromUrl = searchParams.get('form');
   const actionFromUrl = searchParams.get('action');
+  const returnUrl = searchParams.get('returnUrl');
 
   const { qrCodes, loading, deleteQRCode, createQRCode } = useQRCodes();
   const { forms } = useForms();
@@ -109,6 +111,11 @@ function QRCodesPageContent() {
 
     setShowCreateModal(false);
     setSelectedForm('');
+
+    // Redirect back to returnUrl if provided
+    if (returnUrl) {
+      router.push(decodeURIComponent(returnUrl));
+    }
   };
 
   if (loading) {

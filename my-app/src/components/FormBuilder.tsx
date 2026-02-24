@@ -78,9 +78,10 @@ export function FormBuilder({ fields, onChange, currentVersion = 0 }: FormBuilde
       }
     };
 
-    // ถ้าเป็นการเพิ่มคำถามใหม่ใน form ที่ published แล้ว
-    // ให้标记ว่าเพิ่มใน version ถัดไป (currentVersion + 1)
-    const nextVersion = currentVersion > 0 ? currentVersion + 1 : undefined;
+    // ถ้าเป็นการเพิ่มคำถามใหม่ใน form ที่ published แล้ว (v1+)
+    // ให้ mark ว่าเพิ่มใน version ถัดไป (currentVersion + 1)
+    // v1 = baseline ไม่ต้อง mark, เริ่ม mark ตั้งแต่ v2+
+    const nextVersion = currentVersion > 1 ? currentVersion + 1 : undefined;
     
     const newField: FormField = {
       id: generateId(),

@@ -258,8 +258,9 @@ export function useSubmissions(formId?: string) {
       const res = await fetch(url);
       if (!res.ok) throw new Error(await res.text());
       const data = await res.json();
-      // API ส่งมาเป็น { submissions: [...], ... } ถ้ามี formId
-      setSubmissions(Array.isArray(data) ? data : (data.submissions || []));
+      // API ส่งมาเป็น { data: [...], total: N } จาก /api/submissions
+      // หรือ array โดยตรงจาก /api/forms/:id/submissions
+      setSubmissions(Array.isArray(data) ? data : (data.data || data.submissions || []));
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Unknown error'));
     } finally {

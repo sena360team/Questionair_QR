@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
       data: { code, slug, title, ...rest },
     });
 
-    return NextResponse.json(form, { status: 201 });
+    return NextResponse.json({ data: form }, { status: 201 });
   } catch (error: any) {
     console.error('POST /api/forms error:', error);
     if (error.code === 'P2002') {

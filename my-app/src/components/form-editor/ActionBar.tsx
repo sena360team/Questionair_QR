@@ -46,7 +46,7 @@ export function ActionBar({
       >
         <Rocket className="w-4 h-4" />
         <span>Publish</span>
-        {nextVersion && (
+        {nextVersion && nextVersion > 1 && (
           <span className="hidden sm:inline text-green-100">v{nextVersion}</span>
         )}
       </button>

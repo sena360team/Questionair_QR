@@ -8,6 +8,7 @@ interface UseFormVersionsReturn {
   currentVersion: FormVersion | null;
   draftVersion: FormVersion | null;
   hasDraft: boolean;
+  formStatus: string;
   isLoading: boolean;
   error: Error | null;
   refresh: () => void;
@@ -23,6 +24,7 @@ export function useFormVersions(formId: string): UseFormVersionsReturn {
   const [draftVersion, setDraftVersion] = useState<FormVersion | null>(null);
   const [hasDraft, setHasDraft] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [formStatus, setFormStatus] = useState<string>('draft');
   const [error, setError] = useState<Error | null>(null);
 
   const fetchVersions = useCallback(async () => {
@@ -56,6 +58,7 @@ export function useFormVersions(formId: string): UseFormVersionsReturn {
         }))
       });
       
+      setFormStatus(result.data.form_status || 'draft');
       setVersions(versionsWithStatus);
       
       // Find current version
@@ -92,7 +95,7 @@ export function useFormVersions(formId: string): UseFormVersionsReturn {
     const response = await fetch('/api/form-versions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ formId, ...data }),
+      body: JSON.stringify({ formId, isDraft: true, ...data }),
     });
     
     const result = await response.json();
@@ -157,6 +160,7 @@ export function useFormVersions(formId: string): UseFormVersionsReturn {
     currentVersion,
     draftVersion,
     hasDraft,
+    formStatus,
     isLoading,
     error,
     refresh: fetchVersions,

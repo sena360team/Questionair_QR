@@ -37,7 +37,28 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const body = await req.json();
 
     // ลบ field ที่ไม่ใช่ column ของ Form model
-    const { _count, qr_codes, submissions, versions, draft, has_draft, ...data } = body;
+    const { _count, qr_codes, submissions, versions, draft, has_draft, css_integration_enabled, css_field_mapping, ...data } = body;
+
+    const form = await prisma.form.update({
+      where: { id },
+      data,
+    });
+
+    return NextResponse.json(form);
+  } catch (error: any) {
+    if (error.code === 'P2025') return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
+// PATCH /api/forms/[id] — อัพเดทแบบสอบถามแบบ partial
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const { id } = await params;
+    const body = await req.json();
+
+    // ลบ field ที่ไม่ใช่ column ของ Form model
+    const { _count, qr_codes, submissions, versions, draft, has_draft, css_integration_enabled, css_field_mapping, ...data } = body;
 
     const form = await prisma.form.update({
       where: { id },

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { FormBuilder } from '@/components/FormBuilder';
 import { FormRenderer } from '@/components/FormRenderer';
@@ -19,11 +19,15 @@ import { cn } from '@/lib/utils';
 export default function EditFormPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const formId = params.id as string;
+
+  // อ่าน tab query parameter (เช่น ?tab=history)
+  const initialTab = (searchParams.get('tab') as TabType) || 'content';
 
   const [form, setForm] = useState<Form | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<TabType>('content');
+  const [activeTab, setActiveTab] = useState<TabType>(initialTab);
   const [showPreview, setShowPreview] = useState(false);
   const [previewSnapshot, setPreviewSnapshot] = useState<Form | null>(null);
   const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
@@ -61,6 +65,14 @@ export default function EditFormPage() {
       }
     }
   }, [draftVersion]);
+
+  // Update activeTab when query parameter changes
+  useEffect(() => {
+    const tabParam = searchParams.get('tab') as TabType;
+    if (tabParam && tabParam !== activeTab) {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
 
   // Form state
   const [title, setTitle] = useState('');
@@ -522,8 +534,8 @@ export default function EditFormPage() {
 
     setIsSaving(true);
     try {
-      const currentVersion = form?.current_version || 0;
-      const newVersion = currentVersion + 1;
+      const currentVersion = form?.current_version;
+      const newVersion = currentVersion === null || currentVersion === undefined ? 1 : currentVersion + 1;
 
       // Update form
       const updateResponse = await fetch(`/api/forms/${formId}`, {
@@ -726,7 +738,7 @@ export default function EditFormPage() {
     <div className="space-y-6">
       {/* Draft Alert - V4 */}
       {isEditingDraft && (
-        <DraftAlert currentVersion={form?.current_version ?? null} />
+        <DraftAlert currentVersion={form?.current_version ?? null} draftVersionNumber={draftVersion?.version ?? null} />
       )}
 
       {/* Main Card */}
@@ -750,7 +762,7 @@ export default function EditFormPage() {
                 onSaveDraft={handleSaveDraft}
                 onPublish={() => setShowPublishModal(true)}
                 isSaving={isSaving}
-                nextVersion={draftVersion?.version ?? ((form.current_version ?? 0) + 1)}
+                nextVersion={draftVersion?.version ?? (form.current_version === null || form.current_version === undefined ? 1 : form.current_version + 1)}
               />
             </div>
           </div>
@@ -886,7 +898,7 @@ export default function EditFormPage() {
               {/* Form Builder */}
               <div className="bg-white p-6 rounded-2xl border-2 border-slate-300">
                 <h2 className="text-lg font-semibold mb-4">คำถาม</h2>
-                <FormBuilder fields={fields} onChange={setFields} currentVersion={form.current_version || 0} />
+                <FormBuilder fields={fields} onChange={setFields} currentVersion={form.current_version || 1} />
               </div>
             </div>
           )}
@@ -1383,7 +1395,7 @@ export default function EditFormPage() {
           )}
 
           {activeTab === 'history' && (
-            <VersionHistory formId={formId} currentVersion={form.current_version || 0} />
+            <VersionHistory formId={formId} currentVersion={form.current_version || 1} />
           )}
 
           {activeTab === 'qr-codes' && form && (
@@ -1595,11 +1607,18 @@ export default function EditFormPage() {
                 ยกเลิก
               </button>
               <button
-                onClick={form?.status === 'published' ? handlePublishDraft : handlePublish}
+                onClick={draftVersionId ? handlePublishDraft : handlePublish}
                 disabled={isSaving}
                 className="flex-1 py-2.5 px-4 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white rounded-xl font-medium transition-colors"
               >
-                {isSaving ? 'กำลัง Publish...' : (form?.status === 'published' ? 'Publish Draft' : `Publish v${draftVersion?.version ?? ((form?.current_version ?? 0) + 1)}`)}
+                {isSaving ? 'กำลัง Publish...' : (() => {
+                  if (form?.status === 'published') {
+                    const v = draftVersion?.version ?? (form.current_version! + 1);
+                    return v <= 1 ? 'Publish' : `Publish v${v}`;
+                  }
+                  // form status=draft (ยังไม่เคย publish) → "Publish"
+                  return 'Publish';
+                })()}
               </button>
             </div>
           </div>

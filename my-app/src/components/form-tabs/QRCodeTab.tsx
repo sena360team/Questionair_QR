@@ -23,6 +23,9 @@ interface QRCodeTabProps {
 }
 
 export function QRCodeTab({ formId, formCode }: QRCodeTabProps) {
+  const getReturnUrl = () => {
+    return encodeURIComponent(`/admin/forms/${formId}?tab=qr`);
+  };
   const [qrCodes, setQrCodes] = useState<QRCode[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -36,13 +39,14 @@ export function QRCodeTab({ formId, formCode }: QRCodeTabProps) {
     try {
       setLoading(true);
       const response = await fetch(`/api/forms/${formId}/qr-codes`);
-      const result = await response.json();
 
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to fetch QR codes');
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to fetch QR codes');
       }
 
-      setQrCodes(result.data);
+      const qrCodes = await response.json();
+      setQrCodes(qrCodes);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -60,8 +64,8 @@ export function QRCodeTab({ formId, formCode }: QRCodeTabProps) {
     return `${window.location.origin}/qr/${qrSlug}`;
   };
 
-  const getQRImageUrl = (qrSlug: string) => {
-    return `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`${window.location.origin}/qr/${qrSlug}`)}`;
+  const getQRImageUrl = (qrSlug: string, size: number = 150) => {
+    return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(`${window.location.origin}/qr/${qrSlug}`)}`;
   };
 
   if (loading) {
@@ -95,7 +99,7 @@ export function QRCodeTab({ formId, formCode }: QRCodeTabProps) {
           </p>
         </div>
         <Link
-          href={`/admin/qr-codes?form=${formId}&action=create`}
+          href={`/admin/qr-codes?form=${formId}&action=create&returnUrl=${getReturnUrl()}`}
           className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
         >
           <Plus className="w-4 h-4" />
@@ -112,7 +116,7 @@ export function QRCodeTab({ formId, formCode }: QRCodeTabProps) {
           <h3 className="text-lg font-medium text-slate-900 mb-2">ยังไม่มี QR Code</h3>
           <p className="text-slate-500 mb-6">สร้าง QR Code เพื่อให้ผู้ใช้สแกนเข้าถึงแบบสอบถามนี้</p>
           <Link
-            href={`/admin/qr-codes/create?formId=${formId}` as any}
+            href={`/admin/qr-codes?form=${formId}&action=create&returnUrl=${getReturnUrl()}`}
             className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700"
           >
             <Plus className="w-5 h-5" />
@@ -210,27 +214,30 @@ export function QRCodeTab({ formId, formCode }: QRCodeTabProps) {
                 {/* Actions */}
                 <div className="col-span-3 flex items-center justify-end gap-1">
                   <a
-                    href={getQRImageUrl(qr.qr_slug)}
-                    download={`${qr.qr_slug}.png`}
+                    href={getQRImageUrl(qr.qr_slug, 1000)}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
                     title="ดาวน์โหลด"
                   >
                     <Download className="w-4 h-4" />
                   </a>
-                  <Link
+                  {/* TODO: แก้ไข - ซ่อนไว้ก่อนจนกว่าจะสร้างหน้า */}
+                  {/* <Link
                     href={`/admin/qr-codes/${qr.id}` as any}
                     className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                     title="แก้ไข"
                   >
                     <Edit className="w-4 h-4" />
-                  </Link>
-                  <Link
+                  </Link> */}
+                  {/* TODO: สถิติ - ซ่อนไว้ก่อนจนกว่าจะสร้างหน้า */}
+                  {/* <Link
                     href={`/admin/qr-codes/${qr.id}/stats` as any}
                     className="p-2 text-slate-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
                     title="สถิติ"
                   >
                     <BarChart3 className="w-4 h-4" />
-                  </Link>
+                  </Link> */}
                   <a
                     href={`/qr/${qr.qr_slug}`}
                     target="_blank"

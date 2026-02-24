@@ -195,6 +195,12 @@ model Submission {
   metadata     Json?
   submitted_at DateTime @default(now())
 
+  // Consent fields
+  consent_given Boolean?
+  consent_ip    String?
+  consent_location Json?
+  consented_at  DateTime?
+
   form         Form       @relation(fields: [form_id], references: [id], onDelete: Cascade)
   qr_code      QrCode?    @relation(fields: [qr_code_id], references: [id])
   project      Project?   @relation(fields: [project_id], references: [id])

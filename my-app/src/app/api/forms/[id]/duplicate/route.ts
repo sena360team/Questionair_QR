@@ -32,6 +32,15 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         // สร้าง unique code
         const code = slug.substring(0, 20).toUpperCase().replace(/-/g, '_');
 
+        // เตรียม fields: ลบ _versionAdded ออกเพราะเป็นฟอร์มใหม่ (draft, ยังไม่ publish)
+        let cleanedFields = [];
+        if (copy_questions && Array.isArray(source.fields)) {
+            cleanedFields = (source.fields as any[]).map((field: any) => {
+                const { _versionAdded, ...rest } = field;
+                return rest;
+            });
+        }
+
         // สร้าง form ใหม่
         const newForm = await prisma.form.create({
             data: {
@@ -39,7 +48,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
                 slug,
                 title,
                 description: copy_settings ? source.description : null,
-                fields: copy_questions ? (source.fields as any) : [],
+                fields: cleanedFields as any,
                 is_active: false,
                 allow_multiple_responses: source.allow_multiple_responses,
                 status: 'draft',
