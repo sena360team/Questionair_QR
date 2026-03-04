@@ -33,7 +33,7 @@ const getBannerColor = (form: Form) => {
     black: '#0F172A',
     white: '#FFFFFF',
   };
-  
+
   if (form.banner_color === 'custom' && form.banner_custom_color) {
     return form.banner_custom_color;
   }
@@ -53,7 +53,7 @@ const getAccentColor = (form: Form) => {
     slate: '#475569',
     black: '#0F172A',
   };
-  
+
   if (form.accent_color === 'custom' && form.accent_custom_color) {
     return form.accent_custom_color;
   }
@@ -66,11 +66,11 @@ const adjustBrightness = (hex: string, percent: number) => {
   let r = parseInt(hex.substring(0, 2), 16);
   let g = parseInt(hex.substring(2, 4), 16);
   let b = parseInt(hex.substring(4, 6), 16);
-  
+
   r = Math.min(255, Math.max(0, r + (r * percent / 100)));
   g = Math.min(255, Math.max(0, g + (g * percent / 100)));
   b = Math.min(255, Math.max(0, b + (b * percent / 100)));
-  
+
   const toHex = (n: number) => Math.round(n).toString(16).padStart(2, '0');
   return '#' + toHex(r) + toHex(g) + toHex(b);
 };
@@ -89,7 +89,7 @@ export function MinimalTheme({
   const accentColor = getAccentColor(form);
   const bannerMode = form.banner_mode || 'gradient';
   const isWhiteBanner = bannerColor.toLowerCase() === '#ffffff';
-  
+
   // Generate banner style
   const getBannerStyle = () => {
     if (bannerMode === 'solid') {
@@ -105,33 +105,32 @@ export function MinimalTheme({
   return (
     <div className="bg-white rounded-xl overflow-hidden shadow-sm">
       {/* Header - with custom banner color */}
-      <div 
-        className={`p-8 ${isWhiteBanner ? 'text-slate-800 border-b border-slate-200' : 'text-white'}`}
+      <div
+        className={`p-5 md:p-8 ${isWhiteBanner ? 'text-slate-800 border-b border-slate-200' : 'text-white'}`}
         style={getBannerStyle()}
       >
         {form.logo_url && (
-          <img 
-            src={form.logo_url} 
-            alt="Logo" 
-            className={`${logoSizeClass} mb-4 opacity-80 ${
-              form.logo_position === 'center' ? 'mx-auto' : 
-              form.logo_position === 'right' ? 'ml-auto' : 
-              ''
-            }`}
+          <img
+            src={form.logo_url}
+            alt="Logo"
+            className={`${logoSizeClass} mb-4 opacity-80 ${form.logo_position === 'center' ? 'mx-auto' :
+                form.logo_position === 'right' ? 'ml-auto' :
+                  ''
+              }`}
           />
         )}
-        <h1 className={`text-xl font-medium mb-1 ${isWhiteBanner ? 'text-slate-900' : ''}`}>
+        <h1 className={`text-lg md:text-xl font-medium mb-1 ${isWhiteBanner ? 'text-slate-900' : ''}`}>
           {form.title || 'แบบสอบถาม'}
         </h1>
         {form.description && (
-          <p className={`text-sm ${isWhiteBanner ? 'text-slate-600' : 'text-white/80'}`}>
+          <p className={`text-xs md:text-sm ${isWhiteBanner ? 'text-slate-600' : 'text-white/80'}`}>
             {form.description}
           </p>
         )}
       </div>
 
       {/* Fields */}
-      <div className="p-8 space-y-6">
+      <div className="p-4 md:p-8 space-y-5 md:space-y-6">
         {form.fields.map((field) => {
           // Section field - render as major section header
           if (field.type === 'section') {
@@ -146,7 +145,7 @@ export function MinimalTheme({
               </div>
             );
           }
-          
+
           // Heading field - render as sub-heading (smaller)
           if (field.type === 'heading') {
             return (
@@ -160,7 +159,7 @@ export function MinimalTheme({
               </div>
             );
           }
-          
+
           return (
             <div key={field.id} className="space-y-1.5">
               <label className="block text-sm font-medium" style={{ color: accentColor }}>

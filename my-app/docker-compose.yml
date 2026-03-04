@@ -16,7 +16,7 @@ services:
       POSTGRES_PASSWORD: 5wRV%C%9
       POSTGRES_DB: complaint_qr_db
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./setup_postgresql.sql:/docker-entrypoint-initdb.d/01-setup.sql
@@ -25,6 +25,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - questionair-network
 
   # Next.js Application
   app:
@@ -34,7 +36,7 @@ services:
     container_name: questionair-app
     restart: unless-stopped
     ports:
-      - "1881:1881"
+      - "1880:1880"
     environment:
       # Database Connection
       DATABASE_HOST: postgres
@@ -46,7 +48,7 @@ services:
       
       # Application
       NODE_ENV: production
-      NEXT_PUBLIC_APP_URL: http://localhost:1881
+      NEXT_PUBLIC_APP_URL: http://localhost:1880
     depends_on:
       postgres:
         condition: service_healthy

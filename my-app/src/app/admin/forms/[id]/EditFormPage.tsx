@@ -1296,7 +1296,7 @@ export default function EditFormPage() {
                             className="w-full px-4 py-2 border-2 border-slate-300 rounded-lg bg-white"
                           >
                             <option value="">-- เลือกคำถาม --</option>
-                            {fields.filter(f => f.type === 'textarea' || f.type === 'text').map(field => (
+                            {form.fields.filter(f => f.type === 'textarea' || f.type === 'text').map(field => (
                               <option key={field.id} value={field.id}>{field.label}</option>
                             ))}
                           </select>
@@ -1313,7 +1313,7 @@ export default function EditFormPage() {
                             className="w-full px-4 py-2 border-2 border-slate-300 rounded-lg bg-white"
                           >
                             <option value="">-- เลือกคำถาม --</option>
-                            {fields.filter(f => f.type === 'text').map(field => (
+                            {form.fields.filter(f => f.type === 'text').map(field => (
                               <option key={field.id} value={field.id}>{field.label}</option>
                             ))}
                           </select>
@@ -1330,7 +1330,7 @@ export default function EditFormPage() {
                             className="w-full px-4 py-2 border-2 border-slate-300 rounded-lg bg-white"
                           >
                             <option value="">-- เลือกคำถาม --</option>
-                            {fields.filter(f => f.type === 'tel' || f.type === 'text').map(field => (
+                            {form.fields.filter(f => f.type === 'tel' || f.type === 'text').map(field => (
                               <option key={field.id} value={field.id}>{field.label}</option>
                             ))}
                           </select>
@@ -1347,7 +1347,7 @@ export default function EditFormPage() {
                             className="w-full px-4 py-2 border-2 border-slate-300 rounded-lg bg-white"
                           >
                             <option value="">-- เลือกคำถาม --</option>
-                            {fields.filter(f => f.type === 'email' || f.type === 'text').map(field => (
+                            {form.fields.filter(f => f.type === 'email' || f.type === 'text').map(field => (
                               <option key={field.id} value={field.id}>{field.label}</option>
                             ))}
                           </select>

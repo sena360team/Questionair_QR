@@ -159,7 +159,7 @@ export function CardGroupsTheme({
     <div className="max-w-5xl mx-auto space-y-6 bg-white rounded-xl p-6 shadow-sm">
       {/* Header Card - Title always centered, logo position independent */}
       <div
-        className={`rounded-2xl p-8 shadow-xl text-center ${isWhiteBanner ? 'text-slate-800 border border-slate-200' : 'text-white'}`}
+        className={`rounded-2xl p-5 md:p-8 shadow-xl text-center ${isWhiteBanner ? 'text-slate-800 border border-slate-200' : 'text-white'}`}
         style={getBannerStyle()}
       >
         {form.logo_url && (
@@ -172,11 +172,11 @@ export function CardGroupsTheme({
               }`}
           />
         )}
-        <h1 className="text-2xl lg:text-3xl font-bold mb-2">
+        <h1 className="text-xl md:text-2xl lg:text-3xl font-bold mb-2">
           {form.title || 'แบบสอบถาม'}
         </h1>
         {form.description && (
-          <p className={`max-w-xl mx-auto ${isWhiteBanner ? 'text-slate-600' : 'text-white/80'}`}>
+          <p className={`max-w-xl mx-auto text-sm md:text-base ${isWhiteBanner ? 'text-slate-600' : 'text-white/80'}`}>
             {form.description}
           </p>
         )}
@@ -207,7 +207,7 @@ export function CardGroupsTheme({
           className="bg-white rounded-xl shadow-md border border-slate-200 overflow-hidden hover:shadow-lg transition-shadow"
         >
           {/* Group Header */}
-          <div className="bg-slate-50 px-6 py-3 border-b border-slate-200 flex items-center gap-2">
+          <div className="bg-slate-50 px-4 md:px-6 py-3 border-b border-slate-200 flex items-center gap-2">
             <Layers className="w-4 h-4 text-slate-400" />
             <span className="text-sm font-medium text-slate-600">
               {group.title}
@@ -218,7 +218,7 @@ export function CardGroupsTheme({
           </div>
 
           {/* Group Fields */}
-          <div className="p-6 space-y-5">
+          <div className="p-4 sm:p-5 md:p-6 space-y-5">
             {(() => {
               let questionNumber = 0;
               return group.fields.map((field, fieldIndex) => {

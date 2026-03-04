@@ -186,10 +186,10 @@ export function StepWizardTheme({
   };
 
   return (
-    <div className="max-w-5xl mx-auto bg-white rounded-xl p-8 shadow-sm">
+    <div className="max-w-5xl mx-auto bg-white rounded-xl p-4 md:p-8 shadow-sm">
       {/* Header - with custom banner color */}
       <div
-        className="mb-8 text-center p-8 rounded-xl"
+        className="mb-6 md:mb-8 text-center p-5 md:p-8 rounded-xl"
         style={getBannerStyle()}
       >
         {form.logo_url && (
@@ -197,26 +197,26 @@ export function StepWizardTheme({
             src={form.logo_url}
             alt="Logo"
             className={`${logoSizeClass} object-contain mb-4 ${form.logo_position === 'center' ? 'mx-auto' :
-                form.logo_position === 'right' ? 'ml-auto' :
-                  'mr-auto'
+              form.logo_position === 'right' ? 'ml-auto' :
+                'mr-auto'
               }`}
           />
         )}
-        <h1 className={`text-2xl font-bold mb-2 ${isWhiteBanner ? 'text-slate-800' : 'text-white'}`}>
+        <h1 className={`text-xl md:text-2xl font-bold mb-2 ${isWhiteBanner ? 'text-slate-800' : 'text-white'}`}>
           {form.title || 'แบบสอบถาม'}
         </h1>
         {form.description && (
-          <p className={isWhiteBanner ? 'text-slate-600' : 'text-white/80'}>{form.description}</p>
+          <p className={`text-sm md:text-base ${isWhiteBanner ? 'text-slate-600' : 'text-white/80'}`}>{form.description}</p>
         )}
       </div>
 
       {/* Progress Bar */}
-      <div className="mb-8">
+      <div className="mb-6 md:mb-8">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-medium text-slate-600">
+          <span className="text-xs md:text-sm font-medium text-slate-600">
             ขั้นตอน {currentStep + 1} จาก {totalSteps}
           </span>
-          <span className="text-sm text-slate-400">
+          <span className="text-xs md:text-sm text-slate-400">
             {Math.round(((currentStep + 1) / totalSteps) * 100)}%
           </span>
         </div>
@@ -234,14 +234,14 @@ export function StepWizardTheme({
       {/* Step Content */}
       <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden min-h-[300px]">
         {/* Step Header */}
-        <div className="bg-slate-50 px-6 py-4 border-b border-slate-200">
-          <h2 className="font-semibold text-slate-900">
+        <div className="bg-slate-50 px-4 md:px-6 py-3 md:py-4 border-b border-slate-200">
+          <h2 className="font-semibold text-slate-900 text-sm md:text-base">
             {isConsentStep ? 'การยินยอม' : steps[currentStep]?.title}
           </h2>
         </div>
 
         {/* Step Body */}
-        <div className="p-6">
+        <div className="p-4 sm:p-5 md:p-6">
           {isConsentStep ? (
             // Consent Step
             <div className="space-y-4">

@@ -32,7 +32,7 @@ const getBannerColor = (form: Form) => {
     black: '#0F172A',
     white: '#FFFFFF',
   };
-  
+
   if (form.banner_color === 'custom' && form.banner_custom_color) {
     return form.banner_custom_color;
   }
@@ -52,7 +52,7 @@ const getAccentColor = (form: Form) => {
     slate: '#475569',
     black: '#0F172A',
   };
-  
+
   if (form.accent_color === 'custom' && form.accent_custom_color) {
     return form.accent_custom_color;
   }
@@ -65,11 +65,11 @@ const adjustBrightness = (hex: string, percent: number) => {
   let r = parseInt(hex.substring(0, 2), 16);
   let g = parseInt(hex.substring(2, 4), 16);
   let b = parseInt(hex.substring(4, 6), 16);
-  
+
   r = Math.min(255, Math.max(0, r + (r * percent / 100)));
   g = Math.min(255, Math.max(0, g + (g * percent / 100)));
   b = Math.min(255, Math.max(0, b + (b * percent / 100)));
-  
+
   const toHex = (n: number) => Math.round(n).toString(16).padStart(2, '0');
   return '#' + toHex(r) + toHex(g) + toHex(b);
 };
@@ -87,14 +87,14 @@ export function DefaultTheme({
   const accentColor = getAccentColor(form);
   const bannerMode = form.banner_mode || 'gradient';
   const isWhiteBanner = bannerColor.toLowerCase() === '#ffffff';
-  
-  console.log('DefaultTheme banner:', { 
-    banner_color: form.banner_color, 
+
+  console.log('DefaultTheme banner:', {
+    banner_color: form.banner_color,
     banner_custom_color: form.banner_custom_color,
     banner_mode: form.banner_mode,
-    computedColor: bannerColor 
+    computedColor: bannerColor
   });
-  
+
   // Generate banner style
   const getBannerStyle = () => {
     if (bannerMode === 'solid') {
@@ -110,39 +110,38 @@ export function DefaultTheme({
   return (
     <div className="bg-white rounded-xl overflow-hidden shadow-lg">
       {/* Header - with custom color */}
-      <div 
-        className={`p-8 lg:p-10 text-center ${isWhiteBanner ? 'text-slate-800 border-b border-slate-200' : 'text-white'}`}
+      <div
+        className={`p-5 md:p-8 lg:p-10 text-center ${isWhiteBanner ? 'text-slate-800 border-b border-slate-200' : 'text-white'}`}
         style={getBannerStyle()}
       >
         {form.logo_url ? (
           <>
-            <img 
-              src={form.logo_url} 
-              alt={form.title || 'Logo'} 
-              className={`${logoSizeClass} object-contain mb-4 ${
-                form.logo_position === 'center' ? 'mx-auto' : 
-                form.logo_position === 'right' ? 'ml-auto' : 
-                'mr-auto'
-              }`}
+            <img
+              src={form.logo_url}
+              alt={form.title || 'Logo'}
+              className={`${logoSizeClass} object-contain mb-4 ${form.logo_position === 'center' ? 'mx-auto' :
+                  form.logo_position === 'right' ? 'ml-auto' :
+                    'mr-auto'
+                }`}
             />
-            <h1 className="text-xl lg:text-2xl font-bold">
+            <h1 className="text-lg md:text-xl lg:text-2xl font-bold">
               {form.title}
             </h1>
           </>
         ) : (
-          <h1 className="text-3xl lg:text-4xl font-bold">
+          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold">
             {form.title || 'แบบสอบถาม'}
           </h1>
         )}
         {form.description && (
-          <p className={`max-w-2xl mx-auto mt-3 text-base lg:text-lg ${isWhiteBanner ? 'text-slate-600' : 'text-white/80'}`}>
+          <p className={`max-w-2xl mx-auto mt-3 text-sm md:text-base lg:text-lg ${isWhiteBanner ? 'text-slate-600' : 'text-white/80'}`}>
             {form.description}
           </p>
         )}
       </div>
 
       {/* Form Content */}
-      <div className="p-6 lg:p-8 space-y-6">
+      <div className="p-4 sm:p-5 md:p-6 lg:p-8 space-y-6">
         {/* Calculate question numbers excluding section/heading/info_box */}
         {(() => {
           let questionNumber = 0;
@@ -160,7 +159,7 @@ export function DefaultTheme({
                 </div>
               );
             }
-            
+
             // Heading field - render as sub-heading (smaller, no border)
             if (field.type === 'heading') {
               return (
@@ -174,7 +173,7 @@ export function DefaultTheme({
                 </div>
               );
             }
-            
+
             // Info box - render without number but show content
             if (field.type === 'info_box') {
               return (
@@ -183,13 +182,13 @@ export function DefaultTheme({
                 </div>
               );
             }
-            
+
             // Regular question field
             questionNumber++;
             return (
               <div key={field.id} className="space-y-2">
                 <div className="flex items-start gap-2">
-                  <span 
+                  <span
                     className="flex-shrink-0 w-6 h-6 rounded-full text-xs font-medium flex items-center justify-center text-white"
                     style={{ backgroundColor: accentColor }}
                   >

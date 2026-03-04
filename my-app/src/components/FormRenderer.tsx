@@ -13,22 +13,22 @@ interface FormRendererProps {
   submitLabel?: string;
 }
 
-export function FormRenderer({ 
-  form, 
-  onSubmit, 
+export function FormRenderer({
+  form,
+  onSubmit,
   submitting = false,
   submitLabel = 'ส่งคำตอบ'
 }: FormRendererProps) {
   const [responses, setResponses] = useState<Record<string, unknown>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitted, setSubmitted] = useState(false);
-  
+
   // Consent State
   const [consentChecked, setConsentChecked] = useState(false);
-  const [consentLocation, setConsentLocation] = useState<{latitude: number; longitude: number; accuracy?: number} | null>(null);
+  const [consentLocation, setConsentLocation] = useState<{ latitude: number; longitude: number; accuracy?: number } | null>(null);
   const [consentIp, setConsentIp] = useState<string | null>(null);
   const [locationStatus, setLocationStatus] = useState<'idle' | 'requesting' | 'granted' | 'denied'>('idle');
-  
+
   // Get IP Address
   useEffect(() => {
     fetch('https://api.ipify.org?format=json')
@@ -36,7 +36,7 @@ export function FormRenderer({
       .then(data => setConsentIp(data.ip))
       .catch(() => setConsentIp(null));
   }, []);
-  
+
   // Get Location when consent is required AND location is required
   useEffect(() => {
     if (form.require_consent && form.consent_require_location && consentChecked && locationStatus === 'idle') {
@@ -89,7 +89,7 @@ export function FormRenderer({
 
   const validateAll = (): boolean => {
     const newErrors: Record<string, string> = {};
-    
+
     form.fields.forEach(field => {
       const error = validateField(field, responses[field.id]);
       if (error) {
@@ -103,11 +103,11 @@ export function FormRenderer({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateAll()) {
       return;
     }
-    
+
     // Check consent if required
     if (form.require_consent && !consentChecked) {
       setErrors(prev => ({ ...prev, _consent: 'กรุณายินยอมก่อนส่งคำตอบ' }));
@@ -139,10 +139,10 @@ export function FormRenderer({
   // Render individual field
   const renderField = useCallback((field: FormField) => {
     return (
-      <FieldControl 
-        field={field} 
-        value={responses[field.id]} 
-        onChange={(value) => updateResponse(field.id, value)} 
+      <FieldControl
+        field={field}
+        value={responses[field.id]}
+        onChange={(value) => updateResponse(field.id, value)}
       />
     );
   }, [responses]);
@@ -160,7 +160,7 @@ export function FormRenderer({
       slate: '#475569',
       black: '#0F172A',
     };
-    
+
     if (form.accent_color === 'custom' && form.accent_custom_color) {
       return form.accent_custom_color;
     }
@@ -177,11 +177,11 @@ export function FormRenderer({
         className={cn(
           "w-full py-3 px-6 rounded-lg font-medium text-white transition-all",
           submitting || (form.require_consent && !consentChecked)
-            ? "bg-slate-400 cursor-not-allowed" 
+            ? "bg-slate-400 cursor-not-allowed"
             : "hover:opacity-90 active:scale-[0.98]"
         )}
-        style={{ 
-          backgroundColor: submitting || (form.require_consent && !consentChecked) ? undefined : accentColor 
+        style={{
+          backgroundColor: submitting || (form.require_consent && !consentChecked) ? undefined : accentColor
         }}
       >
         {submitting ? (
@@ -306,9 +306,9 @@ function FieldControl({ field, value, onChange }: FieldControlProps) {
             <label
               key={idx}
               className={cn(
-                "flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-all select-none",
-                value === option 
-                  ? "border-blue-500 bg-blue-50" 
+                "flex items-center gap-3 p-3.5 sm:p-3 border rounded-lg cursor-pointer transition-all select-none",
+                value === option
+                  ? "border-blue-500 bg-blue-50"
                   : "border-slate-300 hover:border-slate-300"
               )}
             >
@@ -326,7 +326,7 @@ function FieldControl({ field, value, onChange }: FieldControlProps) {
           {field.allow_other && (
             <label
               className={cn(
-                "flex flex-col gap-2 p-3 border rounded-lg cursor-pointer transition-all select-none",
+                "flex flex-col gap-2 p-3.5 sm:p-3 border rounded-lg cursor-pointer transition-all select-none",
                 isOther ? "border-blue-500 bg-blue-50" : "border-slate-300 hover:border-slate-300"
               )}
             >
@@ -360,7 +360,7 @@ function FieldControl({ field, value, onChange }: FieldControlProps) {
       const otherIndex = selectedValues.findIndex(v => v.startsWith('other:'));
       const hasOther = otherIndex >= 0;
       const multiOtherValue = hasOther ? selectedValues[otherIndex].replace('other:', '') : '';
-      
+
       const toggleOther = (checked: boolean) => {
         if (checked) {
           onChange([...selectedValues, 'other:']);
@@ -368,7 +368,7 @@ function FieldControl({ field, value, onChange }: FieldControlProps) {
           onChange(selectedValues.filter(v => !v.startsWith('other:')));
         }
       };
-      
+
       const updateOtherValue = (text: string) => {
         const newValues = selectedValues.filter(v => !v.startsWith('other:'));
         if (text) {
@@ -378,14 +378,14 @@ function FieldControl({ field, value, onChange }: FieldControlProps) {
         }
         onChange(newValues);
       };
-      
+
       return (
         <div className="space-y-2">
           {field.options?.map((option, idx) => (
             <label
               key={idx}
               className={cn(
-                "flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-all select-none",
+                "flex items-center gap-3 p-3.5 sm:p-3 border rounded-lg cursor-pointer transition-all select-none",
                 selectedValues.includes(option)
                   ? "border-blue-500 bg-blue-50"
                   : "border-slate-300 hover:border-slate-300"
@@ -410,7 +410,7 @@ function FieldControl({ field, value, onChange }: FieldControlProps) {
           {field.allow_other && (
             <label
               className={cn(
-                "flex flex-col gap-2 p-3 border rounded-lg cursor-pointer transition-all select-none",
+                "flex flex-col gap-2 p-3.5 sm:p-3 border rounded-lg cursor-pointer transition-all select-none",
                 hasOther ? "border-blue-500 bg-blue-50" : "border-slate-300 hover:border-slate-300"
               )}
             >
@@ -484,7 +484,7 @@ function FieldControl({ field, value, onChange }: FieldControlProps) {
       const dropdownValue = String(value || '');
       const isDropdownOther = dropdownValue.startsWith('other:');
       const dropdownOtherValue = isDropdownOther ? dropdownValue.replace('other:', '') : '';
-      
+
       return (
         <div className="space-y-2">
           <select
@@ -507,7 +507,7 @@ function FieldControl({ field, value, onChange }: FieldControlProps) {
               <option value="_other_">อื่นๆ (โปรดระบุ)</option>
             )}
           </select>
-          
+
           {isDropdownOther && (
             <input
               type="text"
@@ -528,7 +528,7 @@ function FieldControl({ field, value, onChange }: FieldControlProps) {
           {field.helpText && <p className="text-xl text-slate-600 mt-3">{field.helpText}</p>}
         </div>
       );
-    
+
     case 'section':
       return (
         <div className="border-2 border-slate-300 rounded-xl bg-white p-6 my-4 shadow-sm">
@@ -558,19 +558,19 @@ function FieldControl({ field, value, onChange }: FieldControlProps) {
 
 // ==================== Rating Component ====================
 
-function RatingInput({ 
-  value, 
-  max, 
-  onChange 
-}: { 
-  value: number; 
-  max: number; 
+function RatingInput({
+  value,
+  max,
+  onChange
+}: {
+  value: number;
+  max: number;
   onChange: (value: number) => void;
 }) {
   const [hoverValue, setHoverValue] = useState(0);
 
   return (
-    <div className="flex gap-1 select-none">
+    <div className="flex flex-wrap gap-1 md:gap-2 select-none">
       {Array.from({ length: max }, (_, i) => i + 1).map((star) => (
         <button
           key={star}
@@ -582,7 +582,7 @@ function RatingInput({
         >
           <Star
             className={cn(
-              "w-8 h-8 transition-colors",
+              "w-7 h-7 sm:w-8 sm:h-8 transition-colors",
               (hoverValue ? star <= hoverValue : star <= value)
                 ? "fill-yellow-400 text-yellow-400"
                 : "text-slate-300"
@@ -609,28 +609,32 @@ function ScaleInput({
 }) {
   return (
     <div className="space-y-3 select-none">
-      <div className="flex items-center gap-4">
-        <span className="text-sm text-slate-500 min-w-[2rem] text-center">{min}</span>
-        <div className="flex-1 flex justify-between gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+        <div className="flex items-center justify-between sm:hidden px-1">
+          <span className="text-sm text-slate-500">ไม่เห็นด้วยอย่างยิ่ง ({min})</span>
+          <span className="text-sm text-slate-500">เห็นด้วยอย่างยิ่ง ({max})</span>
+        </div>
+        <span className="hidden sm:block text-sm text-slate-500 min-w-[2rem] text-center">{min}</span>
+        <div className="flex-1 flex flex-wrap justify-center sm:justify-between gap-1 sm:gap-2">
           {Array.from({ length: max - min + 1 }, (_, i) => min + i).map((num) => (
             <button
               key={num}
               type="button"
               onClick={() => onChange(num)}
               className={cn(
-                "w-10 h-10 rounded-lg font-medium transition-all",
+                "w-8 h-8 sm:w-10 sm:h-10 rounded-lg text-sm sm:text-base font-medium transition-all",
                 value === num
                   ? "bg-blue-600 text-white"
-                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  : "bg-slate-100 text-slate-600 hover:bg-slate-200 shadow-sm"
               )}
             >
               {num}
             </button>
           ))}
         </div>
-        <span className="text-sm text-slate-500 min-w-[2rem] text-center">{max}</span>
+        <span className="hidden sm:block text-sm text-slate-500 min-w-[2rem] text-center">{max}</span>
       </div>
-      <div className="flex justify-between text-sm text-slate-400 select-none">
+      <div className="hidden sm:flex justify-between text-sm text-slate-400 select-none">
         <span>ไม่เห็นด้วยอย่างยิ่ง</span>
         <span>เห็นด้วยอย่างยิ่ง</span>
       </div>

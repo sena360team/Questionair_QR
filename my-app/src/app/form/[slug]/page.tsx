@@ -187,7 +187,7 @@ function FormPageContent() {
   const isDraft = form.status === 'draft';
 
   return (
-    <div className="min-h-screen bg-slate-50 py-8 px-4">
+    <div className="min-h-screen bg-slate-50 py-4 md:py-8 px-2 md:px-4">
       <div className="w-full max-w-7xl mx-auto">
         {isDraft && (
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">

@@ -66,6 +66,10 @@ model Form {
   consent_text           String?
   consent_require_location Boolean? @default(false)
 
+  // CSS Integration settings
+  css_integration_enabled Boolean? @default(false)
+  css_field_mapping      Json?
+
   qr_codes               QrCode[]
   submissions            Submission[]
   versions               FormVersion[]
