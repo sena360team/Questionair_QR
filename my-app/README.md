@@ -1,5 +1,11 @@
 # Questionnaire QR System
 
+<!-- README-I18N:START -->
+
+**English** | [ไทย](./README.th.md)
+
+<!-- README-I18N:END -->
+
 Questionnaire QR System is a Next.js application for creating, publishing, and tracking QR-based forms. It includes an admin panel, form versioning, draft workflows, theme customization, and submission analytics.
 
 ## Tech Stack
